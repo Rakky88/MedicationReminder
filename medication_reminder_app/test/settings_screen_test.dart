@@ -35,7 +35,7 @@ void main() {
     await tester.pumpWidget(localized(const AboutScreen()));
 
     expect(find.text('Made by Rick Groot · 2026'), findsOneWidget);
-    expect(find.text('Version V0.00.01'), findsOneWidget);
+    expect(find.text('Version V0.00.02'), findsOneWidget);
     expect(find.text('Share or update the app'), findsOneWidget);
     expect(find.text('Copy Android download link'), findsOneWidget);
     expect(find.text('Open contact form'), findsOneWidget);

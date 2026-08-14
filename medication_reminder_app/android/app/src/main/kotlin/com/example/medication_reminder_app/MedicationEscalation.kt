@@ -265,15 +265,23 @@ object EscalationStore {
         atMillis: Long,
         operation: PendingIntent,
     ) {
-        val exactAllowed =
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager.canScheduleExactAlarms()
-        when {
-            exactAllowed && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
-                manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis, operation)
-            exactAllowed -> manager.setExact(AlarmManager.RTC_WAKEUP, atMillis, operation)
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
-                manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis, operation)
-            else -> manager.set(AlarmManager.RTC_WAKEUP, atMillis, operation)
+        try {
+            val exactAllowed =
+                Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager.canScheduleExactAlarms()
+            when {
+                exactAllowed && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
+                    manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis, operation)
+                exactAllowed -> manager.setExact(AlarmManager.RTC_WAKEUP, atMillis, operation)
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
+                    manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis, operation)
+                else -> manager.set(AlarmManager.RTC_WAKEUP, atMillis, operation)
+            }
+        } catch (_: IllegalStateException) {
+            // Some vendors enforce a lower per-app alarm cap. The base dose
+            // notification remains scheduled; a missed follow-up must never
+            // be able to crash the app or its package-replaced receiver.
+        } catch (_: SecurityException) {
+            // Exact-alarm access can change while the app is not running.
         }
     }
 
@@ -365,7 +373,7 @@ class MedicationSnoozeReceiver : BroadcastReceiver() {
 
 class MedicationEscalationBootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        EscalationStore.rescheduleAll(context)
+        runCatching { EscalationStore.rescheduleAll(context) }
     }
 }
 

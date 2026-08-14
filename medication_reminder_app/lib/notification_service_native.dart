@@ -30,8 +30,11 @@ class NotificationService {
   static const snoozeAction = 'snooze';
   static const _categoryId = 'medication_reminder';
   static const _channelId = 'medication_reminders_v1';
-  static const _androidRollingWeeks = 8;
-  static const _maxAndroidScheduledNotifications = 320;
+  static const _androidRollingWeeks = 26;
+  // Each dated dose uses one plugin alarm plus a follow-up and boundary alarm
+  // in the native escalation layer. Keep enough room below Android's common
+  // limit of 500 alarms per app for snoozes and OS bookkeeping.
+  static const _maxAndroidScheduledDoseOccurrences = 144;
   static const _accents = <Color>[
     Color(0xFF00897B),
     Color(0xFF7B1FA2),
@@ -230,6 +233,15 @@ class NotificationService {
     if (!isSupported) return;
     await init();
     await _plugin.cancelAllPendingNotifications();
+    if (Platform.isAndroid) {
+      // Native follow-up alarms are separate from the notifications plugin.
+      // Clear them before adding base notifications so a previously interrupted
+      // or oversized sync cannot keep the app pinned at Android's alarm limit.
+      await _replaceEscalationPlans(
+        const <Map<String, Object?>>[],
+        const <int>[],
+      );
+    }
     await refreshTimeZone();
     final images = await _prepareNotificationImages(mascot);
     final slots = _reminderSlots(medications);
@@ -475,24 +487,27 @@ class NotificationService {
     }
     final scheduleMode = await _androidScheduleMode();
     final rollingWeeks = math.max(
-      0,
+      1,
       math.min(
         _androidRollingWeeks,
-        (_maxAndroidScheduledNotifications ~/ slots.length) - 1,
+        _maxAndroidScheduledDoseOccurrences ~/ slots.length,
       ),
     );
-    final planned = <_PlannedReminder>[];
+    final plannedByDoseKey = <String, _PlannedReminder>{};
     for (final slot in slots) {
       final first = _nextWeekday(slot.weekday, slot.hour, slot.minute);
       for (var week = 0; week < rollingWeeks; week++) {
-        planned.add(
-          _PlannedReminder(
-            slot: slot,
-            scheduledAt: _addCalendarDays(first, week * 7),
-          ),
+        final reminder = _PlannedReminder(
+          slot: slot,
+          scheduledAt: _addCalendarDays(first, week * 7),
+        );
+        plannedByDoseKey.putIfAbsent(
+          _doseKey(reminder.slot, reminder.scheduledAt),
+          () => reminder,
         );
       }
     }
+    final planned = plannedByDoseKey.values.toList();
     planned.removeWhere(
       (reminder) => !shouldScheduleDoseNotification(
         doseKey: _doseKey(reminder.slot, reminder.scheduledAt),
@@ -500,6 +515,9 @@ class NotificationService {
       ),
     );
     planned.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+    if (planned.length > _maxAndroidScheduledDoseOccurrences) {
+      planned.removeRange(_maxAndroidScheduledDoseOccurrences, planned.length);
+    }
 
     final escalationPlans = <Map<String, Object?>>[];
     _NotificationAppearance? previous;
@@ -558,32 +576,11 @@ class NotificationService {
       });
     }
 
-    for (var index = 0; index < slots.length; index++) {
-      final slot = slots[index];
-      final appearance = _newAppearance(previous: previous);
-      previous = appearance;
-      final first = _addCalendarDays(
-        _nextWeekday(slot.weekday, slot.hour, slot.minute),
-        rollingWeeks * 7,
-      );
-      final body = _notificationBody(copy, slot.medication, mascot);
-      await _plugin.zonedSchedule(
-        id: 200000000 + index,
-        title: copy.title,
-        body: body,
-        scheduledDate: first,
-        notificationDetails: _details(
-          copy,
-          mascot: mascot,
-          images: images,
-          appearance: appearance,
-          summaryText: body,
-        ),
-        androidScheduleMode: scheduleMode,
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-        payload: _payload(slot.medication.id, null),
-      );
-    }
+    // Do not add weekly repeating fallbacks here. Android normalizes their
+    // first trigger to the next matching weekday, even when a later start date
+    // is supplied. Combining those repeats with dated occurrences therefore
+    // produces two notifications for one dose. App startup/resume and every
+    // medication change replenish this rolling, date-specific schedule.
     await _replaceEscalationPlans(
       escalationPlans,
       slots.map((slot) => slot.medication.id).toSet().toList(),

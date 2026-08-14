@@ -1,5 +1,17 @@
 # Versiegeschiedenis
 
+## V0.00.02 — 2026-08-14
+
+- Zorg dat het dynamisch gebruikte Android-notificatie-icoon en de alarmsounds
+  niet uit releasebuilds worden verwijderd.
+- Herstel daarmee de opstartfout van de eerste openbare Android-release.
+- Verwijder overlappende wekelijkse Android-reservemeldingen die soms tegelijk
+  met de datumgebonden dosisnotificatie afgingen.
+- Houd voldoende marge onder Android's alarmenlimiet en voorkom dat een
+  leverancierslimiet de app of herstartontvanger kan laten crashen.
+- Wis oude native vervolgalarms vóór een nieuwe planning, zodat een eerder
+  afgebroken synchronisatie zichzelf bij de volgende Save kan herstellen.
+
 ## V0.00.01 — 2026-08-14
 
 - Vaste versieaanduiding toegevoegd aan **Over deze app**.
