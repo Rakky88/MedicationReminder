@@ -1,0 +1,61 @@
+name: Android release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release-android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: medication_reminder_app
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Restore release signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/medication-reminder-release.jks"
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-pub
+
+      - name: Test
+        run: flutter test --no-pub
+
+      - name: Build signed release APK
+        env:
+          MEDICATION_REMINDER_KEYSTORE: ${{ runner.temp }}/medication-reminder-release.jks
+          MEDICATION_REMINDER_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          MEDICATION_REMINDER_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          MEDICATION_REMINDER_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: flutter build apk --release --no-pub
+
+      - name: Prepare stable download filename
+        run: cp build/app/outputs/flutter-apk/app-release.apk MedicationReminder.apk
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME" MedicationReminder.apk
+          --title "$GITHUB_REF_NAME"
+          --generate-notes
+          --verify-tag

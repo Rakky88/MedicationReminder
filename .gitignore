@@ -1,0 +1,12 @@
+# Local editor and signing material
+.vscode/
+.signing/
+
+# Generated QA screenshots and source-audio working files
+medication_reminder_app/tmp/
+medication_reminder_app/.source_audio/
+medication_reminder_app/android/build/
+
+# Python caches
+__pycache__/
+*.py[cod]

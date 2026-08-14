@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "medication-reminder-contact-relay",
+  "main": "src/index.js",
+  "compatibility_date": "2026-08-01",
+  "workers_dev": true,
+  "ratelimits": [
+    {
+      "name": "CONTACT_RATE_LIMITER",
+      "namespace_id": "17319",
+      "simple": {
+        "limit": 3,
+        "period": 60
+      }
+    },
+    {
+      "name": "CONTACT_NETWORK_RATE_LIMITER",
+      "namespace_id": "17320",
+      "simple": {
+        "limit": 12,
+        "period": 60
+      }
+    }
+  ]
+}
