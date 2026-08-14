@@ -1,9 +1,12 @@
 name: Android release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release tag, for example v0.00.02
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -55,7 +58,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
-          gh release create "$GITHUB_REF_NAME" MedicationReminder.apk
-          --title "$GITHUB_REF_NAME"
+          gh release create "${{ inputs.version }}" MedicationReminder.apk
+          --target "$GITHUB_SHA"
+          --title "${{ inputs.version }}"
           --generate-notes
-          --verify-tag

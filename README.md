@@ -186,6 +186,9 @@ Belangrijk voor alle volgende publicaties:
 - verander de definitieve identifier `nl.rickgroot.medicationreminder` niet meer;
 - bewaar `.signing/release-key.jks` en de lokale signinggegevens veilig in
   meerdere back-ups; deze map wordt bewust nooit naar Git gestuurd;
+- publiceer voorlopig een lokaal ondertekende APK. De handmatige GitHub Actions-
+  workflow kan pas worden gebruikt nadat de vier signing-secrets bewust en
+  afzonderlijk via de repository-instellingen zijn toegevoegd;
 - test elke datamigratie met een kopie van gegevens uit de vorige appversie;
 - voeg vóór brede uitrol export/import of versleutelde cloudback-up toe voor
   herstel na verwijderen, een nieuw toestel of gewiste appdata.
