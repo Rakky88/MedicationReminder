@@ -2,12 +2,14 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'async_operation_queue.dart';
 import 'medication.dart';
 
 class MedicationRepository {
   MedicationRepository._();
 
   static final MedicationRepository instance = MedicationRepository._();
+  final AsyncOperationQueue _operations = AsyncOperationQueue();
 
   static const _medicationsKey = 'medications_v1';
   static const _doseLogsKey = 'dose_logs_v1';
@@ -17,12 +19,19 @@ class MedicationRepository {
   static const _legacyLogKey = 'med_log_entries';
   static const reconciliationLookback = Duration(days: 45);
 
-  Future<List<Medication>> getMedications({DateTime? migrationAt}) async {
+  Future<List<Medication>> getMedications({DateTime? migrationAt}) =>
+      _operations.run(() => _getMedications(migrationAt: migrationAt));
+
+  Future<List<Medication>> _getMedications({DateTime? migrationAt}) async {
     final prefs = await SharedPreferences.getInstance();
-    final medications = _decodeList(
+    final decodedMedications = _decodeList(
       prefs.getString(_medicationsKey),
       Medication.fromJson,
-    ).where(_isValidMedication).toList();
+    );
+    final medications = decodedMedications.where(_isValidMedication).toList();
+    if (decodedMedications.length != medications.length) {
+      throw const FormatException('Invalid medication data was found.');
+    }
     final migratedAt = (migrationAt ?? DateTime.now()).toLocal();
     var changed = false;
     for (var index = 0; index < medications.length; index++) {
@@ -53,13 +62,16 @@ class MedicationRepository {
     return medications;
   }
 
-  Future<Medication> saveMedication(
+  Future<Medication> saveMedication(Medication medication, {DateTime? at}) =>
+      _operations.run(() => _saveMedication(medication, at: at));
+
+  Future<Medication> _saveMedication(
     Medication medication, {
     DateTime? at,
   }) async {
     final now = (at ?? DateTime.now()).toLocal();
     final prefs = await SharedPreferences.getInstance();
-    final medications = await getMedications(migrationAt: now);
+    final medications = await _getMedications(migrationAt: now);
     var saved = medication.createdAt == null
         ? medication.copyWith(createdAt: now)
         : medication;
@@ -87,7 +99,7 @@ class MedicationRepository {
         }
       }
       saved = saved.copyWith(id: nextId);
-      await prefs.setInt(_nextIdKey, nextId + 1);
+      await _requireStored(prefs.setInt(_nextIdKey, nextId + 1), _nextIdKey);
       medications.add(saved);
     } else {
       if (existingIndex == -1) {
@@ -100,19 +112,29 @@ class MedicationRepository {
     return saved;
   }
 
-  Future<void> deleteMedication(int id) async {
+  Future<void> deleteMedication(int id) =>
+      _operations.run(() => _deleteMedication(id));
+
+  Future<void> _deleteMedication(int id) async {
     final prefs = await SharedPreferences.getInstance();
-    final medications = await getMedications();
+    final medications = await _getMedications();
     medications.removeWhere((item) => item.id == id);
     await _saveMedications(prefs, medications);
   }
 
-  Future<List<DoseLog>> getDoseLogs({bool includeHidden = false}) async {
+  Future<List<DoseLog>> getDoseLogs({bool includeHidden = false}) =>
+      _operations.run(() => _getDoseLogs(includeHidden: includeHidden));
+
+  Future<List<DoseLog>> _getDoseLogs({bool includeHidden = false}) async {
     final prefs = await SharedPreferences.getInstance();
-    var logs = _decodeList(
+    final decodedLogs = _decodeList(
       prefs.getString(_doseLogsKey),
       DoseLog.fromJson,
-    ).where(_isValidDoseLog).toList();
+    );
+    var logs = decodedLogs.where(_isValidDoseLog).toList();
+    if (decodedLogs.length != logs.length) {
+      throw const FormatException('Invalid dose history was found.');
+    }
     if (logs.isEmpty) {
       logs = await _migrateLegacyLogs(prefs);
     }
@@ -131,9 +153,23 @@ class MedicationRepository {
     DoseStatus status, {
     String? doseKey,
     DateTime? recordedAt,
+  }) => _operations.run(
+    () => _recordDose(
+      medication,
+      status,
+      doseKey: doseKey,
+      recordedAt: recordedAt,
+    ),
+  );
+
+  Future<DoseLog?> _recordDose(
+    Medication medication,
+    DoseStatus status, {
+    String? doseKey,
+    DateTime? recordedAt,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    final logs = await getDoseLogs(includeHidden: true);
+    final logs = await _getDoseLogs(includeHidden: true);
     final now = recordedAt ?? DateTime.now();
     final resolvedDoseKey = doseKey ?? medication.nearestDoseSlot(now)?.key;
     final scheduledAt = resolvedDoseKey == null
@@ -151,8 +187,12 @@ class MedicationRepository {
     );
     if (duplicate) return null;
 
+    var id = now.microsecondsSinceEpoch.toString();
+    for (var suffix = 1; logs.any((log) => log.id == id); suffix++) {
+      id = '${now.microsecondsSinceEpoch}-$suffix';
+    }
     final log = DoseLog(
-      id: now.microsecondsSinceEpoch.toString(),
+      id: id,
       medicationId: medication.id,
       medicationName: medication.name,
       dosage: medication.dosage,
@@ -169,10 +209,15 @@ class MedicationRepository {
   Future<List<DoseLog>> reconcileMissedDoses(
     List<Medication> medications, {
     DateTime? at,
+  }) => _operations.run(() => _reconcileMissedDoses(medications, at: at));
+
+  Future<List<DoseLog>> _reconcileMissedDoses(
+    List<Medication> medications, {
+    DateTime? at,
   }) async {
     final now = (at ?? DateTime.now()).toLocal();
     final prefs = await SharedPreferences.getInstance();
-    final logs = await getDoseLogs(includeHidden: true);
+    final logs = await _getDoseLogs(includeHidden: true);
     final loggedKeys = logs
         .map((log) => log.doseKey)
         .whereType<String>()
@@ -223,9 +268,12 @@ class MedicationRepository {
     return logs;
   }
 
-  Future<void> deleteDoseLog(String id) async {
+  Future<void> deleteDoseLog(String id) =>
+      _operations.run(() => _deleteDoseLog(id));
+
+  Future<void> _deleteDoseLog(String id) async {
     final prefs = await SharedPreferences.getInstance();
-    final logs = await getDoseLogs(includeHidden: true);
+    final logs = await _getDoseLogs(includeHidden: true);
     logs.removeWhere((log) => log.id == id);
     await _saveLogs(prefs, logs);
   }
@@ -234,50 +282,72 @@ class MedicationRepository {
   ///
   /// Reconciliation and pet health continue to see the dose, preventing a
   /// cleared/swiped history entry from returning as a newly missed dose.
-  Future<void> hideDoseLog(String id) async {
+  Future<void> hideDoseLog(String id) =>
+      _operations.run(() => _hideDoseLog(id));
+
+  Future<void> _hideDoseLog(String id) async {
     final prefs = await SharedPreferences.getInstance();
-    final logs = await getDoseLogs(includeHidden: true);
+    final logs = await _getDoseLogs(includeHidden: true);
     if (!logs.any((log) => log.id == id)) return;
     final hiddenIds =
         prefs.getStringList(_hiddenDoseLogIdsKey)?.toSet() ?? <String>{};
     hiddenIds.add(id);
-    await prefs.setStringList(_hiddenDoseLogIdsKey, hiddenIds.toList()..sort());
+    await _requireStored(
+      prefs.setStringList(_hiddenDoseLogIdsKey, hiddenIds.toList()..sort()),
+      _hiddenDoseLogIdsKey,
+    );
   }
 
-  Future<void> clearDoseLogs() async {
+  Future<void> clearDoseLogs() => _operations.run(_clearDoseLogs);
+
+  Future<void> _clearDoseLogs() async {
     final prefs = await SharedPreferences.getInstance();
-    final logs = await getDoseLogs(includeHidden: true);
-    await prefs.setStringList(
+    final logs = await _getDoseLogs(includeHidden: true);
+    await _requireStored(
+      prefs.setStringList(
+        _hiddenDoseLogIdsKey,
+        logs.map((log) => log.id).toSet().toList()..sort(),
+      ),
       _hiddenDoseLogIdsKey,
-      logs.map((log) => log.id).toSet().toList()..sort(),
     );
     await prefs.remove(_legacyLogKey);
   }
 
-  Future<String?> getPreferredLocale() async {
+  Future<String?> getPreferredLocale() => _operations.run(_getPreferredLocale);
+
+  Future<String?> _getPreferredLocale() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_localeKey);
   }
 
-  Future<void> setPreferredLocale(String languageCode) async {
+  Future<void> setPreferredLocale(String languageCode) =>
+      _operations.run(() => _setPreferredLocale(languageCode));
+
+  Future<void> _setPreferredLocale(String languageCode) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_localeKey, languageCode);
+    await _requireStored(prefs.setString(_localeKey, languageCode), _localeKey);
   }
 
   Future<void> _saveMedications(
     SharedPreferences prefs,
     List<Medication> medications,
   ) async {
-    await prefs.setString(
+    await _requireStored(
+      prefs.setString(
+        _medicationsKey,
+        jsonEncode(medications.map((item) => item.toJson()).toList()),
+      ),
       _medicationsKey,
-      jsonEncode(medications.map((item) => item.toJson()).toList()),
     );
   }
 
   Future<void> _saveLogs(SharedPreferences prefs, List<DoseLog> logs) async {
-    await prefs.setString(
+    await _requireStored(
+      prefs.setString(
+        _doseLogsKey,
+        jsonEncode(logs.map((item) => item.toJson()).toList()),
+      ),
       _doseLogsKey,
-      jsonEncode(logs.map((item) => item.toJson()).toList()),
     );
     final storedHiddenIds = prefs.getStringList(_hiddenDoseLogIdsKey);
     if (storedHiddenIds == null || storedHiddenIds.isEmpty) return;
@@ -287,7 +357,10 @@ class MedicationRepository {
     if (retainedHiddenIds.isEmpty) {
       await prefs.remove(_hiddenDoseLogIdsKey);
     } else {
-      await prefs.setStringList(_hiddenDoseLogIdsKey, retainedHiddenIds);
+      await _requireStored(
+        prefs.setStringList(_hiddenDoseLogIdsKey, retainedHiddenIds),
+        _hiddenDoseLogIdsKey,
+      );
     }
   }
 
@@ -298,18 +371,30 @@ class MedicationRepository {
     if (source == null || source.isEmpty) return <T>[];
     try {
       final decoded = jsonDecode(source);
-      if (decoded is! List<dynamic>) return <T>[];
+      if (decoded is! List<dynamic>) {
+        throw const FormatException('Stored data is not a list.');
+      }
       final values = <T>[];
-      for (final value in decoded.whereType<Map<dynamic, dynamic>>()) {
+      var damagedRecords = 0;
+      for (final value in decoded) {
+        if (value is! Map<dynamic, dynamic>) {
+          damagedRecords++;
+          continue;
+        }
         try {
           values.add(decode(Map<String, Object?>.from(value)));
         } on Object {
-          // Keep valid records usable when one stored record is damaged.
+          damagedRecords++;
         }
       }
+      if (damagedRecords > 0) {
+        throw const FormatException('Damaged stored records were found.');
+      }
       return values;
-    } on Object {
-      return <T>[];
+    } on FormatException {
+      rethrow;
+    } on Object catch (error) {
+      throw FormatException('Stored data could not be decoded.', error);
     }
   }
 
@@ -317,6 +402,7 @@ class MedicationRepository {
       medication.id > 0 &&
       medication.name.trim().isNotEmpty &&
       medication.times.isNotEmpty &&
+      medication.times.every(isValidMedicationTime) &&
       medication.weekdays.isNotEmpty;
 
   bool _isValidDoseLog(DoseLog log) =>
@@ -331,6 +417,12 @@ class MedicationRepository {
       if (right[entry.key] != entry.value) return false;
     }
     return true;
+  }
+
+  Future<void> _requireStored(Future<bool> result, String key) async {
+    if (!await result) {
+      throw StateError('Could not persist local data for $key.');
+    }
   }
 
   Future<List<DoseLog>> _migrateLegacyLogs(SharedPreferences prefs) async {
@@ -350,6 +442,9 @@ class MedicationRepository {
           ),
         )
         .toList();
+    if (logs.length != oldEntries.length) {
+      throw const FormatException('Legacy dose history is damaged.');
+    }
     await _saveLogs(prefs, logs);
     await prefs.remove(_legacyLogKey);
     return logs;

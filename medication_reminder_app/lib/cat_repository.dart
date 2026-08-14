@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'async_operation_queue.dart';
 import 'cat.dart';
 import 'cat_shop.dart';
 import 'medication.dart';
@@ -11,6 +12,7 @@ class CatRepository {
   CatRepository._();
 
   static final CatRepository instance = CatRepository._();
+  final AsyncOperationQueue _operations = AsyncOperationQueue();
   static const _catKey = 'adopted_cat_v1';
   static const _entitlementsKey = 'cat_entitlements_v1';
 
@@ -24,9 +26,16 @@ class CatRepository {
     final source = prefs.getString(_catKey);
     if (source == null || source.isEmpty) return null;
     try {
-      final profile = CatProfile.fromJson(
-        Map<String, Object?>.from(jsonDecode(source) as Map<dynamic, dynamic>),
+      final json = Map<String, Object?>.from(
+        jsonDecode(source) as Map<dynamic, dynamic>,
       );
+      if (json['name'] is! String ||
+          (json['name'] as String).trim().isEmpty ||
+          json['variant'] is! String ||
+          DateTime.tryParse(json['adoptedAt'] as String? ?? '') == null) {
+        throw const FormatException('Stored pet profile is incomplete.');
+      }
+      final profile = CatProfile.fromJson(json);
       final entitlements = _CatEntitlements.fromPreferences(prefs);
       return profile.copyWith(
         ownedAccessoryIds: <String>{
@@ -45,8 +54,10 @@ class CatRepository {
           ...entitlements.processedCodeRedemptions,
         },
       );
-    } on Object {
-      return null;
+    } on FormatException {
+      rethrow;
+    } on Object catch (error) {
+      throw FormatException('Stored pet data could not be decoded.', error);
     }
   }
 
@@ -56,8 +67,31 @@ class CatRepository {
     bool purrEnabled = true,
     bool meowEnabled = true,
     bool persistentMeowEnabled = true,
+  }) => _operations.run(
+    () => _adopt(
+      name: name,
+      variant: variant,
+      purrEnabled: purrEnabled,
+      meowEnabled: meowEnabled,
+      persistentMeowEnabled: persistentMeowEnabled,
+    ),
+  );
+
+  Future<CatProfile> _adopt({
+    required String name,
+    required PetVariant variant,
+    required bool purrEnabled,
+    required bool meowEnabled,
+    required bool persistentMeowEnabled,
   }) async {
     final prefs = await SharedPreferences.getInstance();
+    final existingSource = prefs.getString(_catKey);
+    if (existingSource != null && existingSource.isNotEmpty) {
+      final existing = await getProfile();
+      if (existing != null) {
+        throw StateError('A pet has already been adopted.');
+      }
+    }
     final entitlements = _CatEntitlements.fromPreferences(prefs);
     final profile = CatProfile(
       name: name.trim().isEmpty ? randomDefaultPetName() : name.trim(),
@@ -86,6 +120,22 @@ class CatRepository {
     required bool purrEnabled,
     required bool meowEnabled,
     required bool persistentMeowEnabled,
+  }) => _operations.run(
+    () => _updateSettings(
+      profile,
+      name: name,
+      purrEnabled: purrEnabled,
+      meowEnabled: meowEnabled,
+      persistentMeowEnabled: persistentMeowEnabled,
+    ),
+  );
+
+  Future<CatProfile> _updateSettings(
+    CatProfile profile, {
+    required String name,
+    required bool purrEnabled,
+    required bool meowEnabled,
+    required bool persistentMeowEnabled,
   }) async {
     final updated = profile.copyWith(
       name: name.trim().isEmpty ? profile.name : name.trim(),
@@ -97,7 +147,9 @@ class CatRepository {
     return updated;
   }
 
-  Future<void> remove() async {
+  Future<void> remove() => _operations.run(_remove);
+
+  Future<void> _remove() async {
     final prefs = await SharedPreferences.getInstance();
     final source = prefs.getString(_catKey);
     if (source != null && source.isNotEmpty) {
@@ -112,10 +164,13 @@ class CatRepository {
         // A damaged cat profile must not block finding the cat a new home.
       }
     }
-    await prefs.remove(_catKey);
+    await _requireStored(prefs.remove(_catKey), _catKey);
   }
 
-  Future<CatProfile?> reconcileDoseLogs(List<DoseLog> logs) async {
+  Future<CatProfile?> reconcileDoseLogs(List<DoseLog> logs) =>
+      _operations.run(() => _reconcileDoseLogs(logs));
+
+  Future<CatProfile?> _reconcileDoseLogs(List<DoseLog> logs) async {
     final loadedProfile = await getProfile();
     if (loadedProfile == null) return null;
     var profile = loadedProfile;
@@ -180,6 +235,14 @@ class CatRepository {
     Medication medication,
     DoseLog log, {
     List<Medication> allMedications = const <Medication>[],
+  }) => _operations.run(
+    () => _applyDose(medication, log, allMedications: allMedications),
+  );
+
+  Future<CatDoseResult?> _applyDose(
+    Medication medication,
+    DoseLog log, {
+    List<Medication> allMedications = const <Medication>[],
   }) async {
     var profile = await getProfile();
     if (profile == null || log.doseKey == null) return null;
@@ -236,7 +299,10 @@ class CatRepository {
     return CatDoseResult(profile: profile);
   }
 
-  Future<CatProfile?> undoDose(DoseLog log) async {
+  Future<CatProfile?> undoDose(DoseLog log) =>
+      _operations.run(() => _undoDose(log));
+
+  Future<CatProfile?> _undoDose(DoseLog log) async {
     var profile = await getProfile();
     final key = log.doseKey;
     if (profile == null || key == null) return profile;
@@ -292,17 +358,29 @@ class CatRepository {
     required String itemId,
     required CatAccessoryCategory category,
     required double price,
+  }) => _operations.run(
+    () => _purchaseAccessory(itemId: itemId, category: category, price: price),
+  );
+
+  Future<CatProfile?> _purchaseAccessory({
+    required String itemId,
+    required CatAccessoryCategory category,
+    required double price,
   }) async {
     final profile = await getProfile();
+    final item = catShopItemById(itemId);
     if (profile == null ||
-        supporterAccessoryIds.contains(itemId) ||
+        item == null ||
+        item.category != category ||
+        item.price != price ||
+        item.hiddenUntilOwned ||
         profile.stage != CatStage.adult ||
         profile.ownedAccessoryIds.contains(itemId) ||
-        profile.happyPoints < price) {
+        profile.happyPoints < item.price) {
       return profile;
     }
     final updated = profile.copyWith(
-      happyPoints: profile.happyPoints - price,
+      happyPoints: profile.happyPoints - item.price,
       ownedAccessoryIds: <String>{...profile.ownedAccessoryIds, itemId},
     );
     await _save(updated);
@@ -310,6 +388,12 @@ class CatRepository {
   }
 
   Future<CatSupportResult?> registerVerifiedSupport({
+    required String transactionId,
+  }) => _operations.run(
+    () => _registerVerifiedSupport(transactionId: transactionId),
+  );
+
+  Future<CatSupportResult?> _registerVerifiedSupport({
     required String transactionId,
   }) async {
     var profile = await getProfile();
@@ -345,9 +429,19 @@ class CatRepository {
   Future<CatProfile?> toggleAccessory({
     required String itemId,
     required CatAccessoryCategory category,
+  }) => _operations.run(
+    () => _toggleAccessory(itemId: itemId, category: category),
+  );
+
+  Future<CatProfile?> _toggleAccessory({
+    required String itemId,
+    required CatAccessoryCategory category,
   }) async {
     final profile = await getProfile();
+    final item = catShopItemById(itemId);
     if (profile == null ||
+        item == null ||
+        item.category != category ||
         profile.stage != CatStage.adult ||
         !profile.ownedAccessoryIds.contains(itemId)) {
       return profile;
@@ -363,7 +457,13 @@ class CatRepository {
     return updated;
   }
 
-  Future<CatProfile?> ensurePlaySchedule({DateTime? at, Random? random}) async {
+  Future<CatProfile?> ensurePlaySchedule({DateTime? at, Random? random}) =>
+      _operations.run(() => _ensurePlaySchedule(at: at, random: random));
+
+  Future<CatProfile?> _ensurePlaySchedule({
+    DateTime? at,
+    Random? random,
+  }) async {
     final profile = await getProfile();
     if (profile == null || profile.stage != CatStage.adult) return profile;
     final now = (at ?? DateTime.now()).toLocal();
@@ -410,6 +510,11 @@ class CatRepository {
   Future<CatPlayResult?> playWithCat({
     required String momentKey,
     DateTime? at,
+  }) => _operations.run(() => _playWithCat(momentKey: momentKey, at: at));
+
+  Future<CatPlayResult?> _playWithCat({
+    required String momentKey,
+    DateTime? at,
   }) async {
     final profile = await getProfile();
     if (profile == null ||
@@ -427,6 +532,13 @@ class CatRepository {
   }
 
   Future<CatCodeRewardResult?> registerCodeReward({
+    required String redemptionId,
+    required Set<String> itemIds,
+  }) => _operations.run(
+    () => _registerCodeReward(redemptionId: redemptionId, itemIds: itemIds),
+  );
+
+  Future<CatCodeRewardResult?> _registerCodeReward({
     required String redemptionId,
     required Set<String> itemIds,
   }) async {
@@ -569,13 +681,7 @@ class CatRepository {
   }
 
   DateTime? _scheduledAtFromDoseKey(String key) {
-    final parts = key.split(':');
-    if (parts.length < 4) return null;
-    final date = DateTime.tryParse(parts[1]);
-    final hour = int.tryParse(parts[2]);
-    final minute = int.tryParse(parts[3]);
-    if (date == null || hour == null || minute == null) return null;
-    return DateTime(date.year, date.month, date.day, hour, minute);
+    return scheduledAtFromDoseKey(key);
   }
 
   String _localDay(DateTime value) {
@@ -590,7 +696,10 @@ class CatRepository {
 
   Future<void> _save(CatProfile profile) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_catKey, jsonEncode(profile.toJson()));
+    await _requireStored(
+      prefs.setString(_catKey, jsonEncode(profile.toJson())),
+      _catKey,
+    );
     await _saveEntitlements(prefs, profile);
   }
 
@@ -619,7 +728,16 @@ class CatRepository {
           (profile.species == PetSpecies.cat &&
               profile.stage == CatStage.adult),
     );
-    await prefs.setString(_entitlementsKey, jsonEncode(entitlements.toJson()));
+    await _requireStored(
+      prefs.setString(_entitlementsKey, jsonEncode(entitlements.toJson())),
+      _entitlementsKey,
+    );
+  }
+
+  Future<void> _requireStored(Future<bool> result, String key) async {
+    if (!await result) {
+      throw StateError('Could not persist local data for $key.');
+    }
   }
 }
 
@@ -657,8 +775,13 @@ class _CatEntitlements {
         processedCodeRedemptions: stringSet('processedCodeRedemptions'),
         adultCatEverRaised: json['adultCatEverRaised'] as bool? ?? false,
       );
-    } on Object {
-      return const _CatEntitlements();
+    } on FormatException {
+      rethrow;
+    } on Object catch (error) {
+      throw FormatException(
+        'Stored pet entitlements could not be decoded.',
+        error,
+      );
     }
   }
 

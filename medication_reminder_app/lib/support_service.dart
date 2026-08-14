@@ -76,7 +76,9 @@ class SupportService {
       return existing;
     }
     final generated = _randomHex(16);
-    await preferences.setString(_clientIdKey, generated);
+    if (!await preferences.setString(_clientIdKey, generated)) {
+      throw StateError('Could not persist the contact client identifier.');
+    }
     return generated;
   }
 

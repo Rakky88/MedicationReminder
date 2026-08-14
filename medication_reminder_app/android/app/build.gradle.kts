@@ -14,6 +14,15 @@ val hasReleaseSigning = listOf(
     releaseKeyAlias,
     releaseKeyPassword,
 ).all { !it.isNullOrBlank() }
+val releaseRequested = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+
+if (releaseRequested && !hasReleaseSigning) {
+    throw GradleException(
+        "Release signing is incomplete. Set all four MEDICATION_REMINDER signing variables.",
+    )
+}
 
 android {
     namespace = "nl.rickgroot.medicationreminder"
@@ -50,9 +59,9 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName(
-                if (hasReleaseSigning) "release" else "debug",
-            )
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 }

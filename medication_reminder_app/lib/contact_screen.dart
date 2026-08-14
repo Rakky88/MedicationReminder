@@ -37,14 +37,20 @@ class _ContactScreenState extends State<ContactScreen> {
     final loc = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
     setState(() => _sending = true);
-    final result = await SupportService.sendContactMessage(
-      replyEmail: _emailController.text,
-      subject: _subjectController.text,
-      message: _messageController.text,
-      languageCode: loc.locale.languageCode,
-    );
+    ContactSendStatus result;
+    try {
+      result = await SupportService.sendContactMessage(
+        replyEmail: _emailController.text,
+        subject: _subjectController.text,
+        message: _messageController.text,
+        languageCode: loc.locale.languageCode,
+      );
+    } on Object {
+      result = ContactSendStatus.failed;
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
     if (!mounted) return;
-    setState(() => _sending = false);
     final message = switch (result) {
       ContactSendStatus.sent => loc.contactSent,
       ContactSendStatus.unavailable => loc.contactRelayUnavailable,

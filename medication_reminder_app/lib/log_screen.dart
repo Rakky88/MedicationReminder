@@ -15,6 +15,7 @@ class LogScreen extends StatefulWidget {
 
 class _LogScreenState extends State<LogScreen> {
   late Future<List<DoseLog>> _logs;
+  bool _clearing = false;
 
   @override
   void initState() {
@@ -29,11 +30,17 @@ class _LogScreenState extends State<LogScreen> {
   }
 
   Future<void> _openGraph() async {
-    final logs = await MedicationRepository.instance.getDoseLogs();
-    if (!mounted) return;
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (_) => AdherenceChartScreen(logs: logs)),
-    );
+    try {
+      final logs = await MedicationRepository.instance.getDoseLogs();
+      if (!mounted) return;
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => AdherenceChartScreen(logs: logs),
+        ),
+      );
+    } on Object {
+      if (mounted) _showError();
+    }
   }
 
   Future<void> _confirmClear() async {
@@ -56,8 +63,23 @@ class _LogScreenState extends State<LogScreen> {
       ),
     );
     if (confirmed != true) return;
-    await MedicationRepository.instance.clearDoseLogs();
-    await _refresh();
+    setState(() => _clearing = true);
+    try {
+      await MedicationRepository.instance.clearDoseLogs();
+      await _refresh();
+    } on Object {
+      if (mounted) _showError();
+    } finally {
+      if (mounted) setState(() => _clearing = false);
+    }
+  }
+
+  void _showError() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).loadError)),
+      );
   }
 
   @override
@@ -74,7 +96,7 @@ class _LogScreenState extends State<LogScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
-            onPressed: _confirmClear,
+            onPressed: _clearing ? null : _confirmClear,
             tooltip: loc.clearHistory,
           ),
         ],
@@ -217,9 +239,29 @@ class _DoseLogTile extends StatelessWidget {
           ),
         ),
       ),
+      confirmDismiss: (_) async {
+        try {
+          await MedicationRepository.instance.hideDoseLog(log.id);
+          return true;
+        } on Object {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(content: Text(loc.loadError)));
+          }
+          return false;
+        }
+      },
       onDismissed: (_) async {
-        await MedicationRepository.instance.hideDoseLog(log.id);
-        await onDeleted();
+        try {
+          await onDeleted();
+        } on Object {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(content: Text(loc.loadError)));
+          }
+        }
       },
       child: ListTile(
         leading: CircleAvatar(

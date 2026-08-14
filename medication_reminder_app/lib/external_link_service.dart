@@ -13,9 +13,7 @@ class ExternalLinkService {
             'url': uri.toString(),
           }) ??
           false;
-    } on PlatformException {
-      return false;
-    } on MissingPluginException {
+    } on Object {
       return false;
     }
   }

@@ -36,7 +36,24 @@ class _CatHomeCardState extends State<CatHomeCard>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 720),
-    )..repeat(reverse: true);
+    );
+    _updateAnimation();
+  }
+
+  @override
+  void didUpdateWidget(covariant CatHomeCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.activity != widget.activity) _updateAnimation();
+  }
+
+  void _updateAnimation() {
+    if (widget.activity == CatActivity.normal) {
+      _controller
+        ..stop()
+        ..value = 0;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
   }
 
   @override

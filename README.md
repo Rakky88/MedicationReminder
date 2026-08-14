@@ -2,7 +2,7 @@
 
 Een privacyvriendelijke Flutter-app voor eenvoudige, ADHD-vriendelijke medicatieherinneringen. De app bewaart medicijnen, schema's en innamegeschiedenis lokaal op het apparaat.
 
-## Huidige status — V0.00.02
+## Huidige status — V0.00.03
 
 De ondertekende Android-releasebuild werkt. De meest recente geverifieerde APK
 staat na een build in:
@@ -12,7 +12,7 @@ staat na een build in:
 Geverifieerd met Flutter 3.44.9 en Dart 3.12.2:
 
 - `flutter analyze`: geen issues
-- `flutter test`: 109 tests geslaagd
+- `flutter test`: 117 tests geslaagd
 - `flutter build apk --release`: geslaagd en met de vaste releasekey ondertekend
 
 De vaste openbare Android-downloadlink is:
@@ -22,6 +22,9 @@ De vaste openbare Android-downloadlink is:
 Via **Over deze app** kan die link worden gekopieerd of direct worden geopend
 om de app te installeren of over een oudere, gelijk ondertekende versie bij te
 werken.
+
+De volledige kwaliteitscontrole, open beperkingen en bewust nog niet
+geïmplementeerde verbeterideeën staan in [`APP_AUDIT.md`](APP_AUDIT.md).
 
 ## Functionaliteit
 
@@ -276,9 +279,10 @@ De openbare APK is bruikbaar, maar voor een Play Store/App Store-release zijn no
 - Maak definitieve storescreenshots, een privacybeleid en storeteksten.
 - Test notificaties op echte Android-toestellen van meerdere fabrikanten, met batterijbesparing, herstart en geweigerde rechten.
 - Test en onderteken iOS op een Mac met Xcode en een Apple Developer-account.
-- Beslis of herinneringen exact op de minuut moeten komen. De veilige standaard
-  gebruikt geen speciale exact-alarmtoestemming. Android kan een basis- of
-  vijfminutenmelding bij zware batterijbesparing daarom iets uitstellen.
+- De app vraagt op Android om exact-alarmtoegang, maar blijft met minder exacte
+  alarmen werken wanneer die toegang wordt geweigerd of later ingetrokken.
+  Controleer beide routes op meerdere fabrikanten; bij zware batterijbesparing
+  kan Android een basis- of vijfminutenmelding alsnog iets uitstellen.
 - `flutter_timezone 5.1.0` geeft met de huidige Flutter-versie een waarschuwing
   over een toekomstige Built-in-Kotlin-migratie. Dit is momenteel de nieuwste
   pluginversie en de Android-build slaagt; blijf de Flutter/pluginupdates volgen.

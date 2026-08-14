@@ -55,8 +55,12 @@ class _CatScreenState extends State<CatScreen> {
   }
 
   Future<void> _loadUnlocks() async {
-    final unlocked = await CatRepository.instance.isChickenUnlocked();
-    if (mounted) setState(() => _chickenUnlocked = unlocked);
+    try {
+      final unlocked = await CatRepository.instance.isChickenUnlocked();
+      if (mounted) setState(() => _chickenUnlocked = unlocked);
+    } on Object {
+      // Cats and dogs remain available if this optional unlock cannot load.
+    }
   }
 
   @override
@@ -116,23 +120,33 @@ class _CatScreenState extends State<CatScreen> {
   Future<void> _openShop() async {
     final profile = _profile;
     if (profile == null || profile.stage != CatStage.adult) return;
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (_) => CatShopScreen(profile: profile)),
-    );
-    final updated = await CatRepository.instance.getProfile();
-    if (updated != null && mounted) setState(() => _profile = updated);
+    try {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => CatShopScreen(profile: profile),
+        ),
+      );
+      final updated = await CatRepository.instance.getProfile();
+      if (updated != null && mounted) setState(() => _profile = updated);
+    } on Object {
+      if (mounted) _showStorageError();
+    }
   }
 
   Future<void> _openInventory() async {
     final profile = _profile;
     if (profile == null || profile.stage != CatStage.adult) return;
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => CatInventoryScreen(profile: profile),
-      ),
-    );
-    final updated = await CatRepository.instance.getProfile();
-    if (updated != null && mounted) setState(() => _profile = updated);
+    try {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => CatInventoryScreen(profile: profile),
+        ),
+      );
+      final updated = await CatRepository.instance.getProfile();
+      if (updated != null && mounted) setState(() => _profile = updated);
+    } on Object {
+      if (mounted) _showStorageError();
+    }
   }
 
   Future<void> _remove() async {
@@ -155,8 +169,22 @@ class _CatScreenState extends State<CatScreen> {
       ),
     );
     if (confirmed != true) return;
-    await CatRepository.instance.remove();
-    if (mounted) Navigator.pop(context, const CatScreenResult(removed: true));
+    setState(() => _saving = true);
+    try {
+      await CatRepository.instance.remove();
+      if (mounted) Navigator.pop(context, const CatScreenResult(removed: true));
+    } on Object {
+      if (mounted) {
+        setState(() => _saving = false);
+        _showStorageError();
+      }
+    }
+  }
+
+  void _showStorageError() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).loadError)),
+    );
   }
 
   @override
@@ -321,7 +349,10 @@ class _CatScreenState extends State<CatScreen> {
           ),
           if (!_isAdopting) ...<Widget>[
             const SizedBox(height: 12),
-            TextButton(onPressed: _remove, child: Text(loc.catRemove)),
+            TextButton(
+              onPressed: _saving ? null : _remove,
+              child: Text(loc.catRemove),
+            ),
           ],
         ],
       ),

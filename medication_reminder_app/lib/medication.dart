@@ -192,12 +192,9 @@ class Medication {
   }
 
   DateTime? _dateWithTime(DateTime day, String value) {
-    final parts = value.split(':');
-    if (parts.length != 2) return null;
-    final hour = int.tryParse(parts[0]);
-    final minute = int.tryParse(parts[1]);
-    if (hour == null || minute == null) return null;
-    return DateTime(day.year, day.month, day.day, hour, minute);
+    final time = _parseMedicationTime(value);
+    if (time == null) return null;
+    return DateTime(day.year, day.month, day.day, time.$1, time.$2);
   }
 
   String _doseKey(DateTime date, String value) {
@@ -223,9 +220,13 @@ class Medication {
   };
 
   factory Medication.fromJson(Map<String, Object?> json) {
-    final times = (json['times'] as List<dynamic>? ?? const <dynamic>[])
-        .whereType<String>()
-        .toList();
+    final times =
+        (json['times'] as List<dynamic>? ?? const <dynamic>[])
+            .whereType<String>()
+            .where(isValidMedicationTime)
+            .toSet()
+            .toList()
+          ..sort();
     final storedEarlyTimes = (json['allowBeforeDueTimes'] as List<dynamic>?)
         ?.whereType<String>()
         .where(times.contains)
@@ -240,13 +241,16 @@ class Medication {
       name: json['name'] as String? ?? '',
       dosage: json['dosage'] as String? ?? '',
       times: times,
-      weekdays: (json['weekdays'] as List<dynamic>? ?? const <dynamic>[])
-          .whereType<num>()
-          .map((value) => value.toInt())
-          .where(
-            (value) => value >= DateTime.monday && value <= DateTime.sunday,
-          )
-          .toList(),
+      weekdays:
+          (json['weekdays'] as List<dynamic>? ?? const <dynamic>[])
+              .whereType<num>()
+              .map((value) => value.toInt())
+              .where(
+                (value) => value >= DateTime.monday && value <= DateTime.sunday,
+              )
+              .toSet()
+              .toList()
+            ..sort(),
       enabled: json['enabled'] as bool? ?? true,
       showNameInNotifications:
           json['showNameInNotifications'] as bool? ?? false,
@@ -305,6 +309,13 @@ class DoseLog {
   };
 
   factory DoseLog.fromJson(Map<String, Object?> json) {
+    final statusName = json['status'];
+    final status = DoseStatus.values
+        .where((value) => value.name == statusName)
+        .firstOrNull;
+    if (status == null) {
+      throw const FormatException('Invalid dose status.');
+    }
     return DoseLog(
       id: json['id'] as String? ?? '',
       medicationId: (json['medicationId'] as num?)?.toInt() ?? 0,
@@ -313,10 +324,7 @@ class DoseLog {
       recordedAt:
           DateTime.tryParse(json['recordedAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-      status: DoseStatus.values.firstWhere(
-        (value) => value.name == json['status'],
-        orElse: () => DoseStatus.taken,
-      ),
+      status: status,
       doseKey: json['doseKey'] as String?,
     );
   }
@@ -326,11 +334,29 @@ DateTime? scheduledAtFromDoseKey(String? key) {
   if (key == null) return null;
   final parts = key.split(':');
   if (parts.length < 4) return null;
+  final dateMatch = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(parts[1]);
+  if (dateMatch == null) return null;
   final date = DateTime.tryParse(parts[1]);
-  final hour = int.tryParse(parts[2]);
-  final minute = int.tryParse(parts[3]);
-  if (date == null || hour == null || minute == null) return null;
-  return DateTime(date.year, date.month, date.day, hour, minute);
+  final time = _parseMedicationTime('${parts[2]}:${parts[3]}');
+  if (date == null ||
+      date.year != int.parse(dateMatch.group(1)!) ||
+      date.month != int.parse(dateMatch.group(2)!) ||
+      date.day != int.parse(dateMatch.group(3)!) ||
+      time == null) {
+    return null;
+  }
+  return DateTime(date.year, date.month, date.day, time.$1, time.$2);
+}
+
+bool isValidMedicationTime(String value) => _parseMedicationTime(value) != null;
+
+(int, int)? _parseMedicationTime(String value) {
+  final match = RegExp(r'^(\d{2}):(\d{2})$').firstMatch(value);
+  if (match == null) return null;
+  final hour = int.parse(match.group(1)!);
+  final minute = int.parse(match.group(2)!);
+  if (hour > 23 || minute > 59) return null;
+  return (hour, minute);
 }
 
 class MedicationDoseSlot {

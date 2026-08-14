@@ -29,28 +29,23 @@ Future<void> main() async {
     return true;
   };
   ErrorWidget.builder = (_) => const _SafeErrorView();
+  String? languageCode;
   try {
-    final languageCode = await MedicationRepository.instance
-        .getPreferredLocale();
-    await NotificationService().init();
-    runApp(
-      MedicationReminderApp(
-        initialLocale: languageCode == null ? null : Locale(languageCode),
-      ),
-    );
+    languageCode = await MedicationRepository.instance.getPreferredLocale();
   } on Object catch (error, stack) {
-    debugPrint('Application startup failed: $error\n$stack');
-    runApp(const _StartupErrorApp());
+    debugPrint('Could not load the preferred locale: $error\n$stack');
   }
-}
-
-class _StartupErrorApp extends StatelessWidget {
-  const _StartupErrorApp();
-
-  @override
-  Widget build(BuildContext context) => const MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: Scaffold(body: _SafeErrorView()),
+  try {
+    await NotificationService().init();
+  } on Object catch (error, stack) {
+    // Notification setup is recoverable and must never make local medication
+    // data or the rest of the app inaccessible.
+    debugPrint('Notification startup failed: $error\n$stack');
+  }
+  runApp(
+    MedicationReminderApp(
+      initialLocale: languageCode == null ? null : Locale(languageCode),
+    ),
   );
 }
 
@@ -111,15 +106,19 @@ class _MedicationReminderAppState extends State<MedicationReminderApp> {
       includeHidden: true,
     );
     final cat = await CatRepository.instance.getProfile();
-    await NotificationService().syncReminders(
-      medications,
-      _notificationCopy(locale.languageCode, cat),
-      mascot: _mascot(cat),
-      resolvedDoseKeys: logs
-          .map((log) => log.doseKey)
-          .whereType<String>()
-          .toSet(),
-    );
+    try {
+      await NotificationService().syncReminders(
+        medications,
+        _notificationCopy(locale.languageCode, cat),
+        mascot: _mascot(cat),
+        resolvedDoseKeys: logs
+            .map((log) => log.doseKey)
+            .whereType<String>()
+            .toSet(),
+      );
+    } on Object catch (error, stack) {
+      debugPrint('Could not update reminder language: $error\n$stack');
+    }
   }
 
   @override
@@ -184,16 +183,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _medications = _repository.getMedications();
     _actionSubscription = _notifications.actions.listen(
-      _handleNotificationAction,
+      (event) => unawaited(_handleNotificationActionSafely(event)),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshCatAndDue().then((_) => _syncReminders(showError: false));
+      unawaited(_refreshAndSyncSilently(showDataError: true));
       final event = _notifications.takeInitialAction();
-      if (event != null) _handleNotificationAction(event);
+      if (event != null) unawaited(_handleNotificationActionSafely(event));
     });
     _catTimer = Timer.periodic(
       const Duration(minutes: 1),
-      (_) => _refreshCatAndDue(),
+      (_) => unawaited(_refreshCatAndDueSilently()),
     );
   }
 
@@ -209,11 +208,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _notifications.refreshTimeZone().then((_) {
-        if (mounted) {
-          _refreshCatAndDue().then((_) => _syncReminders(showError: false));
-        }
-      });
+      unawaited(_resumeSafely());
+    }
+  }
+
+  Future<void> _resumeSafely() async {
+    try {
+      await _notifications.refreshTimeZone();
+      if (mounted) await _refreshAndSyncSilently(showDataError: true);
+    } on Object catch (error, stack) {
+      debugPrint('Could not refresh after app resume: $error\n$stack');
+    }
+  }
+
+  Future<void> _refreshAndSyncSilently({bool showDataError = false}) async {
+    await _refreshCatAndDueSilently(showError: showDataError);
+    if (mounted) await _syncReminders(showError: false);
+  }
+
+  Future<void> _refreshCatAndDueSilently({bool showError = false}) async {
+    try {
+      await _refreshCatAndDue();
+    } on Object catch (error, stack) {
+      debugPrint('Could not refresh medication and pet state: $error\n$stack');
+      if (showError && mounted) {
+        _showMessage(AppLocalizations.of(context).loadError);
+      }
     }
   }
 
@@ -326,7 +346,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             .toSet(),
       );
       return true;
-    } on Object {
+    } on Object catch (error, stack) {
+      debugPrint('Could not synchronize reminders: $error\n$stack');
       if (showError && mounted) {
         _showMessage(AppLocalizations.of(context).notificationError);
       }
@@ -342,19 +363,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
     if (result == null || !mounted) return;
 
-    var toSave = result;
+    // Persist the form before Android can take the user to a system settings
+    // screen. If the process is killed there, their changes are still safe and
+    // startup reconciliation will schedule the enabled reminder later.
+    var saved = await _repository.saveMedication(result);
     if (result.enabled) {
       final allowed = await _notifications.requestPermissions();
       if (!allowed) {
-        toSave = result.copyWith(enabled: false);
+        saved = await _repository.saveMedication(
+          saved.copyWith(enabled: false),
+        );
         if (mounted) {
           _showMessage(AppLocalizations.of(context).notificationDenied);
         }
       }
     }
-    await _repository.saveMedication(toSave);
-    await _syncReminders();
     await _refresh();
+    await _syncReminders();
   }
 
   Future<void> _openCatScreen() async {
@@ -438,8 +463,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
     }
     await _repository.saveMedication(medication.copyWith(enabled: nextEnabled));
-    await _syncReminders();
     await _refresh();
+    await _syncReminders();
   }
 
   Future<void> _deleteMedication(Medication medication) async {
@@ -463,8 +488,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
     if (confirmed != true) return;
     await _repository.deleteMedication(medication.id);
-    await _syncReminders();
     await _refresh();
+    await _syncReminders();
   }
 
   Future<void> _recordDose(
@@ -483,33 +508,48 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _showMessage(loc.duplicate);
       return;
     }
-    final allMedications = await _repository.getMedications();
-    final catResult = await CatRepository.instance.applyDose(
-      medication,
-      log,
-      allMedications: allMedications,
-    );
-    if (log.doseKey case final doseKey?) {
-      await _notifications.resolveDose(doseKey);
-    } else {
-      await _notifications.resolveMedication(medication.id);
+    CatDoseResult? catResult;
+    try {
+      final allMedications = await _repository.getMedications();
+      catResult = await CatRepository.instance.applyDose(
+        medication,
+        log,
+        allMedications: allMedications,
+      );
+    } on Object catch (error, stack) {
+      // The canonical dose log is already safe. Pet reconciliation repairs its
+      // derived state on the next refresh if this optional update fails.
+      debugPrint('Could not update pet after dose: $error\n$stack');
+    }
+    try {
+      if (log.doseKey case final doseKey?) {
+        await _notifications.resolveDose(doseKey);
+      } else {
+        await _notifications.resolveMedication(medication.id);
+      }
+    } on Object catch (error, stack) {
+      // The full reminder sync below also resolves this logged dose.
+      debugPrint('Could not immediately resolve dose reminder: $error\n$stack');
     }
     if (!mounted) return;
     setState(() {
       _highlightedMedicationId = null;
       _doseLogs = <DoseLog>[log, ..._doseLogs];
     });
-    if (catResult != null) {
+    final updatedCat = catResult;
+    if (updatedCat != null) {
       setState(() {
-        _cat = catResult.profile;
-        _catActivity = catResult.fed ? CatActivity.purring : CatActivity.normal;
+        _cat = updatedCat.profile;
+        _catActivity = updatedCat.fed
+            ? CatActivity.purring
+            : CatActivity.normal;
       });
-      if (catResult.fed) {
+      if (updatedCat.fed) {
         _activityTimer?.cancel();
         _activityTimer = Timer(const Duration(seconds: 5), () {
           if (mounted) setState(() => _catActivity = CatActivity.normal);
         });
-        unawaited(PetAudio.instance.happy(catResult.profile));
+        unawaited(PetAudio.instance.happy(updatedCat.profile));
       }
     }
     unawaited(_syncReminders(showError: false));
@@ -526,20 +566,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
         action: SnackBarAction(
           label: loc.undo,
-          onPressed: () async {
-            await _repository.deleteDoseLog(log.id);
+          onPressed: () => _startUserAction(() async {
+            // Undo derived pet state first. If deleting the canonical log then
+            // fails, normal reconciliation can safely add that reward back.
             final profile = await CatRepository.instance.undoDose(log);
-            if (mounted) {
-              setState(() {
-                _cat = profile;
-                _catActivity = CatActivity.normal;
-                _doseLogs = _doseLogs
-                    .where((item) => item.id != log.id)
-                    .toList();
-              });
-              await _syncReminders(showError: false);
-            }
-          },
+            await _repository.deleteDoseLog(log.id);
+            if (!mounted) return;
+            setState(() {
+              _cat = profile;
+              _catActivity = CatActivity.normal;
+              _doseLogs = _doseLogs.where((item) => item.id != log.id).toList();
+            });
+            await _syncReminders(showError: false);
+          }),
         ),
       ),
     );
@@ -615,6 +654,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _handleNotificationActionSafely(
+    NotificationActionEvent event,
+  ) async {
+    try {
+      await _handleNotificationAction(event);
+    } on Object catch (error, stack) {
+      debugPrint('Could not process notification action: $error\n$stack');
+      if (mounted) _showMessage(AppLocalizations.of(context).loadError);
+    }
+  }
+
   Future<void> _testNotification() async {
     final loc = AppLocalizations.of(context);
     if (!_notifications.isSupported) {
@@ -638,11 +688,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _changeLocale(String languageCode) async {
+    try {
+      await widget.onLocaleChanged(Locale(languageCode));
+    } on Object catch (error, stack) {
+      debugPrint('Could not change language: $error\n$stack');
+      if (mounted) _showMessage(AppLocalizations.of(context).loadError);
+    }
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _startUserAction(Future<void> Function() action) {
+    unawaited(_runUserAction(action));
+  }
+
+  Future<void> _runUserAction(Future<void> Function() action) async {
+    try {
+      await action();
+    } on Object catch (error, stack) {
+      debugPrint('User action failed: $error\n$stack');
+      if (mounted) _showMessage(AppLocalizations.of(context).loadError);
+    }
   }
 
   @override
@@ -653,7 +725,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         title: Text(loc.title),
         actions: <Widget>[
           IconButton(
-            onPressed: _openAbout,
+            onPressed: () => _startUserAction(_openAbout),
             tooltip: loc.aboutApp,
             icon: const Icon(Icons.info_outline),
           ),
@@ -668,9 +740,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             tooltip: loc.language,
             onSelected: (value) {
               if (value == 'test') {
-                _testNotification();
+                unawaited(_testNotification());
               } else {
-                widget.onLocaleChanged(Locale(value));
+                unawaited(_changeLocale(value));
               }
             },
             itemBuilder: (_) => <PopupMenuEntry<String>>[
@@ -707,17 +779,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               children: <Widget>[
                 if (_cat == null)
-                  CatAdoptionCard(onAdopt: _openCatScreen)
+                  CatAdoptionCard(
+                    onAdopt: () => _startUserAction(_openCatScreen),
+                  )
                 else
                   CatHomeCard(
                     profile: _cat!,
                     activity: _catActivity,
-                    onTap: _interactWithCat,
-                    onSettings: _openCatScreen,
+                    onTap: () => _startUserAction(_interactWithCat),
+                    onSettings: () => _startUserAction(_openCatScreen),
                   ),
                 const SizedBox(height: 12),
                 if (medications.isEmpty)
-                  _EmptyState(onAdd: _openMedicationForm)
+                  _EmptyState(
+                    onAdd: () => _startUserAction(_openMedicationForm),
+                  )
                 else ...<Widget>[
                   _NextReminderCard(medications: medications),
                   const SizedBox(height: 12),
@@ -745,22 +821,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       child: _MedicationCard(
                         medication: medication,
                         highlighted: medication.id == _highlightedMedicationId,
-                        onEdit: () => _openMedicationForm(medication),
-                        onDelete: () => _deleteMedication(medication),
-                        onToggle: (value) =>
-                            _toggleMedication(medication, value),
+                        onEdit: () => _startUserAction(
+                          () => _openMedicationForm(medication),
+                        ),
+                        onDelete: () => _startUserAction(
+                          () => _deleteMedication(medication),
+                        ),
+                        onToggle: (value) => _startUserAction(
+                          () => _toggleMedication(medication, value),
+                        ),
                         doseActions: _doseActionsFor(medication),
-                        onTaken: (action) => _recordDose(
-                          medication,
-                          DoseStatus.taken,
-                          doseKey: action.slot.key,
+                        onTaken: (action) => _startUserAction(
+                          () => _recordDose(
+                            medication,
+                            DoseStatus.taken,
+                            doseKey: action.slot.key,
+                          ),
                         ),
-                        onSkipped: (action) => _confirmDoseMissed(
-                          medication,
-                          doseKey: action.slot.key,
+                        onSkipped: (action) => _startUserAction(
+                          () => _confirmDoseMissed(
+                            medication,
+                            doseKey: action.slot.key,
+                          ),
                         ),
-                        onSnooze: (action) =>
-                            _snooze(medication, doseKey: action.slot.key),
+                        onSnooze: (action) => _startUserAction(
+                          () => _snooze(medication, doseKey: action.slot.key),
+                        ),
                       ),
                     ),
                 ],
@@ -777,13 +863,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _PulsingPlayAction(
               label: loc.catWantsToPlay,
               tooltip: loc.catPlayTooltip(_cat!.name),
-              onPressed: _playWithCat,
+              onPressed: () => _startUserAction(_playWithCat),
             ),
             const SizedBox(height: 12),
           ],
           FloatingActionButton.extended(
             heroTag: 'add-medication',
-            onPressed: _openMedicationForm,
+            onPressed: () => _startUserAction(_openMedicationForm),
             icon: const Icon(Icons.add),
             label: Text(loc.addMedication),
           ),

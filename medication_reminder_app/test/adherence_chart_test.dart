@@ -51,6 +51,22 @@ void main() {
     expect(buckets[7].taken, 1);
   });
 
+  test('month graph keeps every calendar day across daylight saving', () {
+    final buckets = buildAdherenceBuckets(
+      <DoseLog>[
+        log('a', '1:2026-03-30:08:00', DoseStatus.taken),
+        log('b', '1:2026-03-31:08:00', DoseStatus.skipped),
+      ],
+      AdherencePeriod.month,
+      DateTime(2026, 3, 15),
+      locale: 'en',
+    );
+
+    expect(buckets, hasLength(31));
+    expect(buckets[29].taken, 1);
+    expect(buckets[30].missed, 1);
+  });
+
   test('all graph creates one bucket for every represented year', () {
     final buckets = buildAdherenceBuckets(
       <DoseLog>[

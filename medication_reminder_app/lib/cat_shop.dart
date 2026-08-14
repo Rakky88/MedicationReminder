@@ -138,7 +138,7 @@ const catShopCatalog = <CatShopItem>[
     id: 'doctor_outfit',
     category: CatAccessoryCategory.outfit,
     price: 0,
-    assetPath: 'assets/cats/doctor_outfit.png',
+    assetPath: 'assets/cats/fitted/cat_orange_doctor_outfit.png',
     nameEn: 'Eleventh Doctor outfit',
     nameNl: 'Outfit van de Elfde Doctor',
     codeExclusive: true,

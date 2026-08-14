@@ -37,6 +37,27 @@ void main() {
     );
   });
 
+  test('damaged pet data is reported and cannot be overwritten', () async {
+    const damaged = '{not a pet}';
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'adopted_cat_v1': damaged,
+    });
+
+    await expectLater(
+      CatRepository.instance.getProfile(),
+      throwsFormatException,
+    );
+    await expectLater(
+      CatRepository.instance.adopt(
+        name: 'Replacement',
+        variant: PetVariant.catOrange,
+      ),
+      throwsFormatException,
+    );
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getString('adopted_cat_v1'), damaged);
+  });
+
   test('DOCTORWHO grants four hidden items exactly once', () async {
     final redemption = await SpecialCodeService.redeem(
       code: 'DOCTORWHO',
@@ -439,6 +460,37 @@ void main() {
     },
   );
 
+  test('simultaneous shop taps charge an accessory only once', () async {
+    final adult = CatProfile(
+      name: 'Milo',
+      variant: PetVariant.catOrange,
+      adoptedAt: DateTime(2026, 6, 1),
+      feedCount: 60,
+      happyPoints: 500,
+    );
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'adopted_cat_v1': jsonEncode(adult.toJson()),
+    });
+    final cap = catShopItemById('hat_cap')!;
+
+    await Future.wait(<Future<CatProfile?>>[
+      CatRepository.instance.purchaseAccessory(
+        itemId: cap.id,
+        category: cap.category,
+        price: cap.price,
+      ),
+      CatRepository.instance.purchaseAccessory(
+        itemId: cap.id,
+        category: cap.category,
+        price: cap.price,
+      ),
+    ]);
+
+    final stored = await CatRepository.instance.getProfile();
+    expect(stored?.ownedAccessoryIds, contains(cap.id));
+    expect(stored?.happyPoints, 290);
+  });
+
   test('verified support grants the exclusive reward only once', () async {
     final adult = CatProfile(
       name: 'Milo',
@@ -612,7 +664,7 @@ void main() {
     expect(await CatRepository.instance.isChickenUnlocked(), isFalse);
   });
 
-  test('supporter items cannot be bought with happy points', () async {
+  test('exclusive reward items cannot be bought with happy points', () async {
     final adult = CatProfile(
       name: 'Milo',
       variant: PetVariant.catOrange,
@@ -624,13 +676,19 @@ void main() {
       'adopted_cat_v1': jsonEncode(adult.toJson()),
     });
 
-    final updated = await CatRepository.instance.purchaseAccessory(
+    await CatRepository.instance.purchaseAccessory(
       itemId: 'supporter_hat',
+      category: CatAccessoryCategory.hat,
+      price: 0,
+    );
+    final updated = await CatRepository.instance.purchaseAccessory(
+      itemId: 'doctor_hat_fezz',
       category: CatAccessoryCategory.hat,
       price: 0,
     );
 
     expect(updated?.ownedAccessoryIds, isNot(contains('supporter_hat')));
+    expect(updated?.ownedAccessoryIds, isNot(contains('doctor_hat_fezz')));
     expect(updated?.happyPoints, 1000);
   });
 

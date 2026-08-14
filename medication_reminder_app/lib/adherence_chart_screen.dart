@@ -209,7 +209,11 @@ List<AdherenceBucket> buildAdherenceBuckets(
     case AdherencePeriod.month:
       start = DateTime(localReference.year, localReference.month, 1);
       end = DateTime(localReference.year, localReference.month + 1, 1);
-      final days = end.difference(start).inDays;
+      final days = DateTime(
+        localReference.year,
+        localReference.month + 1,
+        0,
+      ).day;
       starts = List<DateTime>.generate(
         days,
         (index) => start.add(Duration(days: index)),
@@ -243,11 +247,10 @@ List<AdherenceBucket> buildAdherenceBuckets(
     final time = log.scheduledAt;
     if (time.isBefore(start) || !time.isBefore(end)) continue;
     final index = switch (period) {
-      AdherencePeriod.week || AdherencePeriod.month => DateTime(
-        time.year,
-        time.month,
-        time.day,
-      ).difference(start).inDays,
+      AdherencePeriod.week || AdherencePeriod.month => _calendarDayDifference(
+        DateTime(time.year, time.month, time.day),
+        start,
+      ),
       AdherencePeriod.year => time.month - 1,
       AdherencePeriod.all => time.year - start.year,
     };
@@ -267,6 +270,12 @@ List<AdherenceBucket> buildAdherenceBuckets(
     ),
   );
 }
+
+int _calendarDayDifference(DateTime value, DateTime start) => DateTime.utc(
+  value.year,
+  value.month,
+  value.day,
+).difference(DateTime.utc(start.year, start.month, start.day)).inDays;
 
 String _periodTitle(AdherencePeriod period, DateTime value, String locale) {
   return switch (period) {

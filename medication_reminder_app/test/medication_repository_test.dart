@@ -89,6 +89,66 @@ void main() {
     expect(await MedicationRepository.instance.getDoseLogs(), hasLength(1));
   });
 
+  test('serializes simultaneous dose taps for the same alarm', () async {
+    const medication = Medication(
+      id: 1,
+      name: 'Example',
+      dosage: '',
+      times: <String>['08:00'],
+      weekdays: <int>[DateTime.monday],
+    );
+
+    final results = await Future.wait(<Future<DoseLog?>>[
+      MedicationRepository.instance.recordDose(
+        medication,
+        DoseStatus.taken,
+        doseKey: '1:2026-08-10:08:00',
+        recordedAt: DateTime(2026, 8, 10, 8, 1),
+      ),
+      MedicationRepository.instance.recordDose(
+        medication,
+        DoseStatus.taken,
+        doseKey: '1:2026-08-10:08:00',
+        recordedAt: DateTime(2026, 8, 10, 8, 1),
+      ),
+    ]);
+
+    expect(results.whereType<DoseLog>(), hasLength(1));
+    expect(await MedicationRepository.instance.getDoseLogs(), hasLength(1));
+  });
+
+  test(
+    'serializes simultaneous medication inserts without losing data',
+    () async {
+      final saved = await Future.wait(<Future<Medication>>[
+        MedicationRepository.instance.saveMedication(
+          const Medication(
+            id: 0,
+            name: 'First',
+            dosage: '',
+            times: <String>['08:00'],
+            weekdays: <int>[DateTime.monday],
+          ),
+        ),
+        MedicationRepository.instance.saveMedication(
+          const Medication(
+            id: 0,
+            name: 'Second',
+            dosage: '',
+            times: <String>['09:00'],
+            weekdays: <int>[DateTime.tuesday],
+          ),
+        ),
+      ]);
+
+      expect(saved.map((item) => item.id).toSet(), <int>{1, 2});
+      expect(
+        await MedicationRepository.instance.getMedications(),
+        hasLength(2),
+      );
+    },
+  );
+
   test('taken and missed are mutually exclusive for the same alarm', () async {
     final medication = Medication(
       id: 1,
@@ -363,17 +423,51 @@ void main() {
     );
   });
 
-  test('damaged storage is ignored without throwing', () async {
+  test('damaged storage is reported and preserved', () async {
+    const damagedMedications = '{not a list}';
+    final damagedLogs = jsonEncode(<Object?>[
+      <String, Object?>{'broken': true},
+    ]);
     SharedPreferences.setMockInitialValues(<String, Object>{
-      'medications_v1': '{not a list}',
-      'dose_logs_v1': jsonEncode(<Object?>[
-        <String, Object?>{'broken': true},
-      ]),
+      'medications_v1': damagedMedications,
+      'dose_logs_v1': damagedLogs,
     });
 
-    expect(await MedicationRepository.instance.getMedications(), isEmpty);
-    expect(await MedicationRepository.instance.getDoseLogs(), isEmpty);
+    await expectLater(
+      MedicationRepository.instance.getMedications(),
+      throwsFormatException,
+    );
+    await expectLater(
+      MedicationRepository.instance.getDoseLogs(),
+      throwsFormatException,
+    );
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getString('medications_v1'), damagedMedications);
+    expect(preferences.getString('dose_logs_v1'), damagedLogs);
   });
+
+  test(
+    'invalid stored clock values are discarded instead of normalized',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'medications_v1': jsonEncode(<Object?>[
+          <String, Object?>{
+            'id': 1,
+            'name': 'Damaged',
+            'dosage': '',
+            'times': <String>['25:90'],
+            'weekdays': <int>[DateTime.monday],
+          },
+        ]),
+      });
+
+      await expectLater(
+        MedicationRepository.instance.getMedications(),
+        throwsFormatException,
+      );
+      expect(scheduledAtFromDoseKey('1:2026-02-31:25:90'), isNull);
+    },
+  );
 
   test('clearing history preserves the canonical dose resolution', () async {
     final medication = Medication(

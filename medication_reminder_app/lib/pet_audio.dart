@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 
 import 'cat.dart';
 import 'pet_sound_catalog.dart';
@@ -19,12 +20,21 @@ class PetAudio {
 
   Future<void> hungry(CatProfile pet) async {
     if (!pet.hungrySoundEnabled) return;
-    await _playRandom(pet.species, PetSoundMood.hungry);
+    await _playSafely(pet.species, PetSoundMood.hungry);
   }
 
   Future<void> happy(CatProfile pet) async {
     if (!pet.happySoundEnabled) return;
-    await _playRandom(pet.species, PetSoundMood.happy);
+    await _playSafely(pet.species, PetSoundMood.happy);
+  }
+
+  Future<void> _playSafely(PetSpecies species, PetSoundMood mood) async {
+    try {
+      await _playRandom(species, mood);
+    } on Object catch (error, stack) {
+      // Pet audio is decorative and must never interrupt a medication action.
+      debugPrint('Could not play pet audio: $error\n$stack');
+    }
   }
 
   Future<void> _playRandom(PetSpecies species, PetSoundMood mood) async {
@@ -71,7 +81,13 @@ class PetAudio {
         ),
       ),
     );
-    _stopTimer = Timer(length, () => unawaited(_player.stop()));
+    _stopTimer = Timer(length, () async {
+      try {
+        await _player.stop();
+      } on Object catch (error, stack) {
+        debugPrint('Could not stop pet audio: $error\n$stack');
+      }
+    });
   }
 
   Future<void> dispose() async {

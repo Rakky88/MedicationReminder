@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'async_operation_queue.dart';
 import 'medication.dart';
 import 'cat.dart';
 import 'cat_notification_messages.dart';
@@ -70,6 +71,7 @@ class NotificationService {
   final math.Random _random = math.Random.secure();
   final StreamController<NotificationActionEvent> _actionController =
       StreamController<NotificationActionEvent>.broadcast();
+  final AsyncOperationQueue _syncQueue = AsyncOperationQueue();
 
   NotificationActionEvent? _initialAction;
   _NotificationAppearance? _lastAppearance;
@@ -229,37 +231,65 @@ class NotificationService {
     NotificationCopy copy, {
     NotificationMascot? mascot,
     Set<String> resolvedDoseKeys = const <String>{},
+  }) => _syncQueue.run(
+    () => _syncRemindersNow(
+      medications,
+      copy,
+      mascot: mascot,
+      resolvedDoseKeys: resolvedDoseKeys,
+    ),
+  );
+
+  Future<void> _syncRemindersNow(
+    List<Medication> medications,
+    NotificationCopy copy, {
+    NotificationMascot? mascot,
+    Set<String> resolvedDoseKeys = const <String>{},
   }) async {
     if (!isSupported) return;
     await init();
+    try {
+      await _clearPendingReminderPlans();
+      await refreshTimeZone();
+      final images = await _prepareNotificationImages(mascot);
+      final slots = _reminderSlots(medications);
+      if (Platform.isAndroid) {
+        await _scheduleVariedAndroidReminders(
+          slots,
+          copy,
+          mascot: mascot,
+          images: images,
+          resolvedDoseKeys: resolvedDoseKeys,
+        );
+      } else {
+        await _scheduleRollingIosReminders(
+          slots,
+          copy,
+          mascot: mascot,
+          images: images,
+          resolvedDoseKeys: resolvedDoseKeys,
+        );
+      }
+    } on Object {
+      // A platform can fail after only part of a schedule was accepted (for
+      // example at a vendor alarm limit). Do not leave that partial schedule
+      // active while the UI reports that scheduling failed.
+      try {
+        await _clearPendingReminderPlans();
+      } on Object {
+        // Preserve the original scheduling error for the caller.
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _clearPendingReminderPlans() async {
     await _plugin.cancelAllPendingNotifications();
     if (Platform.isAndroid) {
       // Native follow-up alarms are separate from the notifications plugin.
-      // Clear them before adding base notifications so a previously interrupted
-      // or oversized sync cannot keep the app pinned at Android's alarm limit.
       await _replaceEscalationPlans(
         const <Map<String, Object?>>[],
         const <int>[],
-      );
-    }
-    await refreshTimeZone();
-    final images = await _prepareNotificationImages(mascot);
-    final slots = _reminderSlots(medications);
-    if (Platform.isAndroid) {
-      await _scheduleVariedAndroidReminders(
-        slots,
-        copy,
-        mascot: mascot,
-        images: images,
-        resolvedDoseKeys: resolvedDoseKeys,
-      );
-    } else {
-      await _scheduleRollingIosReminders(
-        slots,
-        copy,
-        mascot: mascot,
-        images: images,
-        resolvedDoseKeys: resolvedDoseKeys,
       );
     }
   }
@@ -455,8 +485,16 @@ class NotificationService {
         if (parts.length != 2) continue;
         final hour = int.tryParse(parts[0]);
         final minute = int.tryParse(parts[1]);
-        if (hour == null || minute == null) continue;
+        if (hour == null ||
+            hour < 0 ||
+            hour > 23 ||
+            minute == null ||
+            minute < 0 ||
+            minute > 59) {
+          continue;
+        }
         for (final weekday in medication.weekdays) {
+          if (weekday < DateTime.monday || weekday > DateTime.sunday) continue;
           slots.add(
             _ReminderSlot(
               medication: medication,

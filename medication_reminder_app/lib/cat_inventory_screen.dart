@@ -17,13 +17,26 @@ class CatInventoryScreen extends StatefulWidget {
 
 class _CatInventoryScreenState extends State<CatInventoryScreen> {
   late CatProfile _profile = widget.profile;
+  final Set<String> _updatingItemIds = <String>{};
 
   Future<void> _toggle(CatShopItem item) async {
-    final updated = await CatRepository.instance.toggleAccessory(
-      itemId: item.id,
-      category: item.category,
-    );
-    if (updated != null && mounted) setState(() => _profile = updated);
+    if (_updatingItemIds.contains(item.id)) return;
+    setState(() => _updatingItemIds.add(item.id));
+    try {
+      final updated = await CatRepository.instance.toggleAccessory(
+        itemId: item.id,
+        category: item.category,
+      );
+      if (updated != null && mounted) setState(() => _profile = updated);
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).loadError)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _updatingItemIds.remove(item.id));
+    }
   }
 
   @override
@@ -133,7 +146,9 @@ class _CatInventoryScreenState extends State<CatInventoryScreen> {
                               item: item,
                               profile: _profile,
                               canEquip: canEquip,
-                              onToggle: () => _toggle(item),
+                              onToggle: _updatingItemIds.contains(item.id)
+                                  ? null
+                                  : () => _toggle(item),
                             );
                           },
                         ),
@@ -169,7 +184,7 @@ class _InventoryItemCard extends StatelessWidget {
   final CatShopItem item;
   final CatProfile profile;
   final bool canEquip;
-  final VoidCallback onToggle;
+  final VoidCallback? onToggle;
 
   @override
   Widget build(BuildContext context) {

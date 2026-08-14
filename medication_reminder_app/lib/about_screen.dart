@@ -38,39 +38,44 @@ class _AboutScreenState extends State<AboutScreen> {
       _message(loc.specialCodeRequired);
       return;
     }
-    if (await CatRepository.instance.getProfile() == null) {
-      _message(loc.specialCodeNeedsCat);
-      return;
-    }
     setState(() => _redeeming = true);
-    final response = await SpecialCodeService.redeem(
-      code: code,
-      languageCode: loc.locale.languageCode,
-    );
-    if (!mounted) return;
-    var message = switch (response.status) {
-      SpecialCodeStatus.redeemed => loc.specialCodeInvalid,
-      SpecialCodeStatus.invalid => loc.specialCodeInvalid,
-      SpecialCodeStatus.alreadyUsed => loc.specialCodeAlreadyUsed,
-      SpecialCodeStatus.unavailable ||
-      SpecialCodeStatus.failed => loc.specialCodeFailed,
-    };
-    if (response.status == SpecialCodeStatus.redeemed &&
-        response.redemptionId != null) {
-      final granted = await CatRepository.instance.registerCodeReward(
-        redemptionId: response.redemptionId!,
-        itemIds: response.itemIds,
+    try {
+      if (await CatRepository.instance.getProfile() == null) {
+        if (mounted) _message(loc.specialCodeNeedsCat);
+        return;
+      }
+      final response = await SpecialCodeService.redeem(
+        code: code,
+        languageCode: loc.locale.languageCode,
       );
       if (!mounted) return;
-      if (granted?.duplicate == true) {
-        message = loc.specialCodeAlreadyUsed;
-      } else if (granted?.grantedItemIds.isNotEmpty == true) {
-        message = loc.specialCodeRedeemed;
-        _codeController.clear();
+      var message = switch (response.status) {
+        SpecialCodeStatus.redeemed => loc.specialCodeInvalid,
+        SpecialCodeStatus.invalid => loc.specialCodeInvalid,
+        SpecialCodeStatus.alreadyUsed => loc.specialCodeAlreadyUsed,
+        SpecialCodeStatus.unavailable ||
+        SpecialCodeStatus.failed => loc.specialCodeFailed,
+      };
+      if (response.status == SpecialCodeStatus.redeemed &&
+          response.redemptionId != null) {
+        final granted = await CatRepository.instance.registerCodeReward(
+          redemptionId: response.redemptionId!,
+          itemIds: response.itemIds,
+        );
+        if (!mounted) return;
+        if (granted?.duplicate == true) {
+          message = loc.specialCodeAlreadyUsed;
+        } else if (granted?.grantedItemIds.isNotEmpty == true) {
+          message = loc.specialCodeRedeemed;
+          _codeController.clear();
+        }
       }
+      _message(message);
+    } on Object {
+      if (mounted) _message(loc.specialCodeFailed);
+    } finally {
+      if (mounted) setState(() => _redeeming = false);
     }
-    setState(() => _redeeming = false);
-    _message(message);
   }
 
   void _message(String value) {
@@ -81,15 +86,27 @@ class _AboutScreenState extends State<AboutScreen> {
 
   Future<void> _copyDownloadLink() async {
     final loc = AppLocalizations.of(context);
-    await Clipboard.setData(const ClipboardData(text: AppRelease.downloadUrl));
-    if (mounted) _message(loc.appLinkCopied);
+    try {
+      await Clipboard.setData(
+        const ClipboardData(text: AppRelease.downloadUrl),
+      );
+      if (mounted) _message(loc.appLinkCopied);
+    } on Object {
+      if (mounted) _message(loc.appLinkOpenFailed);
+    }
   }
 
   Future<void> _downloadOrUpdate() async {
     final loc = AppLocalizations.of(context);
     final opened = await ExternalLinkService.openHttps(AppRelease.downloadUrl);
     if (!mounted || opened) return;
-    await Clipboard.setData(const ClipboardData(text: AppRelease.downloadUrl));
+    try {
+      await Clipboard.setData(
+        const ClipboardData(text: AppRelease.downloadUrl),
+      );
+    } on Object {
+      // The same localized message covers both opening and copying failures.
+    }
     if (mounted) _message(loc.appLinkOpenFailed);
   }
 

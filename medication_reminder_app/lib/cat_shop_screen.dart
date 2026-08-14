@@ -18,6 +18,7 @@ class CatShopScreen extends StatefulWidget {
 class _CatShopScreenState extends State<CatShopScreen> {
   late CatProfile _profile = widget.profile;
   bool _chickenUnlocked = false;
+  final Set<String> _buyingItemIds = <String>{};
 
   @override
   void initState() {
@@ -26,24 +27,36 @@ class _CatShopScreenState extends State<CatShopScreen> {
   }
 
   Future<void> _loadUnlocks() async {
-    final unlocked = await CatRepository.instance.isChickenUnlocked();
-    if (mounted) setState(() => _chickenUnlocked = unlocked);
+    try {
+      final unlocked = await CatRepository.instance.isChickenUnlocked();
+      if (mounted) setState(() => _chickenUnlocked = unlocked);
+    } on Object {
+      // The regular catalog remains usable if this optional unlock cannot load.
+    }
   }
 
   Future<void> _buy(CatShopItem item) async {
     final loc = AppLocalizations.of(context);
+    if (_buyingItemIds.contains(item.id)) return;
     if (_profile.happyPoints < item.price) {
       _message(loc.shopNotEnough);
       return;
     }
-    final updated = await CatRepository.instance.purchaseAccessory(
-      itemId: item.id,
-      category: item.category,
-      price: item.price,
-    );
-    if (updated == null || !mounted) return;
-    setState(() => _profile = updated);
-    _message(loc.shopPurchased(item.localizedName(loc.locale.languageCode)));
+    setState(() => _buyingItemIds.add(item.id));
+    try {
+      final updated = await CatRepository.instance.purchaseAccessory(
+        itemId: item.id,
+        category: item.category,
+        price: item.price,
+      );
+      if (updated == null || !mounted) return;
+      setState(() => _profile = updated);
+      _message(loc.shopPurchased(item.localizedName(loc.locale.languageCode)));
+    } on Object {
+      if (mounted) _message(loc.loadError);
+    } finally {
+      if (mounted) setState(() => _buyingItemIds.remove(item.id));
+    }
   }
 
   void _message(String value) {
@@ -120,7 +133,9 @@ class _CatShopScreenState extends State<CatShopScreen> {
                     return _ShopItemCard(
                       item: item,
                       profile: _profile,
-                      onBuy: () => _buy(item),
+                      onBuy: _buyingItemIds.contains(item.id)
+                          ? null
+                          : () => _buy(item),
                     );
                   },
                 ),
@@ -155,7 +170,7 @@ class _ShopItemCard extends StatelessWidget {
 
   final CatShopItem item;
   final CatProfile profile;
-  final VoidCallback onBuy;
+  final VoidCallback? onBuy;
 
   @override
   Widget build(BuildContext context) {
