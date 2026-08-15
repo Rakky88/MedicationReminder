@@ -6,6 +6,8 @@ import 'package:medication_reminder_app/cat.dart';
 import 'package:medication_reminder_app/cat_repository.dart';
 import 'package:medication_reminder_app/cat_shop.dart';
 import 'package:medication_reminder_app/medication.dart';
+import 'package:medication_reminder_app/medication_streak.dart';
+import 'package:medication_reminder_app/medication_streak_repository.dart';
 import 'package:medication_reminder_app/special_code_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -491,6 +493,68 @@ void main() {
     expect(stored?.happyPoints, 290);
   });
 
+  test(
+    'streak reward stays locked below its best-streak requirement',
+    () async {
+      final adult = CatProfile(
+        name: 'Milo',
+        variant: PetVariant.catOrange,
+        adoptedAt: DateTime(2026, 6, 1),
+        feedCount: 60,
+        happyPoints: 5,
+      );
+      final streak = _streakWith(successDays: 39);
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'adopted_cat_v1': jsonEncode(adult.toJson()),
+        MedicationStreakRepository.preferencesKey: jsonEncode(streak.toJson()),
+      });
+      final reward = catShopItemById('streak_40_hat_consistency')!;
+
+      final unchanged = await CatRepository.instance.purchaseAccessory(
+        itemId: reward.id,
+        category: reward.category,
+        price: reward.price,
+      );
+
+      expect(unchanged?.ownedAccessoryIds, isNot(contains(reward.id)));
+      expect(unchanged?.happyPoints, 5);
+    },
+  );
+
+  test('best streak permanently unlocks a free reward after a reset', () async {
+    final adult = CatProfile(
+      name: 'Milo',
+      variant: PetVariant.catOrange,
+      adoptedAt: DateTime(2026, 6, 1),
+      feedCount: 60,
+      happyPoints: 5,
+    );
+    final streak = _streakWith(successDays: 40, followedByFailure: true);
+    expect(streak.current, 0);
+    expect(streak.best, 40);
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'adopted_cat_v1': jsonEncode(adult.toJson()),
+      MedicationStreakRepository.preferencesKey: jsonEncode(streak.toJson()),
+    });
+    final reward = catShopItemById('streak_40_hat_consistency')!;
+
+    final claimed = await CatRepository.instance.purchaseAccessory(
+      itemId: reward.id,
+      category: reward.category,
+      price: reward.price,
+    );
+    final duplicate = await CatRepository.instance.purchaseAccessory(
+      itemId: reward.id,
+      category: reward.category,
+      price: reward.price,
+    );
+
+    expect(claimed?.ownedAccessoryIds, contains(reward.id));
+    expect(claimed?.happyPoints, 5);
+    expect(duplicate?.ownedAccessoryIds, contains(reward.id));
+    expect(duplicate?.happyPoints, 5);
+  });
+
   test('verified support grants the exclusive reward only once', () async {
     final adult = CatProfile(
       name: 'Milo',
@@ -819,6 +883,23 @@ void main() {
     expect(second?.rewarded, isFalse);
     expect(second?.profile.happyPoints, 60);
   });
+}
+
+MedicationStreakState _streakWith({
+  required int successDays,
+  bool followedByFailure = false,
+}) {
+  final results = <String, MedicationStreakDayResult>{};
+  final start = DateTime(2026, 1, 1);
+  for (var offset = 0; offset < successDays; offset++) {
+    results[medicationStreakDayKey(start.add(Duration(days: offset)))] =
+        MedicationStreakDayResult.success;
+  }
+  if (followedByFailure) {
+    results[medicationStreakDayKey(start.add(Duration(days: successDays)))] =
+        MedicationStreakDayResult.failed;
+  }
+  return MedicationStreakState(dayResults: results);
 }
 
 class _FixedBoolRandom implements Random {

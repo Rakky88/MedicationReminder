@@ -102,8 +102,9 @@ void main() {
       };
       final headItems = catShopCatalog.where(
         (item) =>
-            item.category == CatAccessoryCategory.hat ||
-            item.category == CatAccessoryCategory.glasses,
+            !item.adaptiveOverlay &&
+            (item.category == CatAccessoryCategory.hat ||
+                item.category == CatAccessoryCategory.glasses),
       );
 
       for (final variant in PetVariant.values) {

@@ -202,6 +202,14 @@ class AppLocalizations {
       'shopToys': 'Toys',
       'shopSupporterExclusive': 'Supporter exclusive',
       'shopSupporterLocked': 'First support reward',
+      'medicationStreak': 'Medication streak: {days} days',
+      'medicationStreakBest': 'Best: {days}',
+      'shopRegularItems': 'Regular items',
+      'shopStreakItems': 'Streak items',
+      'shopStreakSummary': 'Current streak: {current} days · Best: {best}',
+      'shopStreakRequirement': '{days}-day streak',
+      'shopStreakLocked': 'Reach {days} days',
+      'shopStreakClaim': 'Claim free',
       'catWantsToPlay': 'Your pet wants to play!',
       'catPlayTooltip': 'Play with {cat}',
       'catPlayedTitle': 'Playtime!',
@@ -448,6 +456,14 @@ class AppLocalizations {
       'shopToys': 'Speeltjes',
       'shopSupporterExclusive': 'Exclusief voor supporters',
       'shopSupporterLocked': 'Beloning bij eerste steun',
+      'medicationStreak': 'Medicatiestreak: {days} dagen',
+      'medicationStreakBest': 'Beste: {days}',
+      'shopRegularItems': 'Gewone items',
+      'shopStreakItems': 'Streak-items',
+      'shopStreakSummary': 'Huidige streak: {current} dagen · Beste: {best}',
+      'shopStreakRequirement': 'Streak van {days} dagen',
+      'shopStreakLocked': 'Behaal {days} dagen',
+      'shopStreakClaim': 'Gratis ophalen',
       'catWantsToPlay': 'Je huisdier wil spelen!',
       'catPlayTooltip': 'Spelen met {cat}',
       'catPlayedTitle': 'Speeltijd!',
@@ -687,6 +703,20 @@ class AppLocalizations {
   String get shopToys => _get('shopToys');
   String get shopSupporterExclusive => _get('shopSupporterExclusive');
   String get shopSupporterLocked => _get('shopSupporterLocked');
+  String medicationStreak(int days) =>
+      _get('medicationStreak').replaceAll('{days}', days.toString());
+  String medicationStreakBest(int days) =>
+      _get('medicationStreakBest').replaceAll('{days}', days.toString());
+  String get shopRegularItems => _get('shopRegularItems');
+  String get shopStreakItems => _get('shopStreakItems');
+  String shopStreakSummary(int current, int best) => _get('shopStreakSummary')
+      .replaceAll('{current}', current.toString())
+      .replaceAll('{best}', best.toString());
+  String shopStreakRequirement(int days) =>
+      _get('shopStreakRequirement').replaceAll('{days}', days.toString());
+  String shopStreakLocked(int days) =>
+      _get('shopStreakLocked').replaceAll('{days}', days.toString());
+  String get shopStreakClaim => _get('shopStreakClaim');
   String get catWantsToPlay => _get('catWantsToPlay');
   String catPlayTooltip(String name) =>
       _get('catPlayTooltip').replaceAll('{cat}', name);

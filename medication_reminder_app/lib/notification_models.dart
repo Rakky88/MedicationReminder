@@ -32,6 +32,7 @@ class NotificationMascot {
     this.species = PetSpecies.cat,
     this.hungerPoints = 0,
     this.accessoryAssetPaths = const <String>[],
+    this.accessories = const <NotificationMascotAccessory>[],
   });
 
   final String name;
@@ -41,6 +42,35 @@ class NotificationMascot {
   final PetSpecies species;
   final int hungerPoints;
   final List<String> accessoryAssetPaths;
+  final List<NotificationMascotAccessory> accessories;
+
+  List<NotificationMascotAccessory> get resolvedAccessories =>
+      accessories.isNotEmpty
+      ? accessories
+      : accessoryAssetPaths
+            .map(
+              (path) => NotificationMascotAccessory(
+                path: path,
+                isToy: path.contains('shop_toy_'),
+              ),
+            )
+            .toList(growable: false);
+}
+
+class NotificationMascotAccessory {
+  const NotificationMascotAccessory({
+    required this.path,
+    this.scale = 1,
+    this.dx = 0,
+    this.dy = 0,
+    this.isToy = false,
+  });
+
+  final String path;
+  final double scale;
+  final double dx;
+  final double dy;
+  final bool isToy;
 }
 
 class NotificationActionEvent {

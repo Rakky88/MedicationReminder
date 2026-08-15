@@ -5,6 +5,8 @@ import 'cat.dart';
 import 'cat_avatar.dart';
 import 'cat_repository.dart';
 import 'cat_shop.dart';
+import 'medication_streak.dart';
+import 'medication_streak_repository.dart';
 
 class CatShopScreen extends StatefulWidget {
   const CatShopScreen({super.key, required this.profile});
@@ -18,6 +20,7 @@ class CatShopScreen extends StatefulWidget {
 class _CatShopScreenState extends State<CatShopScreen> {
   late CatProfile _profile = widget.profile;
   bool _chickenUnlocked = false;
+  MedicationStreakState _streak = MedicationStreakState.empty;
   final Set<String> _buyingItemIds = <String>{};
 
   @override
@@ -33,11 +36,22 @@ class _CatShopScreenState extends State<CatShopScreen> {
     } on Object {
       // The regular catalog remains usable if this optional unlock cannot load.
     }
+    try {
+      final streak = await MedicationStreakRepository.instance.getState();
+      if (mounted) setState(() => _streak = streak);
+    } on Object {
+      // A damaged streak record must not make the regular shop unavailable.
+    }
   }
 
   Future<void> _buy(CatShopItem item) async {
     final loc = AppLocalizations.of(context);
     if (_buyingItemIds.contains(item.id)) return;
+    if (item.requiredMedicationStreak case final requirement?
+        when _streak.best < requirement) {
+      _message(loc.shopStreakLocked(requirement));
+      return;
+    }
     if (_profile.happyPoints < item.price) {
       _message(loc.shopNotEnough);
       return;
@@ -72,78 +86,117 @@ class _CatShopScreenState extends State<CatShopScreen> {
       _profile,
       chickenUnlocked: _chickenUnlocked,
     );
-    final visibleCategories = CatAccessoryCategory.values
-        .where(
-          (category) => visibleCatalog.any((item) => item.category == category),
-        )
+    final regularCatalog = visibleCatalog
+        .where((item) => !item.isStreakReward)
         .toList(growable: false);
-    return Scaffold(
-      appBar: AppBar(title: Text(loc.catShop)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: <Widget>[
-          Card.filled(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: <Widget>[
-                  SizedBox(
-                    width: 120,
-                    height: 120,
-                    child: CatAvatar(profile: _profile),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          loc.shopBalance(_formatPoints(_profile.happyPoints)),
-                          style: Theme.of(context).textTheme.titleMedium,
+    final streakCatalog = visibleCatalog
+        .where((item) => item.isStreakReward)
+        .toList(growable: false);
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(loc.catShop),
+          bottom: TabBar(
+            tabs: <Widget>[
+              Tab(text: loc.shopRegularItems),
+              Tab(text: loc.shopStreakItems),
+            ],
+          ),
+        ),
+        body: Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Card.filled(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: <Widget>[
+                      SizedBox(
+                        width: 92,
+                        height: 92,
+                        child: CatAvatar(profile: _profile),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              loc.shopBalance(
+                                _formatPoints(_profile.happyPoints),
+                              ),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              loc.shopStreakSummary(
+                                _streak.current,
+                                _streak.best,
+                              ),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: <Widget>[
+                  _catalogList(loc, regularCatalog),
+                  _catalogList(loc, streakCatalog),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          ...visibleCategories.expand(
-            (category) => <Widget>[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 14, 4, 8),
-                child: Text(
-                  _categoryName(loc, category),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              SizedBox(
-                height: 285,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: visibleCatalog
-                      .where((item) => item.category == category)
-                      .length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 10),
-                  itemBuilder: (context, index) {
-                    final item = visibleCatalog
-                        .where((candidate) => candidate.category == category)
-                        .elementAt(index);
-                    return _ShopItemCard(
-                      item: item,
-                      profile: _profile,
-                      onBuy: _buyingItemIds.contains(item.id)
-                          ? null
-                          : () => _buy(item),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _catalogList(AppLocalizations loc, List<CatShopItem> catalog) {
+    final visibleCategories = CatAccessoryCategory.values
+        .where((category) => catalog.any((item) => item.category == category))
+        .toList(growable: false);
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+      children: <Widget>[
+        ...visibleCategories.expand((category) {
+          final items = catalog
+              .where((item) => item.category == category)
+              .toList(growable: false);
+          return <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 14, 4, 8),
+              child: Text(
+                _categoryName(loc, category),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            SizedBox(
+              height: 300,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, index) => _ShopItemCard(
+                  item: items[index],
+                  profile: _profile,
+                  bestMedicationStreak: _streak.best,
+                  onBuy: _buyingItemIds.contains(items[index].id)
+                      ? null
+                      : () => _buy(items[index]),
+                ),
+              ),
+            ),
+          ];
+        }),
+      ],
     );
   }
 
@@ -165,17 +218,22 @@ class _ShopItemCard extends StatelessWidget {
   const _ShopItemCard({
     required this.item,
     required this.profile,
+    required this.bestMedicationStreak,
     required this.onBuy,
   });
 
   final CatShopItem item;
   final CatProfile profile;
+  final int bestMedicationStreak;
   final VoidCallback? onBuy;
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     final owned = profile.ownedAccessoryIds.contains(item.id);
+    final streakUnlocked =
+        item.requiredMedicationStreak == null ||
+        bestMedicationStreak >= item.requiredMedicationStreak!;
     final preview = profile.copyWith(
       equippedAccessories: <String, String>{
         ...profile.equippedAccessories,
@@ -183,7 +241,7 @@ class _ShopItemCard extends StatelessWidget {
       },
     );
     return SizedBox(
-      width: 165,
+      width: 170,
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: Padding(
@@ -201,7 +259,9 @@ class _ShopItemCard extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               Text(
-                item.supporterExclusive
+                item.isStreakReward
+                    ? loc.shopStreakRequirement(item.requiredMedicationStreak!)
+                    : item.supporterExclusive
                     ? loc.shopSupporterExclusive
                     : '${_formatPrice(item.price)} ♥',
                 style: Theme.of(context).textTheme.labelLarge,
@@ -249,10 +309,18 @@ class _ShopItemCard extends StatelessWidget {
                 child: owned
                     ? const SizedBox.shrink()
                     : FilledButton(
-                        onPressed: item.supporterExclusive ? null : onBuy,
+                        onPressed: item.supporterExclusive || !streakUnlocked
+                            ? null
+                            : onBuy,
                         child: Text(
                           item.supporterExclusive
                               ? loc.shopSupporterLocked
+                              : !streakUnlocked
+                              ? loc.shopStreakLocked(
+                                  item.requiredMedicationStreak!,
+                                )
+                              : item.isStreakReward
+                              ? loc.shopStreakClaim
                               : loc.shopBuy,
                         ),
                       ),

@@ -10,6 +10,8 @@ import 'package:medication_reminder_app/cat_avatar.dart';
 import 'package:medication_reminder_app/cat_inventory_screen.dart';
 import 'package:medication_reminder_app/cat_screen.dart';
 import 'package:medication_reminder_app/cat_shop_screen.dart';
+import 'package:medication_reminder_app/medication_streak.dart';
+import 'package:medication_reminder_app/medication_streak_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Widget localized(Widget home) => MaterialApp(
@@ -35,7 +37,7 @@ void main() {
     await tester.pumpWidget(localized(const AboutScreen()));
 
     expect(find.text('Made by Rick Groot · 2026'), findsOneWidget);
-    expect(find.text('Version V0.00.03'), findsOneWidget);
+    expect(find.text('Version V0.00.04'), findsOneWidget);
     expect(find.text('Share or update the app'), findsOneWidget);
     expect(find.text('Copy Android download link'), findsOneWidget);
     expect(find.text('Open contact form'), findsOneWidget);
@@ -159,6 +161,43 @@ void main() {
     expect(find.text('Remove'), findsNothing);
     expect(find.text('Use'), findsNothing);
     expect(find.text('Supporter crown'), findsNothing);
+  });
+
+  testWidgets('shop has a streak tab with visible locked and free rewards', (
+    tester,
+  ) async {
+    final adult = CatProfile(
+      name: 'Milo',
+      variant: PetVariant.catOrange,
+      adoptedAt: DateTime(2026, 1, 1),
+      feedCount: 60,
+      happyPoints: 10,
+    );
+    final results = <String, MedicationStreakDayResult>{
+      for (var day = 1; day <= 40; day++)
+        medicationStreakDayKey(DateTime(2026, 1, day)):
+            MedicationStreakDayResult.success,
+    };
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      MedicationStreakRepository.preferencesKey: jsonEncode(
+        MedicationStreakState(dayResults: results).toJson(),
+      ),
+    });
+
+    await tester.pumpWidget(localized(CatShopScreen(profile: adult)));
+    await tester.pumpAndSettle();
+    expect(find.text('Regular items'), findsOneWidget);
+    expect(find.text('Streak items'), findsOneWidget);
+
+    await tester.tap(find.text('Streak items'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Consistency cap'), findsOneWidget);
+    expect(find.text('40-day streak'), findsOneWidget);
+    expect(find.text('Claim free'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -330));
+    await tester.pumpAndSettle();
+    expect(find.text('Reach 100 days'), findsOneWidget);
   });
 
   testWidgets('wardrobe equips and removes owned items outside the shop', (

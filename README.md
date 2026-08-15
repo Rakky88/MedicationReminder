@@ -2,7 +2,7 @@
 
 Een privacyvriendelijke Flutter-app voor eenvoudige, ADHD-vriendelijke medicatieherinneringen. De app bewaart medicijnen, schema's en innamegeschiedenis lokaal op het apparaat.
 
-## Huidige status — V0.00.03
+## Huidige status — V0.00.04
 
 De ondertekende Android-releasebuild werkt. De meest recente geverifieerde APK
 staat na een build in:
@@ -12,7 +12,7 @@ staat na een build in:
 Geverifieerd met Flutter 3.44.9 en Dart 3.12.2:
 
 - `flutter analyze`: geen issues
-- `flutter test`: 117 tests geslaagd
+- `flutter test`: 130 tests geslaagd
 - `flutter build apk --release`: geslaagd en met de vaste releasekey ondertekend
 
 De vaste openbare Android-downloadlink is:
@@ -124,6 +124,14 @@ geïmplementeerde verbeterideeën staan in [`APP_AUDIT.md`](APP_AUDIT.md).
   garderobe staan compact naast elkaar; de actuele dierpreview blijft in de
   garderobe tijdens het scrollen zichtbaar. Na de kipontgrendeling verschijnen
   ook een strohoed, eierbril, tuinbroek en maïsspeeltje, bruikbaar door alle dieren.
+- De medicatiestreak telt een kalenderdag alleen wanneer alle geplande innames
+  van die dag zijn afgevinkt. Eén gemiste inname zet de huidige streak op nul;
+  dagen zonder taken tellen niet mee en verbreken hem niet. De streak begint al
+  bij kitten, pup of ei en staat compact bij het huisdier.
+- Het tweede shoptabblad **Streak-items** toont permanent de gratis beloningen
+  voor 40, 100, 150, 200, 250, 300, 365, 500, 750 en 1000 dagen. De beste ooit
+  behaalde streak bepaalt blijvend welke items kunnen worden opgehaald. Bij 365
+  dagen is een volledige jubileumset met kroon, bril, outfit en speeltje klaar.
 - Hoeden en brillen worden vanuit de ongewijzigde bronafbeeldingen per volwassen
   diervariant apart in breedte, hoogte en ankerpunt afgeleid. Alle 110 combinaties
   zijn op volledige resolutie gecontroleerd op de normale sprites en op een

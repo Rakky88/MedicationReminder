@@ -770,7 +770,8 @@ class NotificationService {
       final signature = mascot == null
           ? 'generic'
           : '${mascot.assetPath}|${mascot.hungerPoints}|'
-                '${mascot.accessoryAssetPaths.join('|')}';
+                '${mascot.resolvedAccessories.map((item) => '${item.path}:'
+                    '${item.scale}:${item.dx}:${item.dy}:${item.isToy}').join('|')}';
       final cached = _cachedNotificationImages;
       if (_lastImageSignature == signature &&
           cached != null &&
@@ -783,7 +784,8 @@ class NotificationService {
           mascot?.assetPath.split('/').last ?? 'generic_reminder.png';
       final file = File('${directory.path}/notification_$fileName');
       ui.Image? base;
-      final accessories = <({String path, ui.Image image})>[];
+      final accessories =
+          <({NotificationMascotAccessory item, ui.Image image})>[];
       const size = 512;
       final recorder = ui.PictureRecorder();
       final canvas = ui.Canvas(recorder);
@@ -791,8 +793,11 @@ class NotificationService {
         _drawGenericReminderSymbol(canvas, size.toDouble());
       } else {
         base = await _loadAssetImage(mascot.assetPath);
-        for (final path in mascot.accessoryAssetPaths) {
-          accessories.add((path: path, image: await _loadAssetImage(path)));
+        for (final item in mascot.resolvedAccessories) {
+          accessories.add((
+            item: item,
+            image: await _loadAssetImage(item.path),
+          ));
         }
         final hunger = mascot.hungerPoints.clamp(0, 5);
         final scaleX = 1 - hunger * .055;
@@ -808,18 +813,26 @@ class NotificationService {
           );
         _drawImageFit(canvas, base, catDestination, catPaint);
         for (final accessory in accessories.where(
-          (item) => !item.path.contains('shop_toy_'),
-        )) {
-          _drawImageFit(canvas, accessory.image, catDestination, catPaint);
-        }
-        if (hunger >= 2) _drawHungryRibs(canvas, size.toDouble(), hunger / 5);
-        for (final accessory in accessories.where(
-          (item) => item.path.contains('shop_toy_'),
+          (entry) => !entry.item.isToy,
         )) {
           _drawImageFit(
             canvas,
             accessory.image,
-            const ui.Rect.fromLTWH(0, 0, 512, 512),
+            _accessoryDestination(catDestination, accessory.item),
+            catPaint,
+          );
+        }
+        if (hunger >= 2) _drawHungryRibs(canvas, size.toDouble(), hunger / 5);
+        for (final accessory in accessories.where(
+          (entry) => entry.item.isToy,
+        )) {
+          _drawImageFit(
+            canvas,
+            accessory.image,
+            _accessoryDestination(
+              const ui.Rect.fromLTWH(0, 0, 512, 512),
+              accessory.item,
+            ),
             ui.Paint(),
           );
         }
@@ -895,6 +908,18 @@ class NotificationService {
       return null;
     }
   }
+
+  ui.Rect _accessoryDestination(
+    ui.Rect canvasRect,
+    NotificationMascotAccessory accessory,
+  ) => ui.Rect.fromCenter(
+    center: canvasRect.center.translate(
+      canvasRect.width * accessory.dx,
+      canvasRect.height * accessory.dy,
+    ),
+    width: canvasRect.width * accessory.scale,
+    height: canvasRect.height * accessory.scale,
+  );
 
   void _drawGenericReminderSymbol(ui.Canvas canvas, double size) {
     final center = ui.Offset(size / 2, size / 2);

@@ -15,12 +15,16 @@ class CatHomeCard extends StatefulWidget {
     required this.activity,
     required this.onTap,
     required this.onSettings,
+    this.currentMedicationStreak = 0,
+    this.bestMedicationStreak = 0,
   });
 
   final CatProfile profile;
   final CatActivity activity;
   final VoidCallback onTap;
   final VoidCallback onSettings;
+  final int currentMedicationStreak;
+  final int bestMedicationStreak;
 
   @override
   State<CatHomeCard> createState() => _CatHomeCardState();
@@ -181,6 +185,49 @@ class _CatHomeCardState extends State<CatHomeCard>
                       ],
                     ),
                     Text('${_stageText(loc)} · ${_activityText(loc)}'),
+                    const SizedBox(height: 7),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface.withValues(alpha: .72),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(
+                              Icons.local_fire_department_outlined,
+                              size: 15,
+                              color: colorScheme.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                loc.medicationStreak(
+                                  widget.currentMedicationStreak,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (widget.bestMedicationStreak >
+                        widget.currentMedicationStreak)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8, top: 2),
+                        child: Text(
+                          loc.medicationStreakBest(widget.bestMedicationStreak),
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                      ),
                     if (widget.profile.stage == CatStage.adult) ...<Widget>[
                       const SizedBox(height: 7),
                       Row(

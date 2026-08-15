@@ -17,6 +17,8 @@ import 'log_screen.dart';
 import 'medication.dart';
 import 'medication_form_screen.dart';
 import 'medication_repository.dart';
+import 'medication_streak.dart';
+import 'medication_streak_repository.dart';
 import 'notification_service.dart';
 
 Future<void> main() async {
@@ -172,6 +174,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Timer? _activityTimer;
   CatProfile? _cat;
   List<DoseLog> _doseLogs = const <DoseLog>[];
+  MedicationStreakState _medicationStreak = MedicationStreakState.empty;
   CatActivity _catActivity = CatActivity.normal;
   String? _lastMeowDoseKey;
   int? _highlightedMedicationId;
@@ -269,6 +272,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final currentMedications =
         medications ?? await _repository.getMedications();
     final logs = await _repository.reconcileMissedDoses(currentMedications);
+    MedicationStreakState? medicationStreak;
+    try {
+      medicationStreak = await MedicationStreakRepository.instance.synchronize(
+        medications: currentMedications,
+        logs: logs,
+      );
+    } on Object catch (error, stack) {
+      // Streak progress is derived data. A damaged streak record must not make
+      // medication, history, reminders, or the pet unavailable.
+      debugPrint('Could not refresh medication streak: $error\n$stack');
+    }
     var profile = await CatRepository.instance.reconcileDoseLogs(logs);
     if (profile?.stage == CatStage.adult) {
       profile = await CatRepository.instance.ensurePlaySchedule();
@@ -277,6 +291,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() {
       _cat = profile;
       _doseLogs = logs;
+      if (medicationStreak != null) _medicationStreak = medicationStreak;
       _activePlayMomentKey = profile == null
           ? null
           : CatRepository.currentPlayMomentKey(profile);
@@ -509,6 +524,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
     CatDoseResult? catResult;
+    MedicationStreakState? medicationStreak;
     try {
       final allMedications = await _repository.getMedications();
       catResult = await CatRepository.instance.applyDose(
@@ -520,6 +536,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       // The canonical dose log is already safe. Pet reconciliation repairs its
       // derived state on the next refresh if this optional update fails.
       debugPrint('Could not update pet after dose: $error\n$stack');
+    }
+    try {
+      final allMedications = await _repository.getMedications();
+      final allLogs = await _repository.getDoseLogs(includeHidden: true);
+      medicationStreak = await MedicationStreakRepository.instance.synchronize(
+        medications: allMedications,
+        logs: allLogs,
+      );
+    } on Object catch (error, stack) {
+      debugPrint('Could not update medication streak: $error\n$stack');
     }
     try {
       if (log.doseKey case final doseKey?) {
@@ -535,6 +561,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() {
       _highlightedMedicationId = null;
       _doseLogs = <DoseLog>[log, ..._doseLogs];
+      if (medicationStreak != null) _medicationStreak = medicationStreak;
     });
     final updatedCat = catResult;
     if (updatedCat != null) {
@@ -571,11 +598,34 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             // fails, normal reconciliation can safely add that reward back.
             final profile = await CatRepository.instance.undoDose(log);
             await _repository.deleteDoseLog(log.id);
+            MedicationStreakState? medicationStreak;
+            try {
+              final allMedications = await _repository.getMedications();
+              final allLogs = await _repository.getDoseLogs(
+                includeHidden: true,
+              );
+              medicationStreak = await MedicationStreakRepository.instance
+                  .synchronize(
+                    medications: allMedications,
+                    logs: allLogs,
+                    invalidatedDays: <String>{
+                      medicationStreakDayKey(log.scheduledAt),
+                    },
+                  );
+            } on Object catch (error, stack) {
+              debugPrint(
+                'Could not update medication streak after undo: '
+                '$error\n$stack',
+              );
+            }
             if (!mounted) return;
             setState(() {
               _cat = profile;
               _catActivity = CatActivity.normal;
               _doseLogs = _doseLogs.where((item) => item.id != log.id).toList();
+              if (medicationStreak != null) {
+                _medicationStreak = medicationStreak;
+              }
             });
             await _syncReminders(showError: false);
           }),
@@ -786,6 +836,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   CatHomeCard(
                     profile: _cat!,
                     activity: _catActivity,
+                    currentMedicationStreak: _medicationStreak.current,
+                    bestMedicationStreak: _medicationStreak.best,
                     onTap: () => _startUserAction(_interactWithCat),
                     onSettings: () => _startUserAction(_openCatScreen),
                   ),
@@ -1325,9 +1377,16 @@ NotificationMascot? _mascot(CatProfile? cat) => cat == null
         persistentMeowEnabled: cat.persistentMeowEnabled,
         species: cat.species,
         hungerPoints: cat.hungerPoints,
-        accessoryAssetPaths: equippedPetOverlayItems(
-          cat,
-        ).map((item) => item.fittedAssetPath(cat.variant)).toList(),
+        accessories: equippedPetOverlayItems(cat).map((item) {
+          final transform = item.adaptiveTransform(cat.variant);
+          return NotificationMascotAccessory(
+            path: item.fittedAssetPath(cat.variant),
+            scale: item.adaptiveOverlay ? transform.scale : 1,
+            dx: item.adaptiveOverlay ? transform.dx : 0,
+            dy: item.adaptiveOverlay ? transform.dy : 0,
+            isToy: item.category == CatAccessoryCategory.toy,
+          );
+        }).toList(),
       );
 
 String _formatPoints(double value) => value == value.roundToDouble()

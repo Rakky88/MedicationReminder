@@ -1,5 +1,24 @@
 # Versiegeschiedenis
 
+## V0.00.04 — 2026-08-15
+
+- Voeg een blijvende medicatiestreak toe die alleen stijgt wanneer alle
+  geplande innames van een kalenderdag zijn voltooid. Eén gemiste inname reset
+  de huidige streak; medicatievrije dagen tellen niet en verbreken hem niet.
+- Laat de streak vanaf kitten, pup of ei meelopen en toon hem compact op de
+  huisdierkaart, inclusief de beste behaalde reeks wanneer die hoger is.
+- Voeg in de dierenwinkel het tweede tabblad **Streak-items** toe. Alle
+  beloningen blijven voor volwassen dieren zichtbaar, zijn gratis en worden
+  blijvend claimbaar bij 40, 100, 150, 200, 250, 300, 365, 500, 750 en 1000
+  dagen op basis van de beste streak.
+- Voeg dertien nieuwe transparante beloningsassets toe: hoeden, brillen,
+  outfits en speeltjes, met bij 365 dagen een complete vierdelige jubileumset.
+- Pas elk streak-item automatisch aan de anatomie van alle vijf volwassen
+  katten, vijf volwassen honden en de volwassen kip aan, zowel in de app als in
+  notificatie-afbeeldingen.
+- Voeg opslag-, reset-, undo-, permanente ontgrendel-, gratis aankoop-,
+  shoptab- en 143 visuele dier-itemcombinatietests toe.
+
 ## V0.00.03 — 2026-08-15
 
 - Voorkom dat gelijktijdige meldingssynchronisaties elkaars planning wissen en

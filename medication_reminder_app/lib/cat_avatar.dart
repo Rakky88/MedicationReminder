@@ -20,6 +20,9 @@ class CatAvatar extends StatelessWidget {
     final hunger = profile.hungerPoints.clamp(0, 5);
     final saturation = 1 - hunger * .12;
     final canWearAccessories = profile.stage == CatStage.adult;
+    final outfit = canWearAccessories
+        ? catShopItemById(profile.equippedId(CatAccessoryCategory.outfit))
+        : null;
     final hat = canWearAccessories
         ? catShopItemById(profile.equippedId(CatAccessoryCategory.hat))
         : null;
@@ -51,25 +54,17 @@ class CatAvatar extends StatelessWidget {
                 fit: StackFit.expand,
                 children: <Widget>[
                   Image.asset(petBodyAssetPath(profile), fit: fit),
-                  if (neckwear != null)
-                    Image.asset(
-                      neckwear.fittedAssetPath(profile.variant),
-                      fit: fit,
-                    ),
-                  if (hat != null)
-                    Image.asset(hat.fittedAssetPath(profile.variant), fit: fit),
-                  if (glasses != null)
-                    Image.asset(
-                      glasses.fittedAssetPath(profile.variant),
-                      fit: fit,
-                    ),
+                  if (outfit?.adaptiveOverlay == true) _accessoryImage(outfit!),
+                  if (neckwear != null) _accessoryImage(neckwear),
+                  if (hat != null) _accessoryImage(hat),
+                  if (glasses != null) _accessoryImage(glasses),
                   if (hunger >= 2 && profile.stage == CatStage.adult)
                     CustomPaint(painter: _HungryRibsPainter(hunger / 5)),
                 ],
               ),
             ),
           ),
-          if (toy != null) Image.asset(toy.assetPath, fit: fit),
+          if (toy != null) _accessoryImage(toy),
           if (showHungerBadge && hunger > 0)
             Positioned(
               left: 4,
@@ -92,6 +87,31 @@ class CatAvatar extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _accessoryImage(CatShopItem item) {
+    if (!item.adaptiveOverlay) {
+      return Image.asset(item.fittedAssetPath(profile.variant), fit: fit);
+    }
+    final transform = item.adaptiveTransform(profile.variant);
+    return LayoutBuilder(
+      builder: (context, constraints) => Transform.translate(
+        offset: Offset(
+          constraints.maxWidth * transform.dx,
+          constraints.maxHeight * transform.dy,
+        ),
+        child: Transform.scale(
+          scale: transform.scale,
+          child: Image.asset(
+            item.assetPath,
+            key: ValueKey<String>(
+              'adaptive-${profile.variant.name}-${item.id}',
+            ),
+            fit: fit,
+          ),
+        ),
       ),
     );
   }

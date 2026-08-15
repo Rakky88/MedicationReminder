@@ -7,6 +7,7 @@ import 'async_operation_queue.dart';
 import 'cat.dart';
 import 'cat_shop.dart';
 import 'medication.dart';
+import 'medication_streak_repository.dart';
 
 class CatRepository {
   CatRepository._();
@@ -378,6 +379,10 @@ class CatRepository {
         profile.ownedAccessoryIds.contains(itemId) ||
         profile.happyPoints < item.price) {
       return profile;
+    }
+    if (item.requiredMedicationStreak case final requirement?) {
+      final streak = await MedicationStreakRepository.instance.getState();
+      if (streak.best < requirement) return profile;
     }
     final updated = profile.copyWith(
       happyPoints: profile.happyPoints - item.price,
