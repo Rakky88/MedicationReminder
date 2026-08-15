@@ -88,17 +88,30 @@ void main() {
     'every fitted hat and pair of glasses follows the pet landmarks',
     () async {
       const eyeLines = <PetVariant, double>{
-        PetVariant.catOrange: 130,
-        PetVariant.catTuxedo: 130,
-        PetVariant.catGray: 128,
-        PetVariant.catCalico: 130,
-        PetVariant.catBlackBib: 130,
+        PetVariant.catOrange: 140,
+        PetVariant.catTuxedo: 140,
+        PetVariant.catGray: 140,
+        PetVariant.catCalico: 140,
+        PetVariant.catBlackBib: 140,
         PetVariant.dogGolden: 88,
-        PetVariant.dogBeagle: 94,
-        PetVariant.dogBlackLab: 84,
+        PetVariant.dogBeagle: 98,
+        PetVariant.dogBlackLab: 92,
         PetVariant.dogBorderCollie: 108,
-        PetVariant.dogDachshund: 92,
+        PetVariant.dogDachshund: 96,
         PetVariant.chickenHen: 132,
+      };
+      const headCenters = <PetVariant, double>{
+        PetVariant.catOrange: 248,
+        PetVariant.catTuxedo: 249,
+        PetVariant.catGray: 247,
+        PetVariant.catCalico: 247,
+        PetVariant.catBlackBib: 224,
+        PetVariant.dogGolden: 257,
+        PetVariant.dogBeagle: 260,
+        PetVariant.dogBlackLab: 247,
+        PetVariant.dogBorderCollie: 253,
+        PetVariant.dogDachshund: 256,
+        PetVariant.chickenHen: 256,
       };
       final headItems = catShopCatalog.where(
         (item) =>
@@ -116,10 +129,18 @@ void main() {
           expect(bounds.top, greaterThan(0), reason: path);
           expect(bounds.right, lessThan(512), reason: path);
           expect(bounds.bottom, lessThan(512), reason: path);
-          expect((bounds.center.dx - 256).abs(), lessThan(30), reason: path);
+          expect(
+            (bounds.center.dx - headCenters[variant]!).abs(),
+            lessThan(item.category == CatAccessoryCategory.glasses ? 15 : 25),
+            reason: path,
+          );
           expect(
             bounds.width,
-            greaterThanOrEqualTo(130),
+            greaterThanOrEqualTo(
+              item.category == CatAccessoryCategory.glasses
+                  ? 80
+                  : (variant == PetVariant.chickenHen ? 95 : 120),
+            ),
             reason:
                 '$path must span the adult head instead of reading as a '
                 'small floating accessory',
@@ -128,14 +149,62 @@ void main() {
             expect(bounds.top, lessThan(eyeLine), reason: path);
             expect(bounds.bottom, greaterThan(eyeLine), reason: path);
           } else {
-            expect(bounds.bottom, lessThanOrEqualTo(eyeLine + 5), reason: path);
+            expect(
+              bounds.bottom,
+              lessThanOrEqualTo(eyeLine + 18),
+              reason: path,
+            );
           }
         }
       }
     },
   );
 
+  test('classic glasses have no protruding right temple arm', () async {
+    const headCenters = <PetVariant, double>{
+      PetVariant.catOrange: 248,
+      PetVariant.catTuxedo: 249,
+      PetVariant.catGray: 247,
+      PetVariant.catCalico: 247,
+      PetVariant.catBlackBib: 224,
+      PetVariant.dogGolden: 257,
+      PetVariant.dogBeagle: 260,
+      PetVariant.dogBlackLab: 247,
+      PetVariant.dogBorderCollie: 253,
+      PetVariant.dogDachshund: 256,
+      PetVariant.chickenHen: 256,
+    };
+    final glasses = catShopCatalog.where(
+      (item) =>
+          item.category == CatAccessoryCategory.glasses && !item.isStreakReward,
+    );
+    for (final variant in PetVariant.values) {
+      for (final item in glasses) {
+        final path = item.fittedAssetPath(variant);
+        final bounds = await alphaBounds(path);
+        expect(
+          bounds.right,
+          lessThanOrEqualTo(headCenters[variant]! + 84),
+          reason: path,
+        );
+      }
+    }
+  });
+
   test('every Doctor bow tie follows the pet neck landmark', () async {
+    const neckCenters = <PetVariant, double>{
+      PetVariant.catOrange: 245,
+      PetVariant.catTuxedo: 246,
+      PetVariant.catGray: 245,
+      PetVariant.catCalico: 244,
+      PetVariant.catBlackBib: 224,
+      PetVariant.dogGolden: 257,
+      PetVariant.dogBeagle: 260,
+      PetVariant.dogBlackLab: 247,
+      PetVariant.dogBorderCollie: 253,
+      PetVariant.dogDachshund: 256,
+      PetVariant.chickenHen: 256,
+    };
     for (final variant in PetVariant.values) {
       final item = catShopItemById('doctor_bow_tie')!;
       final path = item.fittedAssetPath(variant);
@@ -144,20 +213,41 @@ void main() {
       expect(bounds.right, lessThan(512), reason: path);
       expect(bounds.top, inInclusiveRange(135, 225), reason: path);
       expect(bounds.bottom, inInclusiveRange(180, 255), reason: path);
-      expect((bounds.center.dx - 256).abs(), lessThan(5), reason: path);
-      expect(bounds.width, greaterThanOrEqualTo(80), reason: path);
+      expect(
+        (bounds.center.dx - neckCenters[variant]!).abs(),
+        lessThan(2),
+        reason: path,
+      );
+      expect(bounds.width, greaterThanOrEqualTo(65), reason: path);
     }
   });
 
-  test('every Doctor outfit is a complete fitted adult pet sprite', () async {
-    final item = catShopItemById('doctor_outfit')!;
+  test('every tailored outfit is a complete fitted adult pet sprite', () async {
+    final items = catShopCatalog.where(
+      (item) =>
+          item.category == CatAccessoryCategory.outfit && !item.adaptiveOverlay,
+    );
+    for (final item in items) {
+      for (final variant in PetVariant.values) {
+        final path = item.fittedAssetPath(variant);
+        final bounds = await alphaBounds(path);
+        expect(bounds.left, greaterThan(0), reason: path);
+        expect(bounds.right, lessThan(512), reason: path);
+        expect(bounds.bottom, inInclusiveRange(482, 485), reason: path);
+        expect(bounds.height, greaterThan(400), reason: path);
+      }
+    }
+  });
+
+  test('every Dragon mode sprite is a complete fitted young pet', () async {
     for (final variant in PetVariant.values) {
-      final path = item.fittedAssetPath(variant);
+      final path =
+          'assets/cats/fitted/${variant.assetPrefix}_dragon_mode_young.png';
       final bounds = await alphaBounds(path);
       expect(bounds.left, greaterThan(0), reason: path);
       expect(bounds.right, lessThan(512), reason: path);
       expect(bounds.bottom, inInclusiveRange(482, 485), reason: path);
-      expect(bounds.height, greaterThan(400), reason: path);
+      expect(bounds.height, greaterThan(395), reason: path);
     }
   });
 

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:medication_reminder_app/cat.dart';
 import 'package:medication_reminder_app/cat_avatar.dart';
 import 'package:medication_reminder_app/cat_shop.dart';
+import 'package:medication_reminder_app/pet_costumes.dart';
 
 void main() {
   test('every pet stage, chicken item, and logo asset is bundled', () async {
@@ -20,6 +21,12 @@ void main() {
           greaterThan(0),
         );
       }
+      expect(
+        (await rootBundle.load(
+          dragonModeFittedAssetPath(variant),
+        )).lengthInBytes,
+        greaterThan(0),
+      );
       for (final fittedItem in catShopCatalog.where(
         (item) => item.category != CatAccessoryCategory.toy,
       )) {
@@ -40,6 +47,38 @@ void main() {
       'assets/cats/chicken_toy_corn.png',
     ]) {
       expect((await rootBundle.load(path)).lengthInBytes, greaterThan(0));
+    }
+  });
+
+  testWidgets('dragon costume renders for every young pet and no other stage', (
+    tester,
+  ) async {
+    for (final variant in PetVariant.values) {
+      for (final feedCount in <int>[13, 14, 59, 60]) {
+        final profile = CatProfile(
+          name: 'Dragon test',
+          variant: variant,
+          adoptedAt: DateTime(2026, 1, 1),
+          feedCount: feedCount,
+          dragonMode: true,
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: SizedBox(
+              width: 512,
+              height: 512,
+              child: CatAvatar(profile: profile),
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(
+          find.byKey(ValueKey<String>('dragon-mode-${variant.name}')),
+          feedCount >= 14 && feedCount < 60 ? findsOneWidget : findsNothing,
+          reason: '${variant.name} at $feedCount feeds',
+        );
+        expect(tester.takeException(), isNull);
+      }
     }
   });
 

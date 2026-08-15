@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medication_reminder_app/cat.dart';
+import 'package:medication_reminder_app/pet_costumes.dart';
 
 void main() {
   CatProfile catWithGrowthDays(int growthDays) => CatProfile(
@@ -85,6 +86,25 @@ void main() {
     );
 
     expect(restored.persistentMeowEnabled, isFalse);
+  });
+
+  test('dragon mode is opt-in, persists, and only shows while young', () {
+    final legacy = CatProfile.fromJson(<String, Object?>{
+      'name': 'Nova',
+      'variant': PetVariant.dogGolden.name,
+      'adoptedAt': DateTime(2026, 8, 1).toIso8601String(),
+      'feedCount': 14,
+      'growthModelVersion': 2,
+    });
+    final young = CatProfile.fromJson(
+      legacy.copyWith(dragonMode: true).toJson(),
+    );
+
+    expect(legacy.dragonMode, isFalse);
+    expect(young.dragonMode, isTrue);
+    expect(showsDragonModeCostume(young), isTrue);
+    expect(showsDragonModeCostume(young.copyWith(feedCount: 13)), isFalse);
+    expect(showsDragonModeCostume(young.copyWith(feedCount: 60)), isFalse);
   });
 
   test('legacy sound setting migrates to separate purr and meow settings', () {

@@ -37,7 +37,7 @@ void main() {
     await tester.pumpWidget(localized(const AboutScreen()));
 
     expect(find.text('Made by Rick Groot · 2026'), findsOneWidget);
-    expect(find.text('Version V0.00.04'), findsOneWidget);
+    expect(find.text('Version V0.01.01'), findsOneWidget);
     expect(find.text('Share or update the app'), findsOneWidget);
     expect(find.text('Copy Android download link'), findsOneWidget);
     expect(find.text('Open contact form'), findsOneWidget);
@@ -143,6 +143,26 @@ void main() {
     expect(find.text('Shop'), findsNothing);
     expect(find.text('Wardrobe'), findsNothing);
     expect(find.textContaining('happy points'), findsNothing);
+    expect(find.text('Dragon mode'), findsOneWidget);
+  });
+
+  testWidgets('dragon mode setting is hidden for youngest and adult pets', (
+    tester,
+  ) async {
+    for (final feedCount in <int>[0, 13, 60]) {
+      final profile = CatProfile(
+        name: 'Nova',
+        variant: PetVariant.catOrange,
+        adoptedAt: DateTime(2026, 1, 1),
+        feedCount: feedCount,
+      );
+      await tester.pumpWidget(localized(CatScreen(profile: profile)));
+      expect(
+        find.text('Dragon mode'),
+        findsNothing,
+        reason: '$feedCount feeds',
+      );
+    }
   });
 
   testWidgets('purchased shop item has a clear owned status', (tester) async {

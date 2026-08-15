@@ -121,6 +121,7 @@ class CatRepository {
     required bool purrEnabled,
     required bool meowEnabled,
     required bool persistentMeowEnabled,
+    required bool dragonMode,
   }) => _operations.run(
     () => _updateSettings(
       profile,
@@ -128,6 +129,7 @@ class CatRepository {
       purrEnabled: purrEnabled,
       meowEnabled: meowEnabled,
       persistentMeowEnabled: persistentMeowEnabled,
+      dragonMode: dragonMode,
     ),
   );
 
@@ -137,12 +139,14 @@ class CatRepository {
     required bool purrEnabled,
     required bool meowEnabled,
     required bool persistentMeowEnabled,
+    required bool dragonMode,
   }) async {
     final updated = profile.copyWith(
       name: name.trim().isEmpty ? profile.name : name.trim(),
       purrEnabled: purrEnabled,
       meowEnabled: meowEnabled,
       persistentMeowEnabled: persistentMeowEnabled,
+      dragonMode: dragonMode,
     );
     await _save(updated);
     return updated;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'cat.dart';
 import 'cat_shop.dart';
+import 'pet_costumes.dart';
 
 class CatAvatar extends StatelessWidget {
   const CatAvatar({
@@ -53,7 +54,17 @@ class CatAvatar extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: <Widget>[
-                  Image.asset(petBodyAssetPath(profile), fit: fit),
+                  Image.asset(
+                    showsDragonModeCostume(profile)
+                        ? dragonModeFittedAssetPath(profile.variant)
+                        : petBodyAssetPath(profile),
+                    key: showsDragonModeCostume(profile)
+                        ? ValueKey<String>(
+                            'dragon-mode-${profile.variant.name}',
+                          )
+                        : null,
+                    fit: fit,
+                  ),
                   if (outfit?.adaptiveOverlay == true) _accessoryImage(outfit!),
                   if (neckwear != null) _accessoryImage(neckwear),
                   if (hat != null) _accessoryImage(hat),
@@ -92,9 +103,6 @@ class CatAvatar extends StatelessWidget {
   }
 
   Widget _accessoryImage(CatShopItem item) {
-    if (!item.adaptiveOverlay) {
-      return Image.asset(item.fittedAssetPath(profile.variant), fit: fit);
-    }
     final transform = item.adaptiveTransform(profile.variant);
     return LayoutBuilder(
       builder: (context, constraints) => Transform.translate(
@@ -103,12 +111,15 @@ class CatAvatar extends StatelessWidget {
           constraints.maxHeight * transform.dy,
         ),
         child: Transform.scale(
-          scale: transform.scale,
+          scaleX: transform.effectiveScaleX,
+          scaleY: transform.effectiveScaleY,
           child: Image.asset(
-            item.assetPath,
-            key: ValueKey<String>(
-              'adaptive-${profile.variant.name}-${item.id}',
-            ),
+            item.fittedAssetPath(profile.variant),
+            key: item.adaptiveOverlay
+                ? ValueKey<String>(
+                    'adaptive-${profile.variant.name}-${item.id}',
+                  )
+                : null,
             fit: fit,
           ),
         ),

@@ -71,6 +71,7 @@ class CatProfile {
     this.purrEnabled = true,
     this.meowEnabled = true,
     this.persistentMeowEnabled = true,
+    this.dragonMode = false,
     this.lastFedAt,
     this.happyPoints = 0,
     this.happyPointAwards = const <String, double>{},
@@ -102,6 +103,7 @@ class CatProfile {
   bool get happySoundEnabled => purrEnabled;
   bool get hungrySoundEnabled => meowEnabled;
   final bool persistentMeowEnabled;
+  final bool dragonMode;
   final DateTime? lastFedAt;
   final double happyPoints;
   final Map<String, double> happyPointAwards;
@@ -158,6 +160,7 @@ class CatProfile {
     bool? purrEnabled,
     bool? meowEnabled,
     bool? persistentMeowEnabled,
+    bool? dragonMode,
     DateTime? lastFedAt,
     double? happyPoints,
     Map<String, double>? happyPointAwards,
@@ -185,6 +188,7 @@ class CatProfile {
       meowEnabled: meowEnabled ?? this.meowEnabled,
       persistentMeowEnabled:
           persistentMeowEnabled ?? this.persistentMeowEnabled,
+      dragonMode: dragonMode ?? this.dragonMode,
       lastFedAt: lastFedAt ?? this.lastFedAt,
       happyPoints: happyPoints ?? this.happyPoints,
       happyPointAwards: happyPointAwards ?? this.happyPointAwards,
@@ -217,6 +221,7 @@ class CatProfile {
     'purrEnabled': purrEnabled,
     'meowEnabled': meowEnabled,
     'persistentMeowEnabled': persistentMeowEnabled,
+    'dragonMode': dragonMode,
     'lastFedAt': lastFedAt?.toUtc().toIso8601String(),
     'happyPoints': happyPoints,
     'happyPointAwards': _boundedTimelineMap(happyPointAwards),
@@ -258,6 +263,7 @@ class CatProfile {
       purrEnabled: json['purrEnabled'] as bool? ?? legacySoundEnabled,
       meowEnabled: json['meowEnabled'] as bool? ?? legacySoundEnabled,
       persistentMeowEnabled: json['persistentMeowEnabled'] as bool? ?? true,
+      dragonMode: json['dragonMode'] as bool? ?? false,
       lastFedAt: DateTime.tryParse(
         json['lastFedAt'] as String? ?? '',
       )?.toLocal(),

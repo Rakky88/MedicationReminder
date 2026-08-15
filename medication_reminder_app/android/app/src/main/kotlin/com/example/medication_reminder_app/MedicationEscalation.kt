@@ -133,10 +133,12 @@ data class EscalationPlan(
                 snoozeLabel = json.optString("snoozeLabel"),
                 soundEnabled = json.optBoolean("soundEnabled"),
                 persistentMeowEnabled = json.optBoolean("persistentMeowEnabled", true),
-                catName = json.optString("catName").ifBlank { null },
+                catName = json.optString("catName")
+                    .takeUnless { it.isBlank() || it == "null" },
                 speciesCode = json.optString("speciesCode", "cat"),
                 languageCode = json.optString("languageCode", "en"),
-                largeImagePath = json.optString("largeImagePath").ifBlank { null },
+                largeImagePath = json.optString("largeImagePath")
+                    .takeUnless { it.isBlank() || it == "null" },
                 accentedImagePaths = List(paths.length()) { paths.optString(it) }
                     .filter { it.isNotBlank() },
                 channelName = json.optString("channelName", "Medication reminders"),

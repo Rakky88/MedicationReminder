@@ -21,7 +21,14 @@ void main() {
     );
     expect(streakItems, hasLength(13));
     expect(streakItems.every((item) => item.price == 0), isTrue);
-    expect(streakItems.every((item) => item.adaptiveOverlay), isTrue);
+    expect(
+      streakItems.where((item) => item.adaptiveOverlay).map((item) => item.id),
+      <String>{
+        'streak_200_toy_rocket',
+        'streak_365_toy_year_cake',
+        'streak_750_toy_comet',
+      },
+    );
     expect(
       streakItems
           .where((item) => item.requiredMedicationStreak == 365)
@@ -36,12 +43,56 @@ void main() {
     );
   });
 
+  test('all streak items remain visible before any streak is earned', () {
+    final adult = CatProfile(
+      name: 'Milo',
+      variant: PetVariant.catOrange,
+      adoptedAt: DateTime(2026, 1, 1),
+      feedCount: 60,
+    );
+    final visible = visibleCatShopCatalog(adult).toSet();
+
+    expect(visible.containsAll(streakItems), isTrue);
+  });
+
+  test('fitted streak glasses follow every adult pet eye line', () async {
+    const eyeLines = <PetVariant, double>{
+      PetVariant.catOrange: 130,
+      PetVariant.catTuxedo: 130,
+      PetVariant.catGray: 128,
+      PetVariant.catCalico: 130,
+      PetVariant.catBlackBib: 130,
+      PetVariant.dogGolden: 88,
+      PetVariant.dogBeagle: 94,
+      PetVariant.dogBlackLab: 84,
+      PetVariant.dogBorderCollie: 108,
+      PetVariant.dogDachshund: 92,
+      PetVariant.chickenHen: 132,
+    };
+    final glasses = streakItems.where(
+      (item) => item.category == CatAccessoryCategory.glasses,
+    );
+
+    for (final item in glasses) {
+      for (final variant in PetVariant.values) {
+        final source = await _alphaBounds(item.fittedAssetPath(variant));
+        final bounds = source.bounds;
+        expect(
+          (bounds.center.dy - eyeLines[variant]!).abs(),
+          lessThan(20),
+          reason: '${item.id} ${variant.name}',
+        );
+      }
+    }
+  });
+
   test('every streak asset remains inside every adult pet canvas', () async {
     for (final item in streakItems) {
-      final source = await _alphaBounds(item.assetPath);
       for (final variant in PetVariant.values) {
-        final transform = item.adaptiveTransform(variant);
-        final bounds = _transformedBounds(source, transform);
+        final source = await _alphaBounds(item.fittedAssetPath(variant));
+        final bounds = item.adaptiveOverlay
+            ? _transformedBounds(source, item.adaptiveTransform(variant))
+            : source.bounds;
         expect(
           bounds.left,
           greaterThanOrEqualTo(-1),
@@ -69,7 +120,16 @@ void main() {
         );
         expect(
           bounds.height,
-          greaterThan(45),
+          greaterThan(
+            item.category == CatAccessoryCategory.outfit
+                ? 400
+                : (item.category == CatAccessoryCategory.glasses
+                      ? 30
+                      : (item.id == 'streak_250_hat_laurel' &&
+                                variant == PetVariant.dogDachshund
+                            ? 40
+                            : 45)),
+          ),
           reason: '${item.id} ${variant.name}',
         );
       }
@@ -99,11 +159,25 @@ void main() {
           ),
         );
         await tester.pump();
-        expect(
-          find.byKey(ValueKey<String>('adaptive-${variant.name}-${item.id}')),
-          findsOneWidget,
-          reason: '${item.id} on ${variant.name}',
-        );
+        if (item.adaptiveOverlay) {
+          expect(
+            find.byKey(ValueKey<String>('adaptive-${variant.name}-${item.id}')),
+            findsOneWidget,
+            reason: '${item.id} on ${variant.name}',
+          );
+        } else {
+          final expectedPath = item.fittedAssetPath(variant);
+          expect(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is Image &&
+                  widget.image is AssetImage &&
+                  (widget.image as AssetImage).assetName == expectedPath,
+            ),
+            findsOneWidget,
+            reason: '${item.id} on ${variant.name}',
+          );
+        }
         expect(
           tester.takeException(),
           isNull,
@@ -125,9 +199,9 @@ ui.Rect _transformedBounds(
     source.bounds.bottom / source.height * 512,
   );
   double x(double value) =>
-      256 + (value - 256) * transform.scale + transform.dx * 512;
+      256 + (value - 256) * transform.effectiveScaleX + transform.dx * 512;
   double y(double value) =>
-      256 + (value - 256) * transform.scale + transform.dy * 512;
+      256 + (value - 256) * transform.effectiveScaleY + transform.dy * 512;
   return ui.Rect.fromLTRB(
     x(normalized.left),
     y(normalized.top),

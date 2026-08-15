@@ -2,7 +2,7 @@
 
 Een privacyvriendelijke Flutter-app voor eenvoudige, ADHD-vriendelijke medicatieherinneringen. De app bewaart medicijnen, schema's en innamegeschiedenis lokaal op het apparaat.
 
-## Huidige status — V0.00.04
+## Huidige status — V0.01.01
 
 De ondertekende Android-releasebuild werkt. De meest recente geverifieerde APK
 staat na een build in:
@@ -12,7 +12,7 @@ staat na een build in:
 Geverifieerd met Flutter 3.44.9 en Dart 3.12.2:
 
 - `flutter analyze`: geen issues
-- `flutter test`: 130 tests geslaagd
+- `flutter test`: 137 tests geslaagd
 - `flutter build apk --release`: geslaagd en met de vaste releasekey ondertekend
 
 De vaste openbare Android-downloadlink is:
@@ -25,6 +25,8 @@ werken.
 
 De volledige kwaliteitscontrole, open beperkingen en bewust nog niet
 geïmplementeerde verbeterideeën staan in [`APP_AUDIT.md`](APP_AUDIT.md).
+De vaste visuele controleronde voor nieuwe dieren, outfits en accessoires staat
+in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
 
 ## Functionaliteit
 
@@ -84,6 +86,11 @@ geïmplementeerde verbeterideeën staan in [`APP_AUDIT.md`](APP_AUDIT.md).
   succesvolle medicatiedagen naar de volwassen fase. Meerdere geldige
   innames op dezelfde kalenderdag leveren samen maximaal één groeidag op. De
   interne groeipunten en voortgangsbalk zijn niet zichtbaar voor de gebruiker.
+- Alleen in de jonge/middelste levensfase verschijnt in de dierinstellingen de
+  optionele **Dragon mode**. Alle vijf katten, vijf honden en de kip gebruiken
+  daarin een anatomisch passende drakenoutfit met zichtbare poten of vleugels
+  door de openingen; de instelling staat standaard uit en verdwijnt weer bij de
+  volwassen fase.
 - Gemiste innames maken de kat geleidelijk hongeriger. Een handmatig gemiste
   inname telt meteen; een onbeantwoord moment telt zodra het volgende alarm
   afgaat (met twee uur als terugvalcontrole). Elke volgende geldige

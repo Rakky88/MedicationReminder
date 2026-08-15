@@ -61,16 +61,22 @@ class NotificationMascotAccessory {
   const NotificationMascotAccessory({
     required this.path,
     this.scale = 1,
+    this.scaleX = 1,
+    this.scaleY = 1,
     this.dx = 0,
     this.dy = 0,
     this.isToy = false,
+    this.clipRightFraction = 1,
   });
 
   final String path;
   final double scale;
+  final double scaleX;
+  final double scaleY;
   final double dx;
   final double dy;
   final bool isToy;
+  final double clipRightFraction;
 }
 
 class NotificationActionEvent {

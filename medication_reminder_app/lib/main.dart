@@ -20,6 +20,7 @@ import 'medication_repository.dart';
 import 'medication_streak.dart';
 import 'medication_streak_repository.dart';
 import 'notification_service.dart';
+import 'pet_costumes.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1372,21 +1373,27 @@ NotificationMascot? _mascot(CatProfile? cat) => cat == null
     ? null
     : NotificationMascot(
         name: cat.name,
-        assetPath: petBodyAssetPath(cat),
+        assetPath: showsDragonModeCostume(cat)
+            ? dragonModeFittedAssetPath(cat.variant)
+            : petBodyAssetPath(cat),
         soundEnabled: cat.hungrySoundEnabled,
         persistentMeowEnabled: cat.persistentMeowEnabled,
         species: cat.species,
         hungerPoints: cat.hungerPoints,
-        accessories: equippedPetOverlayItems(cat).map((item) {
-          final transform = item.adaptiveTransform(cat.variant);
-          return NotificationMascotAccessory(
-            path: item.fittedAssetPath(cat.variant),
-            scale: item.adaptiveOverlay ? transform.scale : 1,
-            dx: item.adaptiveOverlay ? transform.dx : 0,
-            dy: item.adaptiveOverlay ? transform.dy : 0,
-            isToy: item.category == CatAccessoryCategory.toy,
-          );
-        }).toList(),
+        accessories: <NotificationMascotAccessory>[
+          ...equippedPetOverlayItems(cat).map((item) {
+            final transform = item.adaptiveTransform(cat.variant);
+            return NotificationMascotAccessory(
+              path: item.fittedAssetPath(cat.variant),
+              scale: transform.scale,
+              scaleX: transform.scaleX,
+              scaleY: transform.scaleY,
+              dx: transform.dx,
+              dy: transform.dy,
+              isToy: item.category == CatAccessoryCategory.toy,
+            );
+          }),
+        ],
       );
 
 String _formatPoints(double value) => value == value.roundToDouble()

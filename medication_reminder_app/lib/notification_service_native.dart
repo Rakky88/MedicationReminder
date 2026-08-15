@@ -771,7 +771,8 @@ class NotificationService {
           ? 'generic'
           : '${mascot.assetPath}|${mascot.hungerPoints}|'
                 '${mascot.resolvedAccessories.map((item) => '${item.path}:'
-                    '${item.scale}:${item.dx}:${item.dy}:${item.isToy}').join('|')}';
+                    '${item.scale}:${item.scaleX}:${item.scaleY}:${item.dx}:'
+                    '${item.dy}:${item.isToy}:${item.clipRightFraction}').join('|')}';
       final cached = _cachedNotificationImages;
       if (_lastImageSignature == signature &&
           cached != null &&
@@ -820,6 +821,7 @@ class NotificationService {
             accessory.image,
             _accessoryDestination(catDestination, accessory.item),
             catPaint,
+            sourceRightFraction: accessory.item.clipRightFraction,
           );
         }
         if (hunger >= 2) _drawHungryRibs(canvas, size.toDouble(), hunger / 5);
@@ -834,6 +836,7 @@ class NotificationService {
               accessory.item,
             ),
             ui.Paint(),
+            sourceRightFraction: accessory.item.clipRightFraction,
           );
         }
       }
@@ -917,8 +920,8 @@ class NotificationService {
       canvasRect.width * accessory.dx,
       canvasRect.height * accessory.dy,
     ),
-    width: canvasRect.width * accessory.scale,
-    height: canvasRect.height * accessory.scale,
+    width: canvasRect.width * accessory.scale * accessory.scaleX,
+    height: canvasRect.height * accessory.scale * accessory.scaleY,
   );
 
   void _drawGenericReminderSymbol(ui.Canvas canvas, double size) {
@@ -1094,12 +1097,19 @@ class NotificationService {
     ui.Canvas canvas,
     ui.Image image,
     ui.Rect destination,
-    ui.Paint paint,
-  ) {
+    ui.Paint paint, {
+    double sourceRightFraction = 1,
+  }) {
+    final fraction = sourceRightFraction.clamp(0.0, 1.0);
     canvas.drawImageRect(
       image,
-      ui.Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-      destination,
+      ui.Rect.fromLTWH(0, 0, image.width * fraction, image.height.toDouble()),
+      ui.Rect.fromLTWH(
+        destination.left,
+        destination.top,
+        destination.width * fraction,
+        destination.height,
+      ),
       paint,
     );
   }

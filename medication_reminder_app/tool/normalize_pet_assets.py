@@ -45,7 +45,13 @@ DRESSED_GRIDS = {
     "supporter_outfit": "supporter_outfit_grid_transparent.png",
     "chicken_outfit_overalls": "chicken_outfit_overalls_grid_transparent.png",
     "doctor_outfit": "doctor_outfit_grid_transparent.png",
+    "streak_150_outfit_varsity": "streak_150_outfit_varsity_grid_transparent.png",
+    "streak_365_outfit_year_champion": "streak_365_outfit_year_champion_paws_v2_grid_transparent.png",
+    "streak_500_outfit_legend": "streak_500_outfit_legend_paws_v2_grid_transparent.png",
+    "streak_1000_outfit_millennium": "streak_1000_outfit_millennium_paws_v2_grid_transparent.png",
 }
+
+DRAGON_MODE_GRID = "dragon_mode_young_paws_v2_grid_transparent.png"
 
 DOCTOR_ITEM_SOURCES = {
     "doctor_hat_fezz": "doctor_fezz_transparent.png",
@@ -63,15 +69,65 @@ HEAD_ACCESSORIES = {
     "hat_crown": ("shop_hat_crown", "hat", (189, 22, 323, 121), (256, 116), 1.02),
     "supporter_hat": ("supporter_hat", "hat", (189, 22, 323, 121), (256, 116), 1.02),
     "chicken_hat_straw": ("chicken_hat_straw", "hat", (186, 12, 327, 98), (256, 88), 1.02),
-    "doctor_hat_fezz": ("doctor_hat_fezz", "hat", None, None, 1.00),
+    # A fez is a low, brimless, lightly tapered hat. Keep its seat on the
+    # measured crown landmark while reducing the source itself, instead of
+    # scaling the entire 512px overlay and accidentally moving the hat.
+    "doctor_hat_fezz": ("doctor_hat_fezz", "hat", None, None, (0.75, 0.90)),
     # The round frame has a considerably narrower source crop than the other
     # glasses. A small item-specific correction keeps both lenses over the
     # eyes on broad adult heads without changing the source artwork.
-    "glasses_round": ("shop_glasses_round", "glasses", (196, 121, 315, 178), (242, 145), 1.12),
-    "supporter_glasses": ("supporter_glasses", "glasses", (170, 119, 341, 199), (244, 159), 0.86),
-    "glasses_sun": ("shop_glasses_sun", "glasses", (151, 120, 361, 197), (235, 157), 0.78),
-    "glasses_star": ("shop_glasses_star", "glasses", (170, 119, 341, 199), (244, 159), 0.86),
-    "chicken_glasses_egg": ("chicken_glasses_egg", "glasses", (185, 117, 353, 209), (256, 162), 0.80),
+    # The right edge stops at the frame rim. The decorative/right temple arm
+    # is intentionally excluded, so no truncated stem remains after fitting.
+    "glasses_round": ("shop_glasses_round", "glasses", (196, 121, 290, 178), (242, 145), 1.12),
+    "supporter_glasses": ("supporter_glasses", "glasses", (170, 119, 306, 199), (244, 159), 0.86),
+    "glasses_sun": ("shop_glasses_sun", "glasses", (151, 120, 320, 197), (235, 157), 0.78),
+    "glasses_star": ("shop_glasses_star", "glasses", (170, 119, 305, 199), (244, 159), 0.86),
+    "chicken_glasses_egg": ("chicken_glasses_egg", "glasses", (185, 117, 317, 209), (256, 162), 0.80),
+    # Streak rewards use the same fitted-per-pet pipeline as the established
+    # shop items.  The separate X/Y scales keep caps and crowns pleasantly
+    # shallow, rather than stretching a single generic overlay at runtime.
+    "streak_40_hat_consistency": (
+        "streak_40_hat_consistency",
+        "hat",
+        (299, 65, 949, 585),
+        (624, 579),
+        (0.24, 0.19),
+    ),
+    "streak_100_glasses_century": (
+        "streak_100_glasses_century",
+        "glasses",
+        (129, 372, 1126, 787),
+        (628, 580),
+        (0.138, 0.13),
+    ),
+    "streak_250_hat_laurel": (
+        "streak_250_hat_laurel",
+        "hat",
+        (195, 93, 1060, 541),
+        (628, 535),
+        (0.18, 0.15),
+    ),
+    "streak_300_glasses_prism": (
+        "streak_300_glasses_prism",
+        "glasses",
+        (65, 412, 1188, 804),
+        (626, 608),
+        (0.126, 0.14),
+    ),
+    "streak_365_hat_year_crown": (
+        "streak_365_hat_year_crown",
+        "hat",
+        (193, 68, 1063, 735),
+        (628, 729),
+        (0.18, 0.135),
+    ),
+    "streak_365_glasses_year_star": (
+        "streak_365_glasses_year_star",
+        "glasses",
+        (66, 340, 1188, 775),
+        (627, 558),
+        (0.126, 0.126),
+    ),
 }
 
 # (hat X scale, hat Y scale, hat seat Y, glasses X scale, glasses Y scale,
@@ -81,34 +137,195 @@ HEAD_ACCESSORIES = {
 # The tailored outfit composites retain the same head placement, so these
 # derived overlays fit naked/dressed adults and notification artwork alike.
 PET_HEAD_FITS = {
-    "cat_orange": (1.18, 1.00, 110, 1.20, 1.00, 130),
-    "cat_tuxedo": (1.18, 1.00, 110, 1.20, 1.00, 130),
-    "cat_gray": (1.18, 1.00, 110, 1.20, 1.00, 130),
-    "cat_calico": (1.18, 1.00, 110, 1.20, 1.00, 130),
-    "cat_black_bib": (1.18, 1.00, 110, 1.20, 1.00, 130),
+    "cat_orange": (1.18, 1.00, 110, 1.20, 1.00, 140),
+    "cat_tuxedo": (1.18, 1.00, 110, 1.20, 1.00, 140),
+    "cat_gray": (1.18, 1.00, 110, 1.20, 1.00, 140),
+    "cat_calico": (1.18, 1.00, 110, 1.20, 1.00, 140),
+    "cat_black_bib": (1.18, 1.00, 110, 1.20, 1.00, 140),
     "dog_golden": (1.18, 0.72, 79, 1.20, 1.00, 88),
-    "dog_beagle": (1.18, 0.72, 85, 1.20, 1.00, 94),
-    "dog_black_lab": (1.18, 0.70, 75, 1.20, 1.00, 84),
+    "dog_beagle": (1.18, 0.72, 85, 1.20, 1.00, 98),
+    "dog_black_lab": (1.18, 0.70, 75, 1.20, 1.00, 92),
     "dog_border_collie": (1.18, 0.72, 99, 1.20, 1.00, 108),
-    "dog_dachshund": (1.18, 0.72, 83, 1.20, 1.00, 92),
+    "dog_dachshund": (1.18, 0.72, 83, 1.20, 1.00, 96),
     "chicken_hen": (1.05, 0.82, 97, 1.00, 0.78, 132),
+}
+
+# The generated adult animals are intentionally not all centred in their
+# 512px canvases (tails and broad bodies shift the head). These measured
+# crown/eye midpoints keep hats and glasses on the face instead of on the
+# canvas centre.
+PET_HEAD_CENTER_X = {
+    "cat_orange": 248,
+    "cat_tuxedo": 249,
+    "cat_gray": 247,
+    "cat_calico": 247,
+    "cat_black_bib": 224,
+    "dog_golden": 257,
+    "dog_beagle": 260,
+    "dog_black_lab": 247,
+    "dog_border_collie": 253,
+    "dog_dachshund": 256,
+    "chicken_hen": 256,
 }
 
 # (maximum width, maximum height, vertical centre) for collar-level items.
 # The fitted bow tie uses each adult animal's measured neck/chest landmark.
 PET_NECK_FITS = {
-    "cat_orange": (118, 58, 194),
-    "cat_tuxedo": (118, 58, 194),
-    "cat_gray": (118, 58, 194),
-    "cat_calico": (118, 58, 194),
-    "cat_black_bib": (112, 56, 202),
-    "dog_golden": (108, 52, 174),
-    "dog_beagle": (108, 52, 192),
-    "dog_black_lab": (106, 50, 170),
-    "dog_border_collie": (106, 50, 194),
-    "dog_dachshund": (106, 50, 196),
-    "chicken_hen": (94, 46, 220),
+    "cat_orange": (96, 46, 245, 214),
+    "cat_tuxedo": (96, 46, 246, 214),
+    "cat_gray": (96, 46, 245, 214),
+    "cat_calico": (96, 46, 244, 214),
+    "cat_black_bib": (90, 44, 224, 220),
+    "dog_golden": (108, 52, 257, 174),
+    "dog_beagle": (90, 44, 260, 212),
+    "dog_black_lab": (106, 50, 247, 170),
+    "dog_border_collie": (106, 50, 253, 194),
+    "dog_dachshund": (90, 44, 256, 214),
+    "chicken_hen": (94, 46, 256, 220),
 }
+
+
+def fitted_accessory_correction(
+    item_id: str,
+    prefix: str,
+) -> tuple[float, float, float]:
+    """Return the user-reviewed X/Y scale and vertical offset to bake in."""
+    if item_id == "supporter_hat" and prefix in {
+        "cat_orange",
+        "chicken_hen",
+    }:
+        return (0.86, 0.88, -0.035)
+    if item_id == "hat_cap" and prefix == "chicken_hen":
+        return (0.88, 0.88, -0.035)
+    if item_id == "glasses_round" and prefix != "dog_dachshund":
+        return (0.94, 0.82, -0.035)
+    if item_id == "supporter_glasses" and prefix not in {
+        "dog_beagle",
+        "dog_dachshund",
+    }:
+        return (0.78, 0.78, -0.045)
+    if item_id == "glasses_sun" and prefix != "dog_dachshund":
+        return (0.90, 0.86, -0.028)
+    if item_id == "glasses_star" and prefix != "dog_dachshund":
+        return (0.88, 0.84, -0.03)
+    if item_id == "chicken_glasses_egg" and prefix not in {
+        "cat_orange",
+        "cat_tuxedo",
+        "cat_gray",
+        "cat_calico",
+        "cat_black_bib",
+        "dog_beagle",
+        "dog_dachshund",
+    }:
+        return (0.78, 0.78, -0.045)
+    if item_id == "doctor_bow_tie":
+        if prefix in {"cat_orange", "cat_tuxedo", "cat_gray", "cat_calico", "cat_black_bib"}:
+            return (1.00, 1.00, 0.00)
+        return {
+            "dog_golden": (0.72, 0.74, 0.02),
+            "dog_beagle": (1.00, 1.00, 0.00),
+            "dog_black_lab": (1.00, 0.82, 0.035),
+            "dog_border_collie": (0.85, 0.80, 0.012),
+            "dog_dachshund": (1.00, 1.00, 0.00),
+        }.get(prefix, (1.00, 1.00, 0.00))
+    return (1.00, 1.00, 0.00)
+
+
+def fitted_accessory_placement_adjustment(
+    item_id: str,
+    prefix: str,
+    category: str,
+) -> tuple[float, float, int]:
+    """Return source-local scale and Y-seat adjustments from visual review."""
+    scale_x = 1.0
+    scale_y = 1.0
+    offset_y = 0
+
+    if (
+        category == "hat"
+        and prefix == "dog_dachshund"
+        and item_id != "doctor_hat_fezz"
+    ):
+        scale_x *= 0.78
+        scale_y *= 0.88
+        offset_y -= 6
+
+    if item_id == "doctor_hat_fezz":
+        if prefix == "chicken_hen":
+            scale_x *= 0.75
+        elif prefix in {
+            "dog_golden",
+            "dog_beagle",
+            "dog_black_lab",
+            "dog_border_collie",
+        }:
+            scale_x *= 0.82
+
+    if item_id == "hat_wizard" and prefix in {
+        "dog_beagle",
+        "dog_border_collie",
+        "dog_dachshund",
+    }:
+        offset_y -= 6
+
+    if item_id == "streak_250_hat_laurel" and prefix == "chicken_hen":
+        scale_x *= 0.70
+
+    if item_id == "streak_40_hat_consistency":
+        if prefix == "dog_golden":
+            scale_x *= 0.90
+            scale_y *= 0.90
+            offset_y -= 4
+        elif prefix == "dog_black_lab":
+            scale_x *= 0.80
+            scale_y *= 0.88
+            offset_y -= 6
+        elif prefix == "chicken_hen":
+            scale_x *= 0.68
+            scale_y *= 0.80
+            offset_y -= 2
+
+    if item_id in {
+        "streak_300_glasses_prism",
+        "streak_365_glasses_year_star",
+    } and prefix == "dog_dachshund":
+        scale_x *= 0.92
+
+    return (scale_x, scale_y, offset_y)
+
+
+def bake_accessory_correction(
+    canvas: Image.Image,
+    *,
+    item_id: str,
+    prefix: str,
+    remove_right_arm: bool = False,
+) -> Image.Image:
+    """Bake final fit and optional glasses-arm removal into a 512px asset."""
+    working = canvas.copy()
+    if remove_right_arm:
+        working.paste(
+            (0, 0, 0, 0),
+            (round(CANVAS_SIZE * 0.64), 0, CANVAS_SIZE, CANVAS_SIZE),
+        )
+    scale_x, scale_y, dy = fitted_accessory_correction(item_id, prefix)
+    if (scale_x, scale_y, dy) == (1.0, 1.0, 0.0):
+        return working
+    resized = working.resize(
+        (round(CANVAS_SIZE * scale_x), round(CANVAS_SIZE * scale_y)),
+        Image.Resampling.LANCZOS,
+    )
+    corrected = Image.new("RGBA", (CANVAS_SIZE, CANVAS_SIZE), (0, 0, 0, 0))
+    corrected.alpha_composite(
+        resized,
+        (
+            round((CANVAS_SIZE - resized.width) / 2),
+            round((CANVAS_SIZE - resized.height) / 2 + dy * CANVAS_SIZE),
+        ),
+    )
+    working.close()
+    resized.close()
+    return corrected
 
 
 def visible_crop(image: Image.Image, name: str) -> Image.Image:
@@ -116,6 +333,90 @@ def visible_crop(image: Image.Image, name: str) -> Image.Image:
     if box is None:
         raise RuntimeError(f"No visible pixels found for {name}")
     return image.crop(box)
+
+
+def fitted_grid_cell(
+    sheet: Image.Image,
+    *,
+    row: int,
+    column: int,
+    name: str,
+) -> Image.Image:
+    """Extract one 4x3 grid cell without trimming the outer row margins."""
+    alpha = sheet.getchannel("A")
+    empty_rows = [
+        alpha.crop((0, y, sheet.width, y + 1)).getbbox() is None
+        for y in range(sheet.height)
+    ]
+    empty_runs = contiguous_true_runs(empty_rows)
+
+    row_boundaries = [0]
+    for target in (sheet.height * 3 / 8, sheet.height * 5 / 8):
+        candidates = [
+            run
+            for run in empty_runs
+            if sheet.height * 0.2 < (run[0] + run[1]) / 2 < sheet.height * 0.8
+        ]
+        if not candidates:
+            raise RuntimeError(f"Could not find a transparent row gap for {name}")
+        gap = min(candidates, key=lambda run: abs((run[0] + run[1]) / 2 - target))
+        row_boundaries.append(round((gap[0] + gap[1]) / 2))
+    row_boundaries.append(sheet.height)
+    top = row_boundaries[row]
+    bottom = row_boundaries[row + 1]
+
+    # Find column separators across the complete sheet. Looking at one row can
+    # mistake a wide transparent opening between a pet's wing and body for a
+    # grid separator, which clips accessories that extend sideways.
+    row_alpha = alpha
+    empty_columns = [
+        row_alpha.crop((x, 0, x + 1, row_alpha.height)).getbbox() is None
+        for x in range(sheet.width)
+    ]
+    column_runs = contiguous_true_runs(empty_columns)
+    column_boundaries = [0]
+    for target in (sheet.width / 4, sheet.width / 2, sheet.width * 3 / 4):
+        candidates = [
+            run
+            for run in column_runs
+            if sheet.width * 0.1 < (run[0] + run[1]) / 2 < sheet.width * 0.9
+        ]
+        if not candidates:
+            raise RuntimeError(f"Could not find a transparent column gap for {name}")
+        gap = min(candidates, key=lambda run: abs((run[0] + run[1]) / 2 - target))
+        column_boundaries.append(round((gap[0] + gap[1]) / 2))
+    column_boundaries.append(sheet.width)
+    left = column_boundaries[column]
+    right = column_boundaries[column + 1]
+    cell = sheet.crop((left, top, right, bottom))
+    bounds = cell.getchannel("A").getbbox()
+    if bounds is None:
+        raise RuntimeError(f"No visible pixels found for {name}")
+    # Touching an internal separator means the wrong gap was selected or the
+    # neighbouring cell is being clipped. The outside of the source canvas is
+    # allowed to touch: generated sheets often seat the last row exactly on the
+    # baseline, and there is no neighbouring artwork beyond that edge.
+    if (
+        (column > 0 and bounds[0] == 0)
+        or (row > 0 and bounds[1] == 0)
+        or (column < 3 and bounds[2] == cell.width)
+        or (row < 2 and bounds[3] == cell.height)
+    ):
+        raise RuntimeError(f"{name} touches its source grid boundary: {bounds}")
+    return cell.crop(bounds)
+
+
+def contiguous_true_runs(values: list[bool]) -> list[tuple[int, int]]:
+    """Return half-open ranges containing consecutive true values."""
+    runs: list[tuple[int, int]] = []
+    run_start: int | None = None
+    for index, value in enumerate((*values, False)):
+        if value and run_start is None:
+            run_start = index
+        elif not value and run_start is not None:
+            runs.append((run_start, index))
+            run_start = None
+    return runs
 
 
 def guarded_pet_crop(image: Image.Image, name: str) -> Image.Image:
@@ -381,25 +682,22 @@ def normalize_doctor_items() -> None:
     )
 
 
-def normalize_dressed_pets() -> None:
+def normalize_dressed_pets(outfit_ids: set[str] | None = None) -> None:
     """Extract full, individually tailored adult-pet outfit composites."""
     dressed_output = OUTPUT / "fitted"
     dressed_output.mkdir(parents=True, exist_ok=True)
     dressed_source = SOURCE / "dressed"
     for outfit_id, filename in DRESSED_GRIDS.items():
+        if outfit_ids is not None and outfit_id not in outfit_ids:
+            continue
         sheet = Image.open(dressed_source / filename).convert("RGBA")
-        cell_width = sheet.width / 4
-        cell_height = sheet.height / 4
-        top_offset = sheet.height / 8
         for index, prefix in enumerate(ADULT_PETS):
             row, column = divmod(index, 4)
-            left = round(column * cell_width)
-            right = round((column + 1) * cell_width)
-            top = round(top_offset + row * cell_height)
-            bottom = round(top_offset + (row + 1) * cell_height)
-            dressed = visible_crop(
-                sheet.crop((left, top, right, bottom)),
-                f"{prefix} {outfit_id}",
+            dressed = fitted_grid_cell(
+                sheet,
+                row=row,
+                column=column,
+                name=f"{prefix} {outfit_id}",
             )
             target_height = TARGET_HEIGHTS[-1]
             scale = min(
@@ -422,7 +720,46 @@ def normalize_dressed_pets() -> None:
         sheet.close()
 
 
-def normalize_fitted_head_accessories() -> None:
+def normalize_stage_costume_grid(
+    costume_id: str,
+    filename: str,
+    stage: str,
+    max_width: int = DISPLAY_WIDTH,
+) -> None:
+    """Extract a tailored full-pet costume grid for a non-adult life stage."""
+    if stage not in STAGES:
+        raise ValueError(f"Unsupported pet stage: {stage}")
+    fitted_output = OUTPUT / "fitted"
+    fitted_output.mkdir(parents=True, exist_ok=True)
+    sheet = Image.open(SOURCE / "dressed" / filename).convert("RGBA")
+    target_height = TARGET_HEIGHTS[STAGES.index(stage)]
+    for index, prefix in enumerate(ADULT_PETS):
+        row, column = divmod(index, 4)
+        dressed = fitted_grid_cell(
+            sheet,
+            row=row,
+            column=column,
+            name=f"{prefix} {costume_id} {stage}",
+        )
+        scale = min(target_height / dressed.height, max_width / dressed.width)
+        dressed = dressed.resize(
+            (round(dressed.width * scale), round(dressed.height * scale)),
+            Image.Resampling.LANCZOS,
+        )
+        dressed = center_visible_to_width(dressed, max_width)
+        canvas = Image.new("RGBA", (CANVAS_SIZE, CANVAS_SIZE), (0, 0, 0, 0))
+        x = (CANVAS_SIZE - dressed.width) // 2
+        y = CANVAS_SIZE - 28 - dressed.height
+        canvas.alpha_composite(dressed, (x, y))
+        output = fitted_output / f"{prefix}_{costume_id}_{stage}.png"
+        canvas.save(output, optimize=True)
+        print(output.relative_to(OUTPUT), canvas.getchannel("A").getbbox())
+        dressed.close()
+        canvas.close()
+    sheet.close()
+
+
+def normalize_fitted_head_accessories(item_ids: set[str] | None = None) -> None:
     """Create clean, anchored hat/glasses copies for every adult pet."""
     fitted_output = OUTPUT / "fitted_accessories"
     fitted_output.mkdir(parents=True, exist_ok=True)
@@ -442,6 +779,8 @@ def normalize_fitted_head_accessories() -> None:
             source_anchor,
             item_scale,
         ) in HEAD_ACCESSORIES.items():
+            if item_ids is not None and item_id not in item_ids:
+                continue
             source = Image.open(OUTPUT / f"{source_name}.png").convert("RGBA")
             if content_box is None:
                 content_box = source.getchannel("A").getbbox()
@@ -452,8 +791,27 @@ def normalize_fitted_head_accessories() -> None:
             content = source.crop(content_box)
             pet_scale_x = hat_scale_x if category == "hat" else glasses_scale_x
             pet_scale_y = hat_scale_y if category == "hat" else glasses_scale_y
-            scale_x = item_scale * pet_scale_x
-            scale_y = item_scale * pet_scale_y
+            if isinstance(item_scale, tuple):
+                item_scale_x, item_scale_y = item_scale
+            else:
+                item_scale_x = item_scale_y = item_scale
+            scale_x = item_scale_x * pet_scale_x
+            scale_y = item_scale_y * pet_scale_y
+            (
+                placement_scale_x,
+                placement_scale_y,
+                placement_offset_y,
+            ) = fitted_accessory_placement_adjustment(
+                item_id,
+                prefix,
+                category,
+            )
+            scale_x *= placement_scale_x
+            scale_y *= placement_scale_y
+            if item_id == "hat_wizard" and prefix.startswith("dog_"):
+                # Keep the tall point visible while lifting the brim clear of
+                # the dogs' brows: flatten the crown before seating it higher.
+                scale_y *= 0.85
             content = content.resize(
                 (
                     round(content.width * scale_x),
@@ -464,17 +822,48 @@ def normalize_fitted_head_accessories() -> None:
             anchor_x = (source_anchor[0] - content_box[0]) * scale_x
             anchor_y = (source_anchor[1] - content_box[1]) * scale_y
             target_y = hat_y if category == "hat" else glasses_y
+            target_y += placement_offset_y
+            if item_id == "doctor_hat_fezz":
+                target_y -= 15
+            elif item_id == "hat_wizard" and prefix.startswith("dog_"):
+                target_y -= 12
+            elif item_id == "chicken_hat_straw" and prefix.startswith("dog_"):
+                target_y -= 12
+            elif item_id == "hat_cap" and prefix == "dog_dachshund":
+                target_y -= 8
+            elif item_id == "streak_250_hat_laurel":
+                target_y -= 5
+            elif item_id == "streak_40_hat_consistency" and prefix in {
+                "dog_border_collie",
+                "dog_dachshund",
+            }:
+                target_y -= 10
+            elif item_id == "streak_365_hat_year_crown" and prefix in {
+                "dog_beagle",
+                "dog_dachshund",
+            }:
+                target_y -= 10
+            elif item_id == "hat_crown" and prefix == "dog_beagle":
+                target_y -= 8
             canvas = Image.new("RGBA", (CANVAS_SIZE, CANVAS_SIZE), (0, 0, 0, 0))
+            target_x = PET_HEAD_CENTER_X[prefix]
             canvas.alpha_composite(
                 content,
-                (round(CANVAS_SIZE / 2 - anchor_x), round(target_y - anchor_y)),
+                (round(target_x - anchor_x), round(target_y - anchor_y)),
+            )
+            corrected = bake_accessory_correction(
+                canvas,
+                item_id=item_id,
+                prefix=prefix,
+                remove_right_arm=False,
             )
             output = fitted_output / f"{prefix}_{item_id}.png"
-            canvas.save(output, optimize=True)
-            print(output.relative_to(OUTPUT), canvas.getchannel("A").getbbox())
+            corrected.save(output, optimize=True)
+            print(output.relative_to(OUTPUT), corrected.getchannel("A").getbbox())
             source.close()
             content.close()
             canvas.close()
+            corrected.close()
 
 
 def normalize_fitted_neckwear() -> None:
@@ -483,18 +872,24 @@ def normalize_fitted_neckwear() -> None:
     item = visible_crop(source, "doctor_bow_tie")
     fitted_output = OUTPUT / "fitted_accessories"
     fitted_output.mkdir(parents=True, exist_ok=True)
-    for prefix, (width, height, center_y) in PET_NECK_FITS.items():
+    for prefix, (width, height, center_x, center_y) in PET_NECK_FITS.items():
         canvas = placed_overlay(
             item,
             max_width=width,
             max_height=height,
-            center_x=CANVAS_SIZE // 2,
+            center_x=center_x,
             center_y=center_y,
         )
+        corrected = bake_accessory_correction(
+            canvas,
+            item_id="doctor_bow_tie",
+            prefix=prefix,
+        )
         output = fitted_output / f"{prefix}_doctor_bow_tie.png"
-        canvas.save(output, optimize=True)
-        print(output.relative_to(OUTPUT), canvas.getchannel("A").getbbox())
+        corrected.save(output, optimize=True)
+        print(output.relative_to(OUTPUT), corrected.getchannel("A").getbbox())
         canvas.close()
+        corrected.close()
     source.close()
     item.close()
 
@@ -830,9 +1225,11 @@ def generate_head_landmark_reference() -> None:
     grid.close()
 
 
-def generate_adult_reference_grid() -> None:
+def generate_pet_reference_grid(stage: str = "adult") -> None:
     """Build the fixed 4x3 reference grid used for outfit image edits."""
-    pets = tuple(f"{prefix}_adult" for prefix in ADULT_PETS)
+    if stage not in STAGES:
+        raise ValueError(f"Unsupported pet stage: {stage}")
+    pets = tuple(f"{prefix}_{stage}" for prefix in ADULT_PETS)
     grid_size = 1024
     cell_size = 256
     top = 128
@@ -853,10 +1250,15 @@ def generate_adult_reference_grid() -> None:
         y = cell_y + cell_size - 12 - pet_crop.height
         grid.alpha_composite(pet_crop, (x, y))
         pet.close()
-    output = ROOT / "tmp" / "adult_pet_reference_grid.png"
+    output = ROOT / "tmp" / f"{stage}_pet_reference_grid.png"
     output.parent.mkdir(parents=True, exist_ok=True)
     grid.convert("RGB").save(output, optimize=True)
     grid.close()
+
+
+def generate_adult_reference_grid() -> None:
+    """Keep the historical adult-grid entry point for existing tooling."""
+    generate_pet_reference_grid("adult")
 
 
 def generate_doctor_who_preview() -> None:
@@ -927,6 +1329,12 @@ def main() -> None:
     normalize_accessories()
     normalize_doctor_items()
     normalize_dressed_pets()
+    normalize_stage_costume_grid(
+        "dragon_mode",
+        DRAGON_MODE_GRID,
+        "young",
+        max_width=400,
+    )
     normalize_fitted_head_accessories()
     normalize_fitted_neckwear()
     generate_launcher_icons()

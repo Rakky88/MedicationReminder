@@ -33,6 +33,7 @@ class _CatScreenState extends State<CatScreen> {
   late bool _purrEnabled;
   late bool _meowEnabled;
   late bool _persistentMeowEnabled;
+  late bool _dragonMode;
   bool _chickenUnlocked = false;
   bool _saving = false;
 
@@ -51,6 +52,7 @@ class _CatScreenState extends State<CatScreen> {
     _purrEnabled = _profile?.purrEnabled ?? true;
     _meowEnabled = _profile?.meowEnabled ?? true;
     _persistentMeowEnabled = _profile?.persistentMeowEnabled ?? true;
+    _dragonMode = _profile?.dragonMode ?? false;
     _loadUnlocks();
   }
 
@@ -105,6 +107,7 @@ class _CatScreenState extends State<CatScreen> {
               purrEnabled: _purrEnabled,
               meowEnabled: _meowEnabled,
               persistentMeowEnabled: _persistentMeowEnabled,
+              dragonMode: _dragonMode,
             );
       if (mounted) Navigator.pop(context, CatScreenResult(profile: profile));
     } on Object {
@@ -210,13 +213,14 @@ class _CatScreenState extends State<CatScreen> {
       PetSpecies.dog => loc.dogBarkSoundBody,
       PetSpecies.chicken => loc.chickenCrowSoundBody,
     };
-    final preview =
+    final previewBase =
         _profile ??
         CatProfile(
           name: _nameController.text,
           variant: _variant,
           adoptedAt: DateTime.now(),
         );
+    final preview = previewBase.copyWith(dragonMode: _dragonMode);
     return Scaffold(
       appBar: AppBar(title: Text(_isAdopting ? loc.adoptCat : loc.catSettings)),
       body: ListView(
@@ -295,6 +299,14 @@ class _CatScreenState extends State<CatScreen> {
             decoration: InputDecoration(labelText: loc.catName),
           ),
           const SizedBox(height: 8),
+          if (!_isAdopting && preview.stage == CatStage.young)
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              value: _dragonMode,
+              onChanged: (value) => setState(() => _dragonMode = value),
+              title: const Text('Dragon mode'),
+              secondary: const Icon(Icons.auto_awesome_outlined),
+            ),
           SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
             value: _purrEnabled,

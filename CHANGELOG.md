@@ -1,5 +1,27 @@
 # Versiegeschiedenis
 
+## V0.01.01 — 2026-08-15
+
+- Herstel de door de gebruiker geselecteerde pasvormen van hoeden, brillen en
+  strikjes per volwassen diervariant. De fez is op de geselecteerde honden en
+  kip duidelijk smaller en behoudt zijn lage, brimloze vorm.
+- Verwijder het storende uitstekende rechter brilsteeltje uit de klassieke
+  brillen en plaats de geselecteerde brillen opnieuw op de gemeten ooglijn.
+- Vernauw en verplaats de geselecteerde petten, kronen, tovenaarshoeden,
+  lauwerkransen en streakpetten zonder eerder goedgekeurde varianten te wijzigen.
+- Vervang de Dragon-modebeelden voor alle vijf katten, vijf honden en de kip:
+  natuurlijke voorpoten of vleugels komen nu zichtbaar door de kostuumopeningen.
+- Maak Dragon mode alleen in de jonge/middelste levensfase als standaard
+  uitgeschakelde instelling zichtbaar en gebruik daar per dier een complete,
+  passende sprite voor.
+- Houd alle streak-items voor volwassen dieren altijd zichtbaar in het tweede
+  shoptabblad, maar vergrendel gratis claimen tot de vereiste streak is gehaald.
+- Gebruik generieke meldingstekst en -afbeelding wanneer nog geen huisdier is
+  gekozen, en hernoem de garderobegroep **Bow ties** naar **Ties**.
+- Leg de vaste tik-en-selecteer-review voor nieuwe assets vast, voeg de
+  Dragon-pagina weer aan de emulatorcontrole toe en voeg een script toe dat een
+  geëxporteerde selectielijst als controlesheets rendert.
+
 ## V0.00.04 — 2026-08-15
 
 - Voeg een blijvende medicatiestreak toe die alleen stijgt wanneer alle

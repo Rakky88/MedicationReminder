@@ -55,8 +55,9 @@ class CatShopItem {
   CatAccessoryTransform adaptiveTransform(PetVariant variant) {
     var scale = overlayScale;
     var dy = overlayDy;
-    if (category == CatAccessoryCategory.hat ||
-        category == CatAccessoryCategory.glasses) {
+    if (adaptiveOverlay &&
+        (category == CatAccessoryCategory.hat ||
+            category == CatAccessoryCategory.glasses)) {
       final isDog = variant.species == PetSpecies.dog;
       if (isDog) {
         scale *= category == CatAccessoryCategory.hat ? .82 : .76;
@@ -70,7 +71,7 @@ class CatShopItem {
         PetVariant.dogDachshund => -.074 * landmarkFactor,
         _ => 0,
       };
-    } else if (category == CatAccessoryCategory.outfit) {
+    } else if (adaptiveOverlay && category == CatAccessoryCategory.outfit) {
       scale *= switch (variant) {
         PetVariant.catBlackBib => .90,
         PetVariant.dogGolden => .88,
@@ -98,13 +99,20 @@ class CatShopItem {
 class CatAccessoryTransform {
   const CatAccessoryTransform({
     required this.scale,
+    this.scaleX = 1,
+    this.scaleY = 1,
     required this.dx,
     required this.dy,
   });
 
   final double scale;
+  final double scaleX;
+  final double scaleY;
   final double dx;
   final double dy;
+
+  double get effectiveScaleX => scale * scaleX;
+  double get effectiveScaleY => scale * scaleY;
 }
 
 const catShopCatalog = <CatShopItem>[
@@ -125,9 +133,6 @@ const catShopCatalog = <CatShopItem>[
     nameEn: 'Consistency cap',
     nameNl: 'Doorzetterspet',
     requiredMedicationStreak: 40,
-    adaptiveOverlay: true,
-    overlayScale: .55,
-    overlayDy: -.225,
   ),
   CatShopItem(
     id: 'streak_100_glasses_century',
@@ -137,10 +142,6 @@ const catShopCatalog = <CatShopItem>[
     nameEn: 'Century glasses',
     nameNl: 'Eeuwbril',
     requiredMedicationStreak: 100,
-    adaptiveOverlay: true,
-    overlayScale: .37,
-    overlayDx: .025,
-    overlayDy: -.285,
   ),
   CatShopItem(
     id: 'streak_150_outfit_varsity',
@@ -150,9 +151,6 @@ const catShopCatalog = <CatShopItem>[
     nameEn: 'Progress varsity jacket',
     nameNl: 'Voortgangsjack',
     requiredMedicationStreak: 150,
-    adaptiveOverlay: true,
-    overlayScale: .75,
-    overlayDy: .09,
   ),
   CatShopItem(
     id: 'streak_200_toy_rocket',
@@ -175,9 +173,6 @@ const catShopCatalog = <CatShopItem>[
     nameEn: 'Golden laurel',
     nameNl: 'Gouden lauwerkrans',
     requiredMedicationStreak: 250,
-    adaptiveOverlay: true,
-    overlayScale: .63,
-    overlayDy: -.215,
   ),
   CatShopItem(
     id: 'streak_300_glasses_prism',
@@ -187,10 +182,6 @@ const catShopCatalog = <CatShopItem>[
     nameEn: 'Focus prism glasses',
     nameNl: 'Focusprismabril',
     requiredMedicationStreak: 300,
-    adaptiveOverlay: true,
-    overlayScale: .41,
-    overlayDx: .025,
-    overlayDy: -.255,
   ),
   CatShopItem(
     id: 'streak_365_hat_year_crown',
@@ -200,9 +191,6 @@ const catShopCatalog = <CatShopItem>[
     nameEn: 'First-year crown',
     nameNl: 'Eerstejaarskroon',
     requiredMedicationStreak: 365,
-    adaptiveOverlay: true,
-    overlayScale: .48,
-    overlayDy: -.26,
   ),
   CatShopItem(
     id: 'streak_365_glasses_year_star',
@@ -212,9 +200,6 @@ const catShopCatalog = <CatShopItem>[
     nameEn: 'Anniversary star glasses',
     nameNl: 'Jubileumsterrenbril',
     requiredMedicationStreak: 365,
-    adaptiveOverlay: true,
-    overlayScale: .42,
-    overlayDy: -.265,
   ),
   CatShopItem(
     id: 'streak_365_outfit_year_champion',
@@ -224,9 +209,6 @@ const catShopCatalog = <CatShopItem>[
     nameEn: 'First-year champion jacket',
     nameNl: 'Eerstejaarskampioensjack',
     requiredMedicationStreak: 365,
-    adaptiveOverlay: true,
-    overlayScale: .75,
-    overlayDy: .09,
   ),
   CatShopItem(
     id: 'streak_365_toy_year_cake',
@@ -249,9 +231,6 @@ const catShopCatalog = <CatShopItem>[
     nameEn: 'Legend coat',
     nameNl: 'Legendejas',
     requiredMedicationStreak: 500,
-    adaptiveOverlay: true,
-    overlayScale: .72,
-    overlayDy: .10,
   ),
   CatShopItem(
     id: 'streak_750_toy_comet',
@@ -274,9 +253,6 @@ const catShopCatalog = <CatShopItem>[
     nameEn: 'Millennium regalia',
     nameNl: 'Millenniumgewaad',
     requiredMedicationStreak: 1000,
-    adaptiveOverlay: true,
-    overlayScale: .82,
-    overlayDy: .055,
   ),
   CatShopItem(
     id: 'hat_cap',
@@ -528,7 +504,8 @@ List<CatShopItem> visibleCatShopCatalog(
 }) => catShopCatalog
     .where(
       (item) =>
+          item.isStreakReward ||
           (!item.requiresChickenUnlock || chickenUnlocked) &&
-          !item.hiddenUntilOwned,
+              !item.hiddenUntilOwned,
     )
     .toList();
