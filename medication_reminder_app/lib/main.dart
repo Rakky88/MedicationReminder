@@ -792,12 +792,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         titleSpacing: 12,
         title: Row(
           children: <Widget>[
-            AppLogoMark(
-              size: 38,
-              imageKey: const Key('home-brand-logo'),
-              semanticLabel: loc.title,
+            IconButton(
+              key: const Key('home-brand-about-button'),
+              onPressed: () => _startUserAction(_openAbout),
+              tooltip: loc.aboutApp,
+              padding: const EdgeInsets.all(5),
+              constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+              icon: const AppLogoMark(
+                size: 38,
+                imageKey: Key('home-brand-logo'),
+              ),
             ),
-            const SizedBox(width: 9),
+            const SizedBox(width: 5),
             Expanded(
               child: FittedBox(
                 alignment: Alignment.centerLeft,
@@ -816,11 +822,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ],
         ),
         actions: <Widget>[
-          IconButton(
-            onPressed: () => _startUserAction(_openAbout),
-            tooltip: loc.aboutApp,
-            icon: const Icon(Icons.info_outline),
-          ),
           IconButton(
             tooltip: loc.history,
             icon: const Icon(Icons.history),

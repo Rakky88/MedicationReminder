@@ -1,5 +1,13 @@
 # Versiegeschiedenis
 
+## V0.02.03 — 2026-08-19
+
+- Maak het transparante logo links in de bovenbalk van het hoofdscherm een
+  toegankelijke knop die **Over deze app** opent. Gebruik een tikvlak van 48 bij
+  48 pixels en behoud het bestaande uiterlijk van het beeldmerk.
+- Verwijder het losse informatie-icoon uit de rechterkant van de bovenbalk,
+  zodat de appnaam en overige acties meer ruimte en een rustiger aanblik krijgen.
+
 ## V0.02.02 — 2026-08-19
 
 - Centreer in het merkblok van **Over deze app** het transparante logo, de

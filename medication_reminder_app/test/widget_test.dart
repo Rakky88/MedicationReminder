@@ -43,6 +43,31 @@ void main() {
     expect(find.text('Add my first medication'), findsOneWidget);
   });
 
+  testWidgets('home logo opens About and replaces the separate info action', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MedicationReminderApp(initialLocale: Locale('en')),
+    );
+    await tester.pumpAndSettle();
+
+    final aboutButton = find.byKey(const Key('home-brand-about-button'));
+    expect(aboutButton, findsOneWidget);
+    expect(find.byIcon(Icons.info_outline), findsNothing);
+    expect(tester.getSize(aboutButton), const Size(48, 48));
+    expect(tester.widget<IconButton>(aboutButton).tooltip, 'About this app');
+
+    await tester.tap(find.byKey(const Key('home-brand-logo')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('About this app'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('about-brand-hero')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('compact app bar keeps the complete brand visible', (
     WidgetTester tester,
   ) async {
