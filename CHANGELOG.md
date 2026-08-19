@@ -2,6 +2,8 @@
 
 ## V0.01.01 — 2026-08-15
 
+- Zet het Android-buildnummer op 5, zodat deze APK als update over V0.00.04
+  geïnstalleerd kan worden.
 - Herstel de door de gebruiker geselecteerde pasvormen van hoeden, brillen en
   strikjes per volwassen diervariant. De fez is op de geselecteerde honden en
   kip duidelijk smaller en behoudt zijn lage, brimloze vorm.
