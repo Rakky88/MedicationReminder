@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'cat.dart';
 import 'cat_avatar.dart';
 import 'cat_shop.dart';
+import 'gradual_app_bar.dart';
 
 // V14 contains only the two cat glasses selected in the completed V13 review.
 // Every other combination remains approved and stays out of this last check.
@@ -139,7 +140,7 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
         ? 'dragon_mode'
         : '${item!.id} (${item.category.name})';
     return Scaffold(
-      appBar: AppBar(
+      appBar: GradualAppBar(
         title: Text('${_page + 1}/$_totalPages $title'),
         actions: <Widget>[
           if (!_summaryPage)

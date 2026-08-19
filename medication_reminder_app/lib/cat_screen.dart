@@ -8,6 +8,7 @@ import 'cat_avatar.dart';
 import 'cat_inventory_screen.dart';
 import 'cat_repository.dart';
 import 'cat_shop_screen.dart';
+import 'gradual_app_bar.dart';
 
 class CatScreenResult {
   const CatScreenResult({this.profile, this.removed = false});
@@ -212,7 +213,9 @@ class _CatScreenState extends State<CatScreen> {
         );
     final preview = previewBase.copyWith(dragonMode: _dragonMode);
     return Scaffold(
-      appBar: AppBar(title: Text(_isAdopting ? loc.adoptCat : loc.catSettings)),
+      appBar: GradualAppBar(
+        title: Text(_isAdopting ? loc.adoptCat : loc.catSettings),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: <Widget>[

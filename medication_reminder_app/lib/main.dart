@@ -15,6 +15,7 @@ import 'cat_repository.dart';
 import 'cat_screen.dart';
 import 'cat_shop.dart';
 import 'log_screen.dart';
+import 'gradual_app_bar.dart';
 import 'medication.dart';
 import 'medication_form_screen.dart';
 import 'medication_repository.dart';
@@ -195,7 +196,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? _lastMeowDoseKey;
   int? _highlightedMedicationId;
   String? _activePlayMomentKey;
-  double _appBarScrollProgress = 0;
 
   @override
   void initState() {
@@ -775,20 +775,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     unawaited(_runUserAction(action));
   }
 
-  bool _handleHomeScroll(ScrollNotification notification) {
-    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
-      return false;
-    }
-    final linearProgress = (notification.metrics.pixels / 80)
-        .clamp(0.0, 1.0)
-        .toDouble();
-    final progress = Curves.easeInOutCubic.transform(linearProgress);
-    if ((progress - _appBarScrollProgress).abs() > 0.001 && mounted) {
-      setState(() => _appBarScrollProgress = progress);
-    }
-    return false;
-  }
-
   Future<void> _runUserAction(Future<void> Function() action) async {
     try {
       await action();
@@ -801,21 +787,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final appBarColor = ElevationOverlay.applySurfaceTint(
-      theme.colorScheme.surface,
-      theme.colorScheme.surfaceTint,
-      3 * _appBarScrollProgress,
-    );
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: appBarColor,
-        surfaceTintColor: Colors.transparent,
-        scrolledUnderElevation: 0,
-        elevation: 0.8 * _appBarScrollProgress,
-        shadowColor: theme.shadowColor.withValues(
-          alpha: 0.16 * _appBarScrollProgress,
-        ),
+      appBar: GradualAppBar(
         titleSpacing: 12,
         title: Row(
           children: <Widget>[
@@ -895,72 +868,68 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             return _HomeError(onRetry: _refresh);
           }
           final medications = snapshot.data ?? const <Medication>[];
-          return NotificationListener<ScrollNotification>(
-            onNotification: _handleHomeScroll,
-            child: RefreshIndicator(
-              onRefresh: _refresh,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-                children: <Widget>[
-                  if (_cat == null)
-                    CatAdoptionCard(
-                      onAdopt: () => _startUserAction(_openCatScreen),
-                    )
-                  else
-                    CatHomeCard(
-                      profile: _cat!,
-                      activity: _catActivity,
-                      currentMedicationStreak: _medicationStreak.current,
-                      bestMedicationStreak: _medicationStreak.best,
-                      onTap: () => _startUserAction(_interactWithCat),
-                      onSettings: () => _startUserAction(_openCatScreen),
-                    ),
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+              children: <Widget>[
+                if (_cat == null)
+                  CatAdoptionCard(
+                    onAdopt: () => _startUserAction(_openCatScreen),
+                  )
+                else
+                  CatHomeCard(
+                    profile: _cat!,
+                    activity: _catActivity,
+                    currentMedicationStreak: _medicationStreak.current,
+                    bestMedicationStreak: _medicationStreak.best,
+                    onTap: () => _startUserAction(_interactWithCat),
+                    onSettings: () => _startUserAction(_openCatScreen),
+                  ),
+                const SizedBox(height: 12),
+                if (medications.isEmpty)
+                  _EmptyState(
+                    onAdd: () => _startUserAction(_openMedicationForm),
+                  )
+                else ...<Widget>[
+                  _NextReminderCard(medications: medications),
                   const SizedBox(height: 12),
-                  if (medications.isEmpty)
-                    _EmptyState(
-                      onAdd: () => _startUserAction(_openMedicationForm),
-                    )
-                  else ...<Widget>[
-                    _NextReminderCard(medications: medications),
-                    const SizedBox(height: 12),
-                    for (final medication in medications)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _MedicationCard(
-                          medication: medication,
-                          highlighted:
-                              medication.id == _highlightedMedicationId,
-                          onEdit: () => _startUserAction(
-                            () => _openMedicationForm(medication),
-                          ),
-                          onDelete: () => _startUserAction(
-                            () => _deleteMedication(medication),
-                          ),
-                          onToggle: (value) => _startUserAction(
-                            () => _toggleMedication(medication, value),
-                          ),
-                          doseActions: _doseActionsFor(medication),
-                          onTaken: (action) => _startUserAction(
-                            () => _recordDose(
-                              medication,
-                              DoseStatus.taken,
-                              doseKey: action.slot.key,
-                            ),
-                          ),
-                          onSkipped: (action) => _startUserAction(
-                            () => _confirmDoseMissed(
-                              medication,
-                              doseKey: action.slot.key,
-                            ),
-                          ),
-                          onSnooze: (action) => _startUserAction(
-                            () => _snooze(medication, doseKey: action.slot.key),
+                  for (final medication in medications)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _MedicationCard(
+                        medication: medication,
+                        highlighted: medication.id == _highlightedMedicationId,
+                        onEdit: () => _startUserAction(
+                          () => _openMedicationForm(medication),
+                        ),
+                        onDelete: () => _startUserAction(
+                          () => _deleteMedication(medication),
+                        ),
+                        onToggle: (value) => _startUserAction(
+                          () => _toggleMedication(medication, value),
+                        ),
+                        doseActions: _doseActionsFor(medication),
+                        onTaken: (action) => _startUserAction(
+                          () => _recordDose(
+                            medication,
+                            DoseStatus.taken,
+                            doseKey: action.slot.key,
                           ),
                         ),
+                        onSkipped: (action) => _startUserAction(
+                          () => _confirmDoseMissed(
+                            medication,
+                            doseKey: action.slot.key,
+                          ),
+                        ),
+                        onSnooze: (action) => _startUserAction(
+                          () => _snooze(medication, doseKey: action.slot.key),
+                        ),
                       ),
-                  ],
+                    ),
                 ],
-              ),
+              ],
             ),
           );
         },

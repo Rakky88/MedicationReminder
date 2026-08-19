@@ -6,6 +6,7 @@ import 'app_localizations.dart';
 import 'app_release.dart';
 import 'cat_repository.dart';
 import 'external_link_service.dart';
+import 'gradual_app_bar.dart';
 import 'special_code_service.dart';
 
 class _AboutBrandHero extends StatelessWidget {
@@ -299,7 +300,7 @@ class _AboutScreenState extends State<AboutScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(loc.aboutApp)),
+      appBar: GradualAppBar(title: Text(loc.aboutApp)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: <Widget>[

@@ -5,6 +5,7 @@ import 'cat.dart';
 import 'cat_avatar.dart';
 import 'cat_repository.dart';
 import 'cat_shop.dart';
+import 'gradual_app_bar.dart';
 
 class CatInventoryScreen extends StatefulWidget {
   const CatInventoryScreen({super.key, required this.profile});
@@ -48,7 +49,7 @@ class _CatInventoryScreenState extends State<CatInventoryScreen> {
     final canEquip = _profile.stage == CatStage.adult;
 
     return Scaffold(
-      appBar: AppBar(title: Text(loc.catInventory)),
+      appBar: GradualAppBar(title: Text(loc.catInventory)),
       body: Column(
         children: <Widget>[
           Padding(

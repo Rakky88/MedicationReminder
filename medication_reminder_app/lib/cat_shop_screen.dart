@@ -5,6 +5,7 @@ import 'cat.dart';
 import 'cat_avatar.dart';
 import 'cat_repository.dart';
 import 'cat_shop.dart';
+import 'gradual_app_bar.dart';
 import 'medication_streak.dart';
 import 'medication_streak_repository.dart';
 
@@ -95,7 +96,7 @@ class _CatShopScreenState extends State<CatShopScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
+        appBar: GradualAppBar(
           title: Text(loc.catShop),
           bottom: TabBar(
             tabs: <Widget>[

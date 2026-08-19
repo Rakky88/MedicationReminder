@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_localizations.dart';
+import 'gradual_app_bar.dart';
 import 'support_service.dart';
 
 class ContactScreen extends StatefulWidget {
@@ -66,7 +67,7 @@ class _ContactScreenState extends State<ContactScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(loc.contact)),
+      appBar: GradualAppBar(title: Text(loc.contact)),
       body: SafeArea(
         child: Form(
           key: _formKey,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'app_localizations.dart';
+import 'gradual_app_bar.dart';
 import 'medication.dart';
 
 enum AdherencePeriod { week, month, year, all }
@@ -60,7 +61,7 @@ class _AdherenceChartScreenState extends State<AdherenceChartScreen> {
     final percentage = total == 0 ? 0 : (taken * 100 / total).round();
 
     return Scaffold(
-      appBar: AppBar(title: Text(loc.historyGraph)),
+      appBar: GradualAppBar(title: Text(loc.historyGraph)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[

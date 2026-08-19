@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_localizations.dart';
+import 'gradual_app_bar.dart';
 import 'medication.dart';
 
 class MedicationFormScreen extends StatefulWidget {
@@ -140,7 +141,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(
+      appBar: GradualAppBar(
         title: Text(
           widget.medication == null ? loc.addMedication : loc.editMedication,
         ),

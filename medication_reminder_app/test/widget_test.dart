@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medication_reminder_app/cat.dart';
 import 'package:medication_reminder_app/cat_repository.dart';
+import 'package:medication_reminder_app/gradual_app_bar.dart';
 import 'package:medication_reminder_app/main.dart';
 import 'package:medication_reminder_app/medication.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -78,6 +79,45 @@ void main() {
 
     Color? appBarColor() =>
         tester.widget<AppBar>(find.byType(AppBar)).backgroundColor;
+
+    final initialColor = appBarColor();
+    await tester.drag(find.byType(ListView), const Offset(0, -30));
+    await tester.pump();
+    final partialColor = appBarColor();
+    await tester.drag(find.byType(ListView), const Offset(0, -100));
+    await tester.pump();
+    final scrolledColor = appBarColor();
+
+    expect(partialColor, isNot(initialColor));
+    expect(scrolledColor, isNot(partialColor));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('secondary app bar tint also changes gradually while scrolling', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MedicationReminderApp(initialLocale: Locale('en')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add my first medication'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Medication name'), findsOneWidget);
+    expect(find.byType(GradualAppBar), findsOneWidget);
+    Color? appBarColor() => tester
+        .widget<AppBar>(
+          find.descendant(
+            of: find.byType(GradualAppBar),
+            matching: find.byType(AppBar),
+          ),
+        )
+        .backgroundColor;
 
     final initialColor = appBarColor();
     await tester.drag(find.byType(ListView), const Offset(0, -30));

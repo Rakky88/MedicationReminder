@@ -1,5 +1,16 @@
 # Versiegeschiedenis
 
+## V0.02.01 — 2026-08-19
+
+- Vervang op Android 12 en nieuwer de gekleurde tegel van het launcher-icoon
+  tijdens het opstarten door het vrijstaande transparante beeldmerk. Toon
+  daaronder een transparant, tweekleurig **Medication Reminder**-woordmerk dat
+  aansluit op de merkweergave binnen de app.
+- Laat de bovenbalk voortaan op alle appschermen geleidelijk van de gewone
+  oppervlaktekleur naar de subtiele grijze scrollkleur en schaduw verlopen.
+  Alle schermen gebruiken daarvoor dezelfde overgang over de eerste 80
+  scrollpixels.
+
 ## V0.02.00 — 2026-08-19
 
 - Start een nieuwe installatie voortaan expliciet in het Engels, ongeacht de

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import 'adherence_chart_screen.dart';
 import 'app_localizations.dart';
+import 'gradual_app_bar.dart';
 import 'medication.dart';
 import 'medication_repository.dart';
 
@@ -86,7 +87,7 @@ class _LogScreenState extends State<LogScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(
+      appBar: GradualAppBar(
         title: Text(loc.history),
         actions: <Widget>[
           IconButton(
