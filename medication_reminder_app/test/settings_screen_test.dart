@@ -9,6 +9,7 @@ import 'package:medication_reminder_app/app_localizations.dart';
 import 'package:medication_reminder_app/cat.dart';
 import 'package:medication_reminder_app/cat_avatar.dart';
 import 'package:medication_reminder_app/cat_inventory_screen.dart';
+import 'package:medication_reminder_app/cat_repository.dart';
 import 'package:medication_reminder_app/cat_screen.dart';
 import 'package:medication_reminder_app/cat_shop_screen.dart';
 import 'package:medication_reminder_app/medication_streak.dart';
@@ -54,7 +55,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Made by Rick Groot · 2026'), findsOneWidget);
-    expect(find.text('Version V0.02.03'), findsOneWidget);
+    expect(find.text('Version V0.02.04'), findsOneWidget);
     expect(find.text('Share or update the app'), findsOneWidget);
     expect(find.text('Copy Android download link'), findsOneWidget);
     expect(find.text('Open contact form'), findsNothing);
@@ -112,6 +113,28 @@ void main() {
       );
     }
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('an offline code shows the neutral no-effect response', (
+    tester,
+  ) async {
+    await CatRepository.instance.adopt(
+      name: 'Milo',
+      variant: PetVariant.catTuxedo,
+    );
+    await tester.pumpWidget(localized(const AboutScreen()));
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'ANY-CODE');
+    await tester.tap(find.text('Redeem code'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('This code has no effect right now.'), findsOneWidget);
+    expect(
+      find.text('The code could not be checked. Try again later.'),
+      findsNothing,
+    );
   });
 
   testWidgets('cat settings separate purring and meowing controls', (

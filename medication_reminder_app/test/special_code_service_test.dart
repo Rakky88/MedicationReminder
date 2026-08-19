@@ -18,13 +18,13 @@ void main() {
     });
   });
 
-  test('an unknown built-in code is not accepted offline', () async {
+  test('an unknown offline code reports that it has no effect', () async {
     final result = await SpecialCodeService.redeem(
       code: 'NOT-A-CODE',
       languageCode: 'en',
     );
 
-    expect(result.status, SpecialCodeStatus.unavailable);
+    expect(result.status, SpecialCodeStatus.noEffect);
     expect(result.itemIds, isEmpty);
   });
 }

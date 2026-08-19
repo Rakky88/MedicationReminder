@@ -227,6 +227,7 @@ class AppLocalizations {
       'specialCodeRedeem': 'Redeem code',
       'specialCodeRequired': 'Enter a code first.',
       'specialCodeNeedsCat': 'Adopt a pet before redeeming an item code.',
+      'specialCodeNoEffect': 'This code has no effect right now.',
       'specialCodeInvalid': 'This code is not valid.',
       'specialCodeAlreadyUsed': 'This code has already been used.',
       'specialCodeFailed': 'The code could not be checked. Try again later.',
@@ -460,6 +461,7 @@ class AppLocalizations {
       'specialCodeRequired': 'Vul eerst een code in.',
       'specialCodeNeedsCat':
           'Adopteer eerst een kat om een itemcode te gebruiken.',
+      'specialCodeNoEffect': 'Deze code heeft op dit moment geen effect.',
       'specialCodeInvalid': 'Deze code is niet geldig.',
       'specialCodeAlreadyUsed': 'Deze code is al gebruikt.',
       'specialCodeFailed':
@@ -708,6 +710,7 @@ class AppLocalizations {
   String get specialCodeRedeem => _get('specialCodeRedeem');
   String get specialCodeRequired => _get('specialCodeRequired');
   String get specialCodeNeedsCat => _get('specialCodeNeedsCat');
+  String get specialCodeNoEffect => _get('specialCodeNoEffect');
   String get specialCodeInvalid => _get('specialCodeInvalid');
   String get specialCodeAlreadyUsed => _get('specialCodeAlreadyUsed');
   String get specialCodeFailed => _get('specialCodeFailed');

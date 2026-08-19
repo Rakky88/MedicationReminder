@@ -587,6 +587,11 @@ const Map<String, List<String>> _additionalTranslations = {
     'Adoptez un animal avant d’utiliser un code d’objet.',
     'Adopta una mascota antes de canjear un código de objeto.',
   ],
+  'specialCodeNoEffect': [
+    'Dieser Code hat derzeit keine Wirkung.',
+    'Ce code n’a aucun effet pour le moment.',
+    'Este código no tiene ningún efecto por ahora.',
+  ],
   'specialCodeInvalid': [
     'Dieser Code ist ungültig.',
     'Ce code n’est pas valide.',

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-enum SpecialCodeStatus { redeemed, invalid, alreadyUsed, unavailable, failed }
+enum SpecialCodeStatus { redeemed, noEffect, invalid, alreadyUsed, failed }
 
 class SpecialCodeResult {
   const SpecialCodeResult({
@@ -43,7 +43,7 @@ class SpecialCodeService {
     }
     final endpoint = _secureEndpoint(_endpoint);
     if (endpoint == null) {
-      return const SpecialCodeResult(status: SpecialCodeStatus.unavailable);
+      return const SpecialCodeResult(status: SpecialCodeStatus.noEffect);
     }
     final client = HttpClient()
       ..connectionTimeout = const Duration(seconds: 12);

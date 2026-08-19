@@ -230,9 +230,9 @@ class _AboutScreenState extends State<AboutScreen> {
       if (!mounted) return;
       var message = switch (response.status) {
         SpecialCodeStatus.redeemed => loc.specialCodeInvalid,
+        SpecialCodeStatus.noEffect => loc.specialCodeNoEffect,
         SpecialCodeStatus.invalid => loc.specialCodeInvalid,
         SpecialCodeStatus.alreadyUsed => loc.specialCodeAlreadyUsed,
-        SpecialCodeStatus.unavailable ||
         SpecialCodeStatus.failed => loc.specialCodeFailed,
       };
       if (response.status == SpecialCodeStatus.redeemed &&

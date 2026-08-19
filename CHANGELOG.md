@@ -1,5 +1,15 @@
 # Versiegeschiedenis
 
+## V0.02.04 — 2026-08-19
+
+- Toon voor een ingevoerde code die in de huidige app geen actie uitvoert de
+  neutrale melding **Deze code heeft op dit moment geen effect** in plaats van
+  te suggereren dat de codefunctie niet werkt.
+- Voeg een afzonderlijke no-effectstatus en passende Engelse, Nederlandse,
+  Duitse, Franse en Spaanse tekst toe. Behoud de bestaande afwijkende meldingen
+  voor ontgrendelde items, ongeldige of al gebruikte codes en echte
+  verbindingsfouten.
+
 ## V0.02.03 — 2026-08-19
 
 - Maak het transparante logo links in de bovenbalk van het hoofdscherm een

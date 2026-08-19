@@ -47,6 +47,22 @@ void main() {
     }
     expect(delegate.isSupported(const Locale('it')), isFalse);
   });
+
+  test('the no-effect code response is clear in every app language', () {
+    const expected = <String, String>{
+      'en': 'This code has no effect right now.',
+      'nl': 'Deze code heeft op dit moment geen effect.',
+      'de': 'Dieser Code hat derzeit keine Wirkung.',
+      'fr': 'Ce code n’a aucun effet pour le moment.',
+      'es': 'Este código no tiene ningún efecto por ahora.',
+    };
+    for (final entry in expected.entries) {
+      expect(
+        AppLocalizations.translationsFor(entry.key)['specialCodeNoEffect'],
+        entry.value,
+      );
+    }
+  });
 }
 
 Set<String> _placeholders(String value) => RegExp(
