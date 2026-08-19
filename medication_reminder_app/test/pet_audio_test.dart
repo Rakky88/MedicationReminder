@@ -90,6 +90,10 @@ void main() {
 
     expect(notificationSource, contains('AudioAttributesUsage.alarm'));
     expect(notificationSource, contains('AndroidNotificationCategory.alarm'));
+    expect(
+      notificationSource,
+      contains('useAlarmAudio: !reminder.slot.medication.notificationsOnly'),
+    );
     expect(inAppSource, contains('AndroidUsageType.media'));
     expect(escalationSource, contains('AudioAttributes.USAGE_NOTIFICATION'));
   });

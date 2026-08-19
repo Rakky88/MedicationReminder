@@ -180,6 +180,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? _lastMeowDoseKey;
   int? _highlightedMedicationId;
   String? _activePlayMomentKey;
+  double _appBarScrollProgress = 0;
 
   @override
   void initState() {
@@ -759,6 +760,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     unawaited(_runUserAction(action));
   }
 
+  bool _handleHomeScroll(ScrollNotification notification) {
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    final linearProgress = (notification.metrics.pixels / 80)
+        .clamp(0.0, 1.0)
+        .toDouble();
+    final progress = Curves.easeInOutCubic.transform(linearProgress);
+    if ((progress - _appBarScrollProgress).abs() > 0.001 && mounted) {
+      setState(() => _appBarScrollProgress = progress);
+    }
+    return false;
+  }
+
   Future<void> _runUserAction(Future<void> Function() action) async {
     try {
       await action();
@@ -771,27 +786,71 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final appBarColor = ElevationOverlay.applySurfaceTint(
+      theme.colorScheme.surface,
+      theme.colorScheme.surfaceTint,
+      3 * _appBarScrollProgress,
+    );
+    final titleBreak = loc.title.lastIndexOf(' ');
+    final titleLead = titleBreak < 0
+        ? loc.title
+        : loc.title.substring(0, titleBreak + 1);
+    final titleAccent = titleBreak < 0
+        ? ''
+        : loc.title.substring(titleBreak + 1);
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: appBarColor,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        elevation: 0.8 * _appBarScrollProgress,
+        shadowColor: theme.shadowColor.withValues(
+          alpha: 0.16 * _appBarScrollProgress,
+        ),
         titleSpacing: 12,
         title: Row(
           children: <Widget>[
             Image.asset(
-              'assets/branding/app_logo.png',
+              'assets/branding/app_logo_mark.png',
               key: const Key('home-brand-logo'),
-              width: 34,
-              height: 34,
+              width: 38,
+              height: 38,
               fit: BoxFit.contain,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 9),
             Expanded(
               child: FittedBox(
                 alignment: Alignment.centerLeft,
                 fit: BoxFit.scaleDown,
-                child: Text(
-                  loc.title,
+                child: Text.rich(
+                  TextSpan(
+                    children: <InlineSpan>[
+                      TextSpan(
+                        text: titleLead,
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF80CBC4)
+                              : const Color(0xFF00695C),
+                        ),
+                      ),
+                      TextSpan(
+                        text: titleAccent,
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF90CAF9)
+                              : const Color(0xFF1565C0),
+                        ),
+                      ),
+                    ],
+                  ),
                   key: const Key('home-brand-title'),
                   maxLines: 1,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.7,
+                    height: 1,
+                  ),
                 ),
               ),
             ),
@@ -847,68 +906,72 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             return _HomeError(onRetry: _refresh);
           }
           final medications = snapshot.data ?? const <Medication>[];
-          return RefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-              children: <Widget>[
-                if (_cat == null)
-                  CatAdoptionCard(
-                    onAdopt: () => _startUserAction(_openCatScreen),
-                  )
-                else
-                  CatHomeCard(
-                    profile: _cat!,
-                    activity: _catActivity,
-                    currentMedicationStreak: _medicationStreak.current,
-                    bestMedicationStreak: _medicationStreak.best,
-                    onTap: () => _startUserAction(_interactWithCat),
-                    onSettings: () => _startUserAction(_openCatScreen),
-                  ),
-                const SizedBox(height: 12),
-                if (medications.isEmpty)
-                  _EmptyState(
-                    onAdd: () => _startUserAction(_openMedicationForm),
-                  )
-                else ...<Widget>[
-                  _NextReminderCard(medications: medications),
+          return NotificationListener<ScrollNotification>(
+            onNotification: _handleHomeScroll,
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                children: <Widget>[
+                  if (_cat == null)
+                    CatAdoptionCard(
+                      onAdopt: () => _startUserAction(_openCatScreen),
+                    )
+                  else
+                    CatHomeCard(
+                      profile: _cat!,
+                      activity: _catActivity,
+                      currentMedicationStreak: _medicationStreak.current,
+                      bestMedicationStreak: _medicationStreak.best,
+                      onTap: () => _startUserAction(_interactWithCat),
+                      onSettings: () => _startUserAction(_openCatScreen),
+                    ),
                   const SizedBox(height: 12),
-                  for (final medication in medications)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _MedicationCard(
-                        medication: medication,
-                        highlighted: medication.id == _highlightedMedicationId,
-                        onEdit: () => _startUserAction(
-                          () => _openMedicationForm(medication),
-                        ),
-                        onDelete: () => _startUserAction(
-                          () => _deleteMedication(medication),
-                        ),
-                        onToggle: (value) => _startUserAction(
-                          () => _toggleMedication(medication, value),
-                        ),
-                        doseActions: _doseActionsFor(medication),
-                        onTaken: (action) => _startUserAction(
-                          () => _recordDose(
-                            medication,
-                            DoseStatus.taken,
-                            doseKey: action.slot.key,
+                  if (medications.isEmpty)
+                    _EmptyState(
+                      onAdd: () => _startUserAction(_openMedicationForm),
+                    )
+                  else ...<Widget>[
+                    _NextReminderCard(medications: medications),
+                    const SizedBox(height: 12),
+                    for (final medication in medications)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _MedicationCard(
+                          medication: medication,
+                          highlighted:
+                              medication.id == _highlightedMedicationId,
+                          onEdit: () => _startUserAction(
+                            () => _openMedicationForm(medication),
                           ),
-                        ),
-                        onSkipped: (action) => _startUserAction(
-                          () => _confirmDoseMissed(
-                            medication,
-                            doseKey: action.slot.key,
+                          onDelete: () => _startUserAction(
+                            () => _deleteMedication(medication),
                           ),
-                        ),
-                        onSnooze: (action) => _startUserAction(
-                          () => _snooze(medication, doseKey: action.slot.key),
+                          onToggle: (value) => _startUserAction(
+                            () => _toggleMedication(medication, value),
+                          ),
+                          doseActions: _doseActionsFor(medication),
+                          onTaken: (action) => _startUserAction(
+                            () => _recordDose(
+                              medication,
+                              DoseStatus.taken,
+                              doseKey: action.slot.key,
+                            ),
+                          ),
+                          onSkipped: (action) => _startUserAction(
+                            () => _confirmDoseMissed(
+                              medication,
+                              doseKey: action.slot.key,
+                            ),
+                          ),
+                          onSnooze: (action) => _startUserAction(
+                            () => _snooze(medication, doseKey: action.slot.key),
+                          ),
                         ),
                       ),
-                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           );
         },

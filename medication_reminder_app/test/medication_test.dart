@@ -27,6 +27,7 @@ void main() {
       times: <String>['09:30'],
       weekdays: <int>[DateTime.tuesday],
       enabled: false,
+      notificationsOnly: true,
       showNameInNotifications: true,
       allowBeforeDueTimes: <String>{'09:30'},
       scheduleStartedAt: <String, DateTime>{
@@ -41,6 +42,7 @@ void main() {
     expect(decoded.times, medication.times);
     expect(decoded.weekdays, medication.weekdays);
     expect(decoded.enabled, isFalse);
+    expect(decoded.notificationsOnly, isTrue);
     expect(decoded.showNameInNotifications, isTrue);
     expect(decoded.allowBeforeDueTimes, <String>{'09:30'});
     expect(decoded.scheduleStartedAt, medication.scheduleStartedAt);
@@ -97,7 +99,7 @@ void main() {
     );
   });
 
-  test('old medication data keeps notification names private', () {
+  test('old medication data keeps private names and alarm audio defaults', () {
     final decoded = Medication.fromJson(<String, Object?>{
       'id': 8,
       'name': 'Private medicine',
@@ -106,6 +108,7 @@ void main() {
     });
 
     expect(decoded.showNameInNotifications, isFalse);
+    expect(decoded.notificationsOnly, isFalse);
   });
 
   test('notification name is added only when that medication allows it', () {

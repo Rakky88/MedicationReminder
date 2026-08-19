@@ -2,7 +2,7 @@
 
 Een privacyvriendelijke Flutter-app voor eenvoudige, ADHD-vriendelijke medicatieherinneringen. De app bewaart medicijnen, schema's en innamegeschiedenis lokaal op het apparaat.
 
-## Huidige status — V0.01.02
+## Huidige status — V0.01.03
 
 De ondertekende Android-releasebuild werkt. De meest recente geverifieerde APK
 staat na een build in:
@@ -12,7 +12,7 @@ staat na een build in:
 Geverifieerd met Flutter 3.44.9 en Dart 3.12.2:
 
 - `flutter analyze`: geen issues
-- `flutter test`: 140 tests geslaagd
+- `flutter test`: 141 tests geslaagd
 - `flutter build apk --release`: geslaagd en met de vaste releasekey ondertekend
 
 De vaste openbare Android-downloadlink is:
@@ -186,9 +186,15 @@ items verschijnen nooit in de shop. Een latere beveiligde codeserver kan via
 `--dart-define=SPECIAL_CODE_ENDPOINT=https://...` aanvullende eenmalige
 campagnecodes leveren.
 
-Onderaan opent **Trakteer me op koffie** rechtstreeks de gratis Ko-fi-pagina
-<https://ko-fi.com/rgroot88>. Een bijdrage staat los van appbeloningen en
+Onderaan opent **Trakteer me op koffie** rechtstreeks Ko-fi's compacte
+fooiformulier. Het scherm toont met het officiële PayPal-monogram dat de
+betaling via PayPal verloopt. Een bijdrage staat los van appbeloningen en
 ontgrendelt daarom geen exclusieve digitale items.
+
+Per medicatie kan **Notifications only** worden aangezet. Standaard staat deze
+optie uit en gebruikt het eerste geplande moment het Android-alarmkanaal. Met de
+optie aan wordt ook dat eerste moment een gewone notificatie; vervolgmeldingen
+blijven altijd notificaties.
 
 ## Updates zonder voortgang te verliezen
 
@@ -272,8 +278,9 @@ Je kunt `app-release.apk` ook naar een draaiende emulator slepen om hem handmati
 - `lib/cat_shop.dart` en `lib/cat_shop_screen.dart`: volwassen-katshop
 - `assets/cats/`: transparante groei-sprites voor vijf katten, vijf honden en de
   kip, plus uitgelijnde winkel- en supportersoverlays
-- `assets/branding/`: het speelse, professionele klok/poot/capsule-logo; het
-  transparante beeldmerk blijft binnen de veilige zone van alle launcher-maskers
+- `assets/branding/`: het speelse klok/poot/capsule-logo; de launcher behoudt
+  zijn veilige achtergrond, terwijl het hoofdscherm een strak uitgesneden
+  transparant beeldmerk naast de vetgedrukte tweekleurige appnaam gebruikt
 - `assets/sounds/`: twintig echte varianten voor miauwen, spinnen, blaffen,
   hijgen, kukeleku en tokken; bronopnamen staan buiten de appbundle
 - `tool/normalize_cat_sprites.py`: reproduceerbare uitsnede en centrering van de

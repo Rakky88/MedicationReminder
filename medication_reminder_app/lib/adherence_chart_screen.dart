@@ -335,7 +335,8 @@ class _AdherenceBars extends StatelessWidget {
       (value, item) =>
           (item.taken + item.missed) > value ? item.taken + item.missed : value,
     );
-    final error = Theme.of(context).colorScheme.error;
+    final takenColor = Colors.green.shade700;
+    final missedColor = Colors.red.shade700;
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
@@ -344,8 +345,8 @@ class _AdherenceBars extends StatelessWidget {
             Wrap(
               spacing: 20,
               children: <Widget>[
-                _Legend(color: Colors.green.shade700, label: takenLabel),
-                _Legend(color: error, label: missedLabel),
+                _Legend(color: takenColor, label: takenLabel),
+                _Legend(color: missedColor, label: missedLabel),
               ],
             ),
             const SizedBox(height: 20),
@@ -382,17 +383,21 @@ class _AdherenceBars extends StatelessWidget {
                                   child: total == 0
                                       ? null
                                       : Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
                                           children: <Widget>[
                                             if (bucket.missed > 0)
                                               Expanded(
                                                 flex: bucket.missed,
-                                                child: ColoredBox(color: error),
+                                                child: ColoredBox(
+                                                  color: missedColor,
+                                                ),
                                               ),
                                             if (bucket.taken > 0)
                                               Expanded(
                                                 flex: bucket.taken,
                                                 child: ColoredBox(
-                                                  color: Colors.green.shade700,
+                                                  color: takenColor,
                                                 ),
                                               ),
                                           ],

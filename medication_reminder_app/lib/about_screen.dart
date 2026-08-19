@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'app_localizations.dart';
 import 'app_release.dart';
 import 'cat_repository.dart';
-import 'contact_screen.dart';
 import 'external_link_service.dart';
 import 'special_code_service.dart';
 
@@ -23,12 +22,6 @@ class _AboutScreenState extends State<AboutScreen> {
   void dispose() {
     _codeController.dispose();
     super.dispose();
-  }
-
-  void _contact() {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (_) => const ContactScreen()),
-    );
   }
 
   Future<void> _redeem() async {
@@ -207,29 +200,6 @@ class _AboutScreenState extends State<AboutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  Text(
-                    loc.contact,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(loc.contactBody),
-                  const SizedBox(height: 14),
-                  FilledButton.icon(
-                    onPressed: _contact,
-                    icon: const Icon(Icons.mail_outline),
-                    label: Text(loc.contactAction),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
                   Row(
                     children: <Widget>[
                       const Icon(Icons.card_giftcard_outlined),
@@ -293,6 +263,40 @@ class _AboutScreenState extends State<AboutScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(loc.buyMeCoffeeBody),
+                  const SizedBox(height: 12),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Image.asset(
+                            'assets/branding/paypal_monogram.png',
+                            key: const ValueKey<String>('paypal-payment-logo'),
+                            width: 32,
+                            height: 32,
+                            fit: BoxFit.contain,
+                            semanticLabel: loc.paypalPayment,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              loc.paypalPayment,
+                              style: Theme.of(context).textTheme.labelLarge,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 14),
                   FilledButton.icon(
                     onPressed: _openKofi,

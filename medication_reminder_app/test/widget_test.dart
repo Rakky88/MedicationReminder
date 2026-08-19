@@ -23,6 +23,11 @@ void main() {
 
     expect(find.byKey(const Key('home-brand-logo')), findsOneWidget);
     expect(find.text('Medication Reminder'), findsOneWidget);
+    final logo = tester.widget<Image>(find.byKey(const Key('home-brand-logo')));
+    expect(
+      (logo.image as AssetImage).assetName,
+      'assets/branding/app_logo_mark.png',
+    );
     expect(find.text('No medication scheduled'), findsOneWidget);
     expect(find.text('Add my first medication'), findsOneWidget);
   });
@@ -48,6 +53,35 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('home app bar tint changes gradually while scrolling', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 360);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MedicationReminderApp(initialLocale: Locale('en')),
+    );
+    await tester.pumpAndSettle();
+
+    Color? appBarColor() =>
+        tester.widget<AppBar>(find.byType(AppBar)).backgroundColor;
+
+    final initialColor = appBarColor();
+    await tester.drag(find.byType(ListView), const Offset(0, -30));
+    await tester.pump();
+    final partialColor = appBarColor();
+    await tester.drag(find.byType(ListView), const Offset(0, -100));
+    await tester.pump();
+    final scrolledColor = appBarColor();
+
+    expect(partialColor, isNot(initialColor));
+    expect(scrolledColor, isNot(partialColor));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('adds and displays a medication', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MedicationReminderApp(initialLocale: Locale('en')),
@@ -69,6 +103,8 @@ void main() {
       find.textContaining('Off keeps this medication private'),
       findsNothing,
     );
+    expect(find.text('Reminders enabled'), findsNothing);
+    expect(find.text('Notifications only'), findsOneWidget);
     await tester.tap(find.text('Save').last);
     await tester.pumpAndSettle();
 

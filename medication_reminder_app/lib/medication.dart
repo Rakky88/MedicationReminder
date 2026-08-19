@@ -6,6 +6,7 @@ class Medication {
     required this.times,
     required this.weekdays,
     this.enabled = true,
+    this.notificationsOnly = false,
     this.showNameInNotifications = false,
     this.allowBeforeDueTimes = const <String>{},
     this.createdAt,
@@ -18,6 +19,7 @@ class Medication {
   final List<String> times;
   final List<int> weekdays;
   final bool enabled;
+  final bool notificationsOnly;
   final bool showNameInNotifications;
   final Set<String> allowBeforeDueTimes;
   final DateTime? createdAt;
@@ -30,6 +32,7 @@ class Medication {
     List<String>? times,
     List<int>? weekdays,
     bool? enabled,
+    bool? notificationsOnly,
     bool? showNameInNotifications,
     Set<String>? allowBeforeDueTimes,
     DateTime? createdAt,
@@ -42,6 +45,7 @@ class Medication {
       times: times ?? this.times,
       weekdays: weekdays ?? this.weekdays,
       enabled: enabled ?? this.enabled,
+      notificationsOnly: notificationsOnly ?? this.notificationsOnly,
       showNameInNotifications:
           showNameInNotifications ?? this.showNameInNotifications,
       allowBeforeDueTimes: allowBeforeDueTimes ?? this.allowBeforeDueTimes,
@@ -210,6 +214,7 @@ class Medication {
     'times': times,
     'weekdays': weekdays,
     'enabled': enabled,
+    'notificationsOnly': notificationsOnly,
     'showNameInNotifications': showNameInNotifications,
     'allowBeforeDueTimes': allowBeforeDueTimes.toList()..sort(),
     'createdAt': createdAt?.toUtc().toIso8601String(),
@@ -252,6 +257,7 @@ class Medication {
               .toList()
             ..sort(),
       enabled: json['enabled'] as bool? ?? true,
+      notificationsOnly: json['notificationsOnly'] as bool? ?? false,
       showNameInNotifications:
           json['showNameInNotifications'] as bool? ?? false,
       allowBeforeDueTimes: earlyTimes,

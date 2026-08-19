@@ -19,6 +19,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   late List<String> _times;
   late Set<int> _weekdays;
   late bool _enabled;
+  late bool _notificationsOnly;
   late bool _showNameInNotifications;
   late Set<String> _allowBeforeDueTimes;
 
@@ -42,6 +43,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
           ],
     );
     _enabled = medication?.enabled ?? true;
+    _notificationsOnly = medication?.notificationsOnly ?? false;
     _showNameInNotifications = medication?.showNameInNotifications ?? false;
     _allowBeforeDueTimes = Set<String>.from(
       medication?.allowBeforeDueTimes ?? const <String>{},
@@ -88,6 +90,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         times: List<String>.from(_times)..sort(),
         weekdays: _weekdays.toList()..sort(),
         enabled: _enabled,
+        notificationsOnly: _notificationsOnly,
         showNameInNotifications: _showNameInNotifications,
         allowBeforeDueTimes: _allowBeforeDueTimes,
         createdAt: widget.medication?.createdAt,
@@ -235,11 +238,12 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              SwitchListTile(
+              SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
-                title: Text(loc.enabled),
-                value: _enabled,
-                onChanged: (value) => setState(() => _enabled = value),
+                title: Text(loc.notificationsOnly),
+                value: _notificationsOnly,
+                onChanged: (value) =>
+                    setState(() => _notificationsOnly = value),
               ),
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,

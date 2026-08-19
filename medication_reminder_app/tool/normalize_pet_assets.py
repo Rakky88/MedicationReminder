@@ -48,10 +48,10 @@ DRESSED_GRIDS = {
     "streak_150_outfit_varsity": "streak_150_outfit_varsity_grid_transparent.png",
     "streak_365_outfit_year_champion": "streak_365_outfit_year_champion_paws_v2_grid_transparent.png",
     "streak_500_outfit_legend": "streak_500_outfit_legend_paws_v2_grid_transparent.png",
-    "streak_1000_outfit_millennium": "streak_1000_outfit_millennium_paws_v2_grid_transparent.png",
+    "streak_1000_outfit_millennium": "streak_1000_outfit_millennium_paws_v4_grid_transparent.png",
 }
 
-DRAGON_MODE_GRID = "dragon_mode_young_paws_v2_grid_transparent.png"
+DRAGON_MODE_GRID = "dragon_mode_young_paws_v4_grid_transparent.png"
 
 DOCTOR_ITEM_SOURCES = {
     "doctor_hat_fezz": "doctor_fezz_transparent.png",
@@ -164,7 +164,7 @@ PET_HEAD_CENTER_X = {
     "dog_beagle": 260,
     "dog_black_lab": 247,
     "dog_border_collie": 253,
-    "dog_dachshund": 256,
+    "dog_dachshund": 235,
     "chicken_hen": 256,
 }
 
@@ -172,15 +172,15 @@ PET_HEAD_CENTER_X = {
 # The fitted bow tie uses each adult animal's measured neck/chest landmark.
 PET_NECK_FITS = {
     "cat_orange": (96, 46, 245, 214),
-    "cat_tuxedo": (96, 46, 246, 214),
-    "cat_gray": (96, 46, 245, 214),
+    "cat_tuxedo": (84, 40, 246, 222),
+    "cat_gray": (84, 40, 245, 222),
     "cat_calico": (96, 46, 244, 214),
     "cat_black_bib": (90, 44, 224, 220),
     "dog_golden": (108, 52, 257, 174),
     "dog_beagle": (90, 44, 260, 212),
     "dog_black_lab": (106, 50, 247, 170),
     "dog_border_collie": (106, 50, 253, 194),
-    "dog_dachshund": (90, 44, 256, 214),
+    "dog_dachshund": (80, 38, 244, 222),
     "chicken_hen": (94, 46, 256, 220),
 }
 
@@ -261,12 +261,11 @@ def fitted_accessory_placement_adjustment(
         }:
             scale_x *= 0.82
 
-    if item_id == "hat_wizard" and prefix in {
-        "dog_beagle",
-        "dog_border_collie",
-        "dog_dachshund",
-    }:
-        offset_y -= 6
+    if item_id == "hat_wizard" and prefix.startswith("dog_"):
+        # A narrower crown reads taller without forcing its brim over the eyes.
+        # Seat it high enough to keep the entire eye line unobstructed.
+        scale_x *= 0.86
+        offset_y -= 5
 
     if item_id == "streak_250_hat_laurel" and prefix == "chicken_hen":
         scale_x *= 0.70
@@ -290,6 +289,45 @@ def fitted_accessory_placement_adjustment(
         "streak_365_glasses_year_star",
     } and prefix == "dog_dachshund":
         scale_x *= 0.92
+
+    # V9 review corrections are deliberately scoped to the exact combinations
+    # selected by the user. Values are additional source-local X/Y scales and
+    # Y-seat offsets; approved pets using the same item remain untouched.
+    review_adjustments = {
+        ("chicken_glasses_egg", "cat_tuxedo"): (0.82, 0.86, 5),
+        ("chicken_glasses_egg", "dog_dachshund"): (0.75, 0.82, 6),
+        ("chicken_hat_straw", "dog_dachshund"): (1.00, 1.10, 12),
+        ("doctor_hat_fezz", "dog_border_collie"): (0.72, 0.84, 9),
+        ("doctor_hat_fezz", "dog_dachshund"): (0.60, 0.84, 9),
+        ("glasses_round", "cat_gray"): (1.00, 1.10, 15),
+        ("glasses_round", "cat_orange"): (1.00, 1.10, 15),
+        ("glasses_round", "cat_tuxedo"): (1.00, 1.10, 15),
+        ("glasses_round", "dog_dachshund"): (0.78, 0.90, 8),
+        ("glasses_star", "dog_beagle"): (0.88, 0.95, 10),
+        ("glasses_star", "dog_dachshund"): (0.78, 0.88, 8),
+        ("glasses_sun", "dog_dachshund"): (0.76, 0.90, 8),
+        ("hat_cap", "dog_dachshund"): (0.90, 1.00, 14),
+        ("hat_crown", "dog_dachshund"): (1.00, 1.00, 10),
+        ("streak_100_glasses_century", "dog_dachshund"): (0.78, 0.90, 8),
+        ("streak_250_hat_laurel", "chicken_hen"): (1.18, 1.12, 8),
+        ("streak_250_hat_laurel", "dog_dachshund"): (1.00, 1.08, 12),
+        ("streak_300_glasses_prism", "dog_dachshund"): (0.84, 0.90, 8),
+        ("streak_365_glasses_year_star", "dog_dachshund"): (0.84, 0.90, 8),
+        ("streak_365_hat_year_crown", "dog_dachshund"): (1.00, 1.05, 12),
+        ("streak_40_hat_consistency", "dog_dachshund"): (1.10, 1.10, 12),
+        ("supporter_glasses", "cat_tuxedo"): (1.08, 1.08, 10),
+        ("supporter_glasses", "dog_beagle"): (0.82, 0.90, 8),
+        ("supporter_glasses", "dog_dachshund"): (0.78, 0.88, 8),
+        ("supporter_hat", "dog_beagle"): (0.82, 0.92, 8),
+        ("supporter_hat", "dog_dachshund"): (0.82, 0.92, 10),
+    }
+    review_scale_x, review_scale_y, review_offset_y = review_adjustments.get(
+        (item_id, prefix),
+        (1.0, 1.0, 0),
+    )
+    scale_x *= review_scale_x
+    scale_y *= review_scale_y
+    offset_y += review_offset_y
 
     return (scale_x, scale_y, offset_y)
 
@@ -809,9 +847,10 @@ def normalize_fitted_head_accessories(item_ids: set[str] | None = None) -> None:
             scale_x *= placement_scale_x
             scale_y *= placement_scale_y
             if item_id == "hat_wizard" and prefix.startswith("dog_"):
-                # Keep the tall point visible while lifting the brim clear of
-                # the dogs' brows: flatten the crown before seating it higher.
-                scale_y *= 0.85
+                # Preserve the tall silhouette through a narrower X scale;
+                # excessive absolute height would either clip the point or
+                # force the brim down across the dog's eyes.
+                scale_y *= 0.92
             content = content.resize(
                 (
                     round(content.width * scale_x),
@@ -826,7 +865,9 @@ def normalize_fitted_head_accessories(item_ids: set[str] | None = None) -> None:
             if item_id == "doctor_hat_fezz":
                 target_y -= 15
             elif item_id == "hat_wizard" and prefix.startswith("dog_"):
-                target_y -= 12
+                # Taller V9-reviewed crowns need their natural crown seat;
+                # lifting the brim also clips their point at the canvas edge.
+                target_y -= 0
             elif item_id == "chicken_hat_straw" and prefix.startswith("dog_"):
                 target_y -= 12
             elif item_id == "hat_cap" and prefix == "dog_dachshund":
@@ -924,6 +965,26 @@ def prepare_logo(size: int = 1024) -> Image.Image:
     return logo.convert("RGB")
 
 
+def generate_home_logo_mark(size: int = 512) -> None:
+    """Export a tightly framed transparent mark for the compact app bar."""
+    source = Image.open(
+        ROOT / "design_assets" / "branding" / "app_logo_v3_mark.png"
+    ).convert("RGBA")
+    mark = visible_crop(source, "application logo")
+    extent = round(max(mark.width, mark.height) * 1.08)
+    canvas = Image.new("RGBA", (extent, extent), (0, 0, 0, 0))
+    canvas.alpha_composite(
+        mark,
+        ((extent - mark.width) // 2, (extent - mark.height) // 2),
+    )
+    branding = ROOT / "assets" / "branding"
+    branding.mkdir(parents=True, exist_ok=True)
+    save_resized(canvas, branding / "app_logo_mark.png", size)
+    source.close()
+    mark.close()
+    canvas.close()
+
+
 def save_resized(logo: Image.Image, path: Path, size: int) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     logo.resize((size, size), Image.Resampling.LANCZOS).save(path, optimize=True)
@@ -935,6 +996,7 @@ def generate_launcher_icons() -> None:
     branding = ROOT / "assets" / "branding"
     branding.mkdir(parents=True, exist_ok=True)
     save_resized(logo, branding / "app_logo.png", 1024)
+    generate_home_logo_mark()
 
     android_sizes = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
     for density, size in android_sizes.items():

@@ -110,7 +110,7 @@ void main() {
         PetVariant.dogBeagle: 260,
         PetVariant.dogBlackLab: 247,
         PetVariant.dogBorderCollie: 253,
-        PetVariant.dogDachshund: 256,
+        PetVariant.dogDachshund: 235,
         PetVariant.chickenHen: 256,
       };
       final headItems = catShopCatalog.where(
@@ -139,11 +139,17 @@ void main() {
             greaterThanOrEqualTo(
               item.category == CatAccessoryCategory.glasses
                   ? 80
+                  : item.id == 'doctor_hat_fezz'
+                  ? 80
+                  : item.id == 'supporter_hat' &&
+                        variant == PetVariant.dogDachshund
+                  ? 95
                   : (variant == PetVariant.chickenHen ? 95 : 120),
             ),
             reason:
                 '$path must span the adult head instead of reading as a '
-                'small floating accessory',
+                'small floating accessory; the low brimless fez and the '
+                'narrow dachshund crown use reviewed head-specific minima',
           );
           if (item.category == CatAccessoryCategory.glasses) {
             expect(bounds.top, lessThan(eyeLine), reason: path);
@@ -171,7 +177,7 @@ void main() {
       PetVariant.dogBeagle: 260,
       PetVariant.dogBlackLab: 247,
       PetVariant.dogBorderCollie: 253,
-      PetVariant.dogDachshund: 256,
+      PetVariant.dogDachshund: 235,
       PetVariant.chickenHen: 256,
     };
     final glasses = catShopCatalog.where(
@@ -202,7 +208,7 @@ void main() {
       PetVariant.dogBeagle: 260,
       PetVariant.dogBlackLab: 247,
       PetVariant.dogBorderCollie: 253,
-      PetVariant.dogDachshund: 256,
+      PetVariant.dogDachshund: 244,
       PetVariant.chickenHen: 256,
     };
     for (final variant in PetVariant.values) {

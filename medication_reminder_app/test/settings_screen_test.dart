@@ -37,10 +37,10 @@ void main() {
     await tester.pumpWidget(localized(const AboutScreen()));
 
     expect(find.text('Made by Rick Groot · 2026'), findsOneWidget);
-    expect(find.text('Version V0.01.02'), findsOneWidget);
+    expect(find.text('Version V0.01.03'), findsOneWidget);
     expect(find.text('Share or update the app'), findsOneWidget);
     expect(find.text('Copy Android download link'), findsOneWidget);
-    expect(find.text('Open contact form'), findsOneWidget);
+    expect(find.text('Open contact form'), findsNothing);
     await tester.drag(find.byType(ListView), const Offset(0, -450));
     await tester.pumpAndSettle();
     expect(find.text('Special item codes'), findsOneWidget);
@@ -55,16 +55,13 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('Buy me a coffee'), findsOneWidget);
-    expect(find.text('Open Ko-fi'), findsOneWidget);
+    expect(find.text('Payment via PayPal'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('paypal-payment-logo')),
+      findsOneWidget,
+    );
+    expect(find.text('Open tip form'), findsOneWidget);
     expect(find.text('Support the app'), findsNothing);
-
-    await tester.drag(find.byType(ListView), const Offset(0, 500));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Open contact form'));
-    await tester.pumpAndSettle();
-    expect(find.text('Your email address'), findsOneWidget);
-    expect(find.text('Message'), findsOneWidget);
-    expect(find.text('Send securely'), findsOneWidget);
   });
 
   testWidgets('cat settings separate purring and meowing controls', (

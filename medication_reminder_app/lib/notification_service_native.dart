@@ -606,7 +606,7 @@ class NotificationService {
           images: images,
           appearance: appearance,
           summaryText: body,
-          useAlarmAudio: true,
+          useAlarmAudio: !reminder.slot.medication.notificationsOnly,
         ),
         androidScheduleMode: scheduleMode,
         payload: _payload(reminder.slot.medication.id, doseKey),

@@ -23,7 +23,7 @@ class AppLocalizations {
       'dosage': 'Dosage or instructions (optional)',
       'times': 'Reminder times',
       'days': 'Days',
-      'enabled': 'Reminders enabled',
+      'notificationsOnly': 'Notifications only',
       'showMedicationName': 'Show medication name in notifications',
       'allowEarlyDose': 'Allow Taken before this alarm',
       'doseDueAt': 'Dose due at {time}',
@@ -237,7 +237,8 @@ class AppLocalizations {
       'buyMeCoffee': 'Buy me a coffee',
       'buyMeCoffeeBody':
           'Enjoying the app? You can support its development through Ko-fi.',
-      'buyMeCoffeeAction': 'Open Ko-fi',
+      'paypalPayment': 'Payment via PayPal',
+      'buyMeCoffeeAction': 'Open tip form',
       'buyMeCoffeeOpenFailed':
           'Ko-fi could not be opened. The link has been copied instead.',
     },
@@ -253,7 +254,7 @@ class AppLocalizations {
       'dosage': 'Dosering of instructie (optioneel)',
       'times': 'Herinneringstijden',
       'days': 'Dagen',
-      'enabled': 'Herinneringen ingeschakeld',
+      'notificationsOnly': 'Alleen notificaties',
       'showMedicationName': 'Medicijnnaam tonen in meldingen',
       'allowEarlyDose': 'Ingenomen vóór dit alarm toestaan',
       'doseDueAt': 'Inname van {time}',
@@ -473,7 +474,8 @@ class AppLocalizations {
       'buyMeCoffee': 'Trakteer me op koffie',
       'buyMeCoffeeBody':
           'Blij met de app? Via Ko-fi kun je de verdere ontwikkeling steunen.',
-      'buyMeCoffeeAction': 'Ko-fi openen',
+      'paypalPayment': 'Betaling via PayPal',
+      'buyMeCoffeeAction': 'Fooiformulier openen',
       'buyMeCoffeeOpenFailed':
           'Ko-fi kon niet worden geopend. De link is daarom gekopieerd.',
     },
@@ -492,7 +494,7 @@ class AppLocalizations {
   String get dosage => _get('dosage');
   String get times => _get('times');
   String get days => _get('days');
-  String get enabled => _get('enabled');
+  String get notificationsOnly => _get('notificationsOnly');
   String get showMedicationName => _get('showMedicationName');
   String get allowEarlyDose => _get('allowEarlyDose');
   String doseDueAt(String time) => _get('doseDueAt').replaceAll('{time}', time);
@@ -703,6 +705,7 @@ class AppLocalizations {
   String get contactTestBuildNotice => _get('contactTestBuildNotice');
   String get buyMeCoffee => _get('buyMeCoffee');
   String get buyMeCoffeeBody => _get('buyMeCoffeeBody');
+  String get paypalPayment => _get('paypalPayment');
   String get buyMeCoffeeAction => _get('buyMeCoffeeAction');
   String get buyMeCoffeeOpenFailed => _get('buyMeCoffeeOpenFailed');
 

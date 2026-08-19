@@ -1,5 +1,38 @@
 # Versiegeschiedenis
 
+## In ontwikkeling
+
+## V0.01.03 — 2026-08-19
+
+- Verwijder het contactgedeelte en de knop naar het contactformulier uit het
+  informatiescherm.
+- Laat de staafdiagram in de geschiedenis de ingenomen en gemiste segmenten
+  daadwerkelijk over de volle balkbreedte in duidelijk groen en rood tekenen.
+- Open de Ko-fi-knop rechtstreeks in het compacte fooiformulier en toon op het
+  informatiescherm met het officiële PayPal-monogram dat de betaling via PayPal
+  verloopt.
+- Rond de volledige V9-garderobecontrole af en herstel alle 55 geselecteerde
+  dier-itemcombinaties afzonderlijk. Maak de twee fezzen smaller, geef de vijf
+  hondenhoeden een hogere tovenaarspunt en lijn de gemarkeerde brillen, kronen,
+  petten, lauwerkransen en strikjes opnieuw op hun eigen kop of hals uit.
+- Vervang de millennium- en Dragon-sprites door anatomische versies waarin de
+  natuurlijke poten en vleugels door gesloten, donker omlijnde armgaten lopen,
+  met de achterste stofrand achter de ledematen. Gebruik de V10-selectie voor
+  een lege, gerichte V11-hercontrole van de 50 overgebleven combinaties.
+- Verplaats alle losse teckelaccessoires 21 pixels naar de gemeten oogmiddellijn
+  en het strikje 12 pixels naar de halsmiddellijn. Maak de hondenwizardhoed
+  smaller en plaats de rand boven de ogen zonder de punt af te snijden.
+- Gebruik op het hoofdscherm het strak uitgesneden transparante beeldmerk zonder
+  groen/blauw vlak en geef de volledige appnaam een vet, tweekleurig Flutter-
+  opschrift dat ook op een smal scherm automatisch passend blijft.
+- Laat de grijze kleur en subtiele schaduw van de bovenbalk geleidelijk over de
+  eerste 80 scrollpixels verschijnen in plaats van plotseling in te schakelen.
+- Vervang **Reminders enabled** in het medicatieformulier door de standaard
+  uitgeschakelde optie **Notifications only**. Ingeschakeld gebruikt ook het
+  eerste medicatiemoment het notificatiekanaal; uitgeschakeld blijft het echte
+  alarmkanaal gebruiken. De schakelaar op de hoofdpagina blijft herinneringen
+  voor de medicatie volledig aan- of uitzetten.
+
 ## V0.01.02 — 2026-08-19
 
 - Toon op het hoofdscherm het app-logo naast een automatisch passend, volledig

@@ -25,5 +25,13 @@ void main() {
     expect(int.parse(versionMatch.group(2)!), greaterThan(4));
     expect(AppRelease.downloadUrl, startsWith('https://'));
     expect(AppRelease.downloadUrl, endsWith('/MedicationReminder.apk'));
+    final kofiUri = Uri.parse(AppRelease.kofiUrl);
+    expect(kofiUri.host, 'ko-fi.com');
+    expect(kofiUri.path, '/rgroot88/');
+    expect(kofiUri.queryParameters, <String, String>{
+      'hidefeed': 'true',
+      'widget': 'true',
+      'embed': 'true',
+    });
   });
 }

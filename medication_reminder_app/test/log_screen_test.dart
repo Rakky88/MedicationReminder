@@ -64,5 +64,19 @@ void main() {
     expect(find.text('View adherence graph'), findsOneWidget);
     expect(find.text('Week'), findsOneWidget);
     expect(find.text('All'), findsOneWidget);
+
+    await tester.tap(find.text('All'));
+    await tester.pumpAndSettle();
+
+    final takenSegment = find.byWidgetPredicate(
+      (widget) => widget is ColoredBox && widget.color == Colors.green.shade700,
+    );
+    final missedSegment = find.byWidgetPredicate(
+      (widget) => widget is ColoredBox && widget.color == Colors.red.shade700,
+    );
+    expect(takenSegment, findsOneWidget);
+    expect(missedSegment, findsOneWidget);
+    expect(tester.getSize(takenSegment).width, greaterThan(0));
+    expect(tester.getSize(missedSegment).width, greaterThan(0));
   });
 }

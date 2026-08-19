@@ -10,32 +10,76 @@ import 'cat.dart';
 import 'cat_avatar.dart';
 import 'cat_shop.dart';
 
-const _reviewItemIds = <String>{
-  'supporter_hat',
-  'streak_40_hat_consistency',
-  'streak_100_glasses_century',
-  'streak_250_hat_laurel',
-  'streak_300_glasses_prism',
-  'streak_365_hat_year_crown',
-  'streak_365_glasses_year_star',
-  'streak_365_outfit_year_champion',
-  'streak_500_outfit_legend',
-  'streak_1000_outfit_millennium',
-  'hat_cap',
-  'doctor_hat_fezz',
-  'hat_wizard',
-  'hat_crown',
-  'glasses_round',
-  'supporter_glasses',
-  'glasses_sun',
-  'glasses_star',
-  'doctor_bow_tie',
-  'chicken_hat_straw',
-  'chicken_glasses_egg',
+// V11 is a focused recheck of every combination selected in the completed V10
+// repair review. Only these tiles are shown, so approved fixes stay out of the
+// next round.
+const _reviewTargets = <String, Set<PetVariant>>{
+  'chicken_glasses_egg': <PetVariant>{
+    PetVariant.catTuxedo,
+    PetVariant.dogDachshund,
+  },
+  'doctor_bow_tie': <PetVariant>{PetVariant.dogDachshund},
+  'doctor_hat_fezz': <PetVariant>{PetVariant.dogDachshund},
+  'dragon_mode': <PetVariant>{
+    PetVariant.catOrange,
+    PetVariant.catTuxedo,
+    PetVariant.catGray,
+    PetVariant.catCalico,
+    PetVariant.catBlackBib,
+    PetVariant.dogGolden,
+    PetVariant.dogBeagle,
+    PetVariant.dogBlackLab,
+    PetVariant.dogBorderCollie,
+    PetVariant.dogDachshund,
+  },
+  'glasses_round': <PetVariant>{
+    PetVariant.catOrange,
+    PetVariant.catTuxedo,
+    PetVariant.catGray,
+    PetVariant.dogDachshund,
+  },
+  'glasses_star': <PetVariant>{PetVariant.dogBeagle, PetVariant.dogDachshund},
+  'glasses_sun': <PetVariant>{PetVariant.dogDachshund},
+  'hat_cap': <PetVariant>{PetVariant.dogDachshund},
+  'hat_crown': <PetVariant>{PetVariant.dogDachshund},
+  'hat_wizard': <PetVariant>{
+    PetVariant.dogGolden,
+    PetVariant.dogBeagle,
+    PetVariant.dogBlackLab,
+    PetVariant.dogBorderCollie,
+    PetVariant.dogDachshund,
+  },
+  'streak_1000_outfit_millennium': <PetVariant>{
+    PetVariant.catOrange,
+    PetVariant.catTuxedo,
+    PetVariant.catGray,
+    PetVariant.catCalico,
+    PetVariant.catBlackBib,
+    PetVariant.dogGolden,
+    PetVariant.dogBeagle,
+    PetVariant.dogBlackLab,
+    PetVariant.dogBorderCollie,
+    PetVariant.dogDachshund,
+    PetVariant.chickenHen,
+  },
+  'streak_100_glasses_century': <PetVariant>{PetVariant.dogDachshund},
+  'streak_250_hat_laurel': <PetVariant>{
+    PetVariant.dogDachshund,
+    PetVariant.chickenHen,
+  },
+  'streak_300_glasses_prism': <PetVariant>{PetVariant.dogDachshund},
+  'streak_365_glasses_year_star': <PetVariant>{PetVariant.dogDachshund},
+  'streak_365_hat_year_crown': <PetVariant>{PetVariant.dogDachshund},
+  'streak_40_hat_consistency': <PetVariant>{PetVariant.dogDachshund},
+  'supporter_glasses': <PetVariant>{
+    PetVariant.dogBeagle,
+    PetVariant.dogDachshund,
+  },
+  'supporter_hat': <PetVariant>{PetVariant.dogBeagle, PetVariant.dogDachshund},
 };
 
 final _auditCatalog = catShopCatalog
-    .where((item) => _reviewItemIds.contains(item.id))
+    .where((item) => _reviewTargets.containsKey(item.id))
     .toList(growable: false);
 
 void main() {
@@ -61,8 +105,8 @@ class _AccessoryAuditScreen extends StatefulWidget {
 }
 
 class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
-  static const _preferencesKey = 'accessory_visual_audit_v8_fitted_review';
-  static const _exportFileName = 'accessory_visual_audit_v8_fitted_review.txt';
+  static const _preferencesKey = 'accessory_visual_audit_v11_fixed_recheck';
+  static const _exportFileName = 'accessory_visual_audit_v11_fixed_recheck.txt';
 
   final Set<String> _issues = <String>{};
   int _page = 0;
@@ -72,6 +116,9 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
   bool get _dragonPage => _page == _auditCatalog.length;
   bool get _summaryPage => _page == _auditCatalog.length + 1;
   String get _pageId => _dragonPage ? 'dragon_mode' : _auditCatalog[_page].id;
+  List<PetVariant> get _pageVariants => PetVariant.values
+      .where(_reviewTargets[_pageId]!.contains)
+      .toList(growable: false);
 
   @override
   void initState() {
@@ -101,7 +148,7 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
   }
 
   void _toggleWholePage() {
-    final keys = PetVariant.values.map(_issueKey).toSet();
+    final keys = _pageVariants.map(_issueKey).toSet();
     final allSelected = _issues.containsAll(keys);
     setState(
       () => allSelected ? _issues.removeAll(keys) : _issues.addAll(keys),
@@ -170,7 +217,7 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 2, 8, 0),
               child: Text(
-                'Tik op ieder dier waar het item niet goed zit. '
+                'V11 hercontrole: tik alleen als de reparatie nog niet goed is. '
                 'Rood = geselecteerd. Totaal: ${_issues.length}',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
@@ -186,7 +233,7 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
                     childAspectRatio: .76,
                     mainAxisSpacing: 3,
                     crossAxisSpacing: 3,
-                    children: PetVariant.values
+                    children: _pageVariants
                         .map(
                           (variant) => _PetAuditTile(
                             variant: variant,
