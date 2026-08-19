@@ -74,56 +74,61 @@ class _AboutBrandHero extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-            child: Column(
-              children: <Widget>[
-                AppLogoMark(
-                  size: 112,
-                  imageKey: const ValueKey<String>('about-brand-logo'),
-                  semanticLabel: title,
-                ),
-                const SizedBox(height: 14),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: AppWordmark(
-                    title: title,
-                    textKey: const ValueKey<String>('about-brand-title'),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -1.1,
-                      height: 1,
+            child: SizedBox(
+              width: double.infinity,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  AppLogoMark(
+                    size: 112,
+                    imageKey: const ValueKey<String>('about-brand-logo'),
+                    semanticLabel: title,
+                  ),
+                  const SizedBox(height: 14),
+                  FittedBox(
+                    alignment: Alignment.center,
+                    fit: BoxFit.scaleDown,
+                    child: AppWordmark(
+                      title: title,
+                      textKey: const ValueKey<String>('about-brand-title'),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1.1,
+                        height: 1,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 13),
-                Container(
-                  width: 58,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: <Color>[colors.primary, colors.secondary],
+                  const SizedBox(height: 13),
+                  Container(
+                    width: 58,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: <Color>[colors.primary, colors.secondary],
+                      ),
+                      borderRadius: BorderRadius.circular(999),
                     ),
-                    borderRadius: BorderRadius.circular(999),
                   ),
-                ),
-                const SizedBox(height: 18),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: <Widget>[
-                    _AboutInfoPill(
+                  const SizedBox(height: 18),
+                  Center(
+                    child: _AboutInfoPill(
+                      key: const ValueKey<String>('about-maker-badge'),
                       icon: Icons.person_outline_rounded,
                       label: madeBy,
                     ),
-                    _AboutInfoPill(
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: _AboutInfoPill(
                       key: const ValueKey<String>('about-version-badge'),
                       icon: Icons.sell_outlined,
                       label: version,
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],

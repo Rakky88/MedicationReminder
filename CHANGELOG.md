@@ -1,5 +1,12 @@
 # Versiegeschiedenis
 
+## V0.02.02 — 2026-08-19
+
+- Centreer in het merkblok van **Over deze app** het transparante logo, de
+  tweekleurige appnaam, maker met bouwjaar en versie elk op dezelfde verticale
+  middenlijn. Plaats de twee informatiebadges overzichtelijk onder elkaar en
+  behoud de uitlijning ook op compacte schermen.
+
 ## V0.02.01 — 2026-08-19
 
 - Vervang op Android 12 en nieuwer de gekleurde tegel van het launcher-icoon

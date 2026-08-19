@@ -54,7 +54,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Made by Rick Groot · 2026'), findsOneWidget);
-    expect(find.text('Version V0.02.01'), findsOneWidget);
+    expect(find.text('Version V0.02.02'), findsOneWidget);
     expect(find.text('Share or update the app'), findsOneWidget);
     expect(find.text('Copy Android download link'), findsOneWidget);
     expect(find.text('Open contact form'), findsNothing);
@@ -98,6 +98,19 @@ void main() {
       find.byKey(const ValueKey<String>('about-brand-logo')),
       findsOneWidget,
     );
+    final heroCenter = tester.getCenter(hero).dx;
+    for (final key in <String>[
+      'about-brand-logo',
+      'about-brand-title',
+      'about-maker-badge',
+      'about-version-badge',
+    ]) {
+      expect(
+        tester.getCenter(find.byKey(ValueKey<String>(key))).dx,
+        closeTo(heroCenter, 0.5),
+        reason: '$key should be horizontally centered in the brand block',
+      );
+    }
     expect(tester.takeException(), isNull);
   });
 
