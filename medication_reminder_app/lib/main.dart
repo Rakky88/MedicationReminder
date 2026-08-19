@@ -773,7 +773,30 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final loc = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.title),
+        titleSpacing: 12,
+        title: Row(
+          children: <Widget>[
+            Image.asset(
+              'assets/branding/app_logo.png',
+              key: const Key('home-brand-logo'),
+              width: 34,
+              height: 34,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FittedBox(
+                alignment: Alignment.centerLeft,
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  loc.title,
+                  key: const Key('home-brand-title'),
+                  maxLines: 1,
+                ),
+              ),
+            ),
+          ],
+        ),
         actions: <Widget>[
           IconButton(
             onPressed: () => _startUserAction(_openAbout),
@@ -850,24 +873,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 else ...<Widget>[
                   _NextReminderCard(medications: medications),
                   const SizedBox(height: 12),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        children: <Widget>[
-                          const Icon(Icons.lock_outline, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              loc.privacyHint,
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
                   for (final medication in medications)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),

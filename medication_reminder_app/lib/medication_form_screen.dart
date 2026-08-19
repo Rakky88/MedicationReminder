@@ -212,11 +212,6 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                   onPressed: _addTime,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                loc.allowEarlyDoseBody,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
               const SizedBox(height: 24),
               Text(loc.days, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
@@ -249,7 +244,6 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
                 title: Text(loc.showMedicationName),
-                subtitle: Text(loc.showMedicationNameBody),
                 secondary: Icon(
                   _showNameInNotifications
                       ? Icons.visibility_outlined

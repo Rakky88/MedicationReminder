@@ -40,6 +40,17 @@ abstract final class PetSoundCatalog {
     );
   }
 
+  /// Separate immutable Android channels for the first, alarm-class reminder.
+  /// Follow-up notifications keep using [reminderChannelIds].
+  static List<String> alarmChannelIds(
+    PetSpecies species,
+  ) => List<String>.generate(
+    variantCount,
+    (index) =>
+        'medication_${species.name}_alarm_voice_${(index + 1).toString().padLeft(2, '0')}_v1',
+    growable: false,
+  );
+
   static String stem(PetSpecies species, PetSoundMood mood) =>
       switch ((species, mood)) {
         (PetSpecies.cat, PetSoundMood.happy) => 'cat_purr',

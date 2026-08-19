@@ -48,8 +48,9 @@ Status: code-audit afgerond; onderstaande verbeterideeën zijn **niet geïmpleme
   reconciliatie/synchronisatie kan dit herstellen.
 - Undo werkt in een herstelbare volgorde: eerst afgeleide huisdierstatus, daarna
   de canonieke dosislog.
-- Code- en supportersitems kunnen niet via de gewone shoprepository worden
-  gekocht. Categorie en prijs moeten bovendien exact met de catalogus kloppen.
+- Code-items kunnen niet via de gewone shoprepository worden gekocht. De vier
+  voormalige supportersitems zijn gewone betaalde shopitems; categorie en prijs
+  moeten voor iedere aankoop exact met de catalogus kloppen.
 - Het ontbrekende generieke cataloguspad van de Doctor-outfit verwijst nu naar
   een werkelijk bestaand asset; alle uitgeruste varianten bleven intact.
 - Decoratief huisdiergeluid kan een medicatieactie niet meer onderbreken en de
@@ -88,9 +89,9 @@ Deze punten zijn niet automatisch als fout te bewijzen en zijn niet gewijzigd:
    `DOCTORWHO`, maar de ingebouwde code is wel vindbaar in de openbare
    broncode/APK. Alleen servervalidatie kan toekomstige campagnecodes echt
    geheim, intrekbaar en wereldwijd eenmalig maken.
-8. **Contact en betalingen.** De contactrelay is voorbereid maar pas actief met
-   een endpoint en serversecrets. Officiële storebilling en serververificatie
-   voor supportersbeloningen zijn nog niet aangesloten.
+8. **Contact en externe steun.** De contactrelay is voorbereid maar pas actief
+   met een endpoint en serversecrets. De Ko-fi-link opent extern en is bewust
+   niet gekoppeld aan digitale beloningen in de app.
 9. **Native regressietests.** Dart-/widgetlogica is uitgebreid getest; voor de
    Kotlin AlarmManager-laag ontbreken nog Robolectric/instrumentatietests voor
    reboot, grensalarm, snooze en package-update.

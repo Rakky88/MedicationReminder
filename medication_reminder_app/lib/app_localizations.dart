@@ -25,11 +25,7 @@ class AppLocalizations {
       'days': 'Days',
       'enabled': 'Reminders enabled',
       'showMedicationName': 'Show medication name in notifications',
-      'showMedicationNameBody':
-          'Off keeps this medication private. Turn it on only if its name may appear on the lock screen.',
       'allowEarlyDose': 'Allow Taken before this alarm',
-      'allowEarlyDoseBody':
-          'Off by default for every alarm. When enabled, only Taken appears before that alarm. Taking it early cancels that alarm for today and counts as exactly on time.',
       'doseDueAt': 'Dose due at {time}',
       'earlyDoseAt': 'Early dose for {time}',
       'save': 'Save',
@@ -99,8 +95,6 @@ class AppLocalizations {
       'loadError': 'Something went wrong while loading your data.',
       'retry': 'Try again',
       'genericMedication': 'Medication',
-      'privacyHint':
-          'Medication names stay hidden unless you allow them for that medication.',
       'allDays': 'Every day',
       'adoptCat': 'Adopt a pet',
       'adoptCatBody':
@@ -115,29 +109,13 @@ class AppLocalizations {
       'catSettings': 'Pet settings',
       'catSound': 'Purring and meowing',
       'catPurrSound': 'Purring sound',
-      'catPurrSoundBody':
-          'Let your cat purr after a recorded dose and when you pet it.',
       'catMeowSound': 'Meowing sound',
-      'catMeowSoundBody':
-          'Let your cat meow in reminders and when medication is due.',
       'dogPantSound': 'Panting sound',
-      'dogPantSoundBody':
-          'Let your dog pant happily after a recorded dose and when you pet it.',
       'dogBarkSound': 'Barking sound',
-      'dogBarkSoundBody':
-          'Let your dog bark in reminders and when medication is due.',
       'chickenCluckSound': 'Clucking sound',
-      'chickenCluckSoundBody':
-          'Let your chicken cluck happily after a recorded dose and when you pet it.',
       'chickenCrowSound': 'Crowing sound',
-      'chickenCrowSoundBody':
-          'Let your chicken crow in reminders and when medication is due.',
       'catPersistentMeow': 'Keep repeating reminders until I respond',
-      'catPersistentMeowBody':
-          'After 3 ignored reminders or 3 snoozes, your cat meows every 5 minutes. Turn this off to stop that extra repeating; normal reminders still work.',
       'petPersistentReminder': 'Keep repeating reminders until I respond',
-      'petPersistentReminderBody':
-          'After 3 ignored reminders or 3 snoozes, a reminder repeats every 5 minutes. Turn this off to stop that extra repeating; normal reminders still work.',
       'catSafety':
           'Only one valid scheduled dose feeds your pet. Never take extra medication for the game.',
       'catKitten': 'Kitten',
@@ -200,9 +178,7 @@ class AppLocalizations {
       'shopNeckwear': 'Ties',
       'shopOutfits': 'Outfits',
       'shopToys': 'Toys',
-      'shopSupporterExclusive': 'Supporter exclusive',
-      'shopSupporterLocked': 'First support reward',
-      'medicationStreak': 'Medication streak: {days} days',
+      'medicationStreak': 'Streak: {days}',
       'medicationStreakBest': 'Best: {days}',
       'shopRegularItems': 'Regular items',
       'shopStreakItems': 'Streak items',
@@ -258,11 +234,12 @@ class AppLocalizations {
           'You type everything here. The app never opens another mail app and does not store your message on this device.',
       'contactTestBuildNotice':
           'The secure server relay still needs to be connected before publishing.',
-      'supportApp': 'Support the app',
-      'supportAppBody':
-          'Safe support payments and the one-time cat reward will become available in the store version.',
-      'supportStoreOnly':
-          'Payments are disabled in this test build and will use official store billing.',
+      'buyMeCoffee': 'Buy me a coffee',
+      'buyMeCoffeeBody':
+          'Enjoying the app? You can support its development through Ko-fi.',
+      'buyMeCoffeeAction': 'Open Ko-fi',
+      'buyMeCoffeeOpenFailed':
+          'Ko-fi could not be opened. The link has been copied instead.',
     },
     'nl': {
       'title': 'Medicatieherinnering',
@@ -278,11 +255,7 @@ class AppLocalizations {
       'days': 'Dagen',
       'enabled': 'Herinneringen ingeschakeld',
       'showMedicationName': 'Medicijnnaam tonen in meldingen',
-      'showMedicationNameBody':
-          'Uit houdt dit medicijn privé. Zet dit alleen aan als de naam op het vergrendelscherm mag verschijnen.',
       'allowEarlyDose': 'Ingenomen vóór dit alarm toestaan',
-      'allowEarlyDoseBody':
-          'Standaard uit per alarm. Als dit aanstaat, verschijnt vóór dat alarm alleen Ingenomen. Een vroege inname annuleert dit alarm voor vandaag en telt als precies op tijd.',
       'doseDueAt': 'Inname van {time}',
       'earlyDoseAt': 'Vroege inname voor {time}',
       'save': 'Opslaan',
@@ -352,8 +325,6 @@ class AppLocalizations {
       'loadError': 'Er ging iets mis bij het laden van je gegevens.',
       'retry': 'Opnieuw proberen',
       'genericMedication': 'Medicatie',
-      'privacyHint':
-          'Medicijnnamen blijven verborgen, tenzij je dit per medicijn toestaat.',
       'allDays': 'Elke dag',
       'adoptCat': 'Een huisdier adopteren',
       'adoptCatBody':
@@ -368,29 +339,13 @@ class AppLocalizations {
       'catSettings': 'Huisdierinstellingen',
       'catSound': 'Spinnen en miauwen',
       'catPurrSound': 'Spingeluid',
-      'catPurrSoundBody':
-          'Laat je kat spinnen na een geregistreerde inname en wanneer je hem aait.',
       'catMeowSound': 'Miauwgeluid',
-      'catMeowSoundBody':
-          'Laat je kat miauwen in meldingen en wanneer het medicatietijd is.',
       'dogPantSound': 'Hijggeluid',
-      'dogPantSoundBody':
-          'Laat je hond vrolijk hijgen na een geregistreerde inname en wanneer je hem aait.',
       'dogBarkSound': 'Blafgeluid',
-      'dogBarkSoundBody':
-          'Laat je hond blaffen in meldingen en wanneer het medicatietijd is.',
       'chickenCluckSound': 'Tokgeluid',
-      'chickenCluckSoundBody':
-          'Laat je kip vrolijk tokken na een geregistreerde inname en wanneer je haar aait.',
       'chickenCrowSound': 'Kukelekuugeluid',
-      'chickenCrowSoundBody':
-          'Laat je kip kukelekuu roepen in meldingen en wanneer het medicatietijd is.',
       'catPersistentMeow': 'Meldingen herhalen tot ik reageer',
-      'catPersistentMeowBody':
-          'Na 3 genegeerde meldingen of 3 keer uitstellen miauwt je kat elke 5 minuten. Zet dit uit om die extra herhaling te stoppen; gewone meldingen blijven werken.',
       'petPersistentReminder': 'Meldingen herhalen tot ik reageer',
-      'petPersistentReminderBody':
-          'Na 3 genegeerde meldingen of 3 keer uitstellen komt elke 5 minuten een melding. Zet dit uit om die extra herhaling te stoppen; gewone meldingen blijven werken.',
       'catSafety':
           'Alleen één geldige geplande dosis voert je huisdier. Neem nooit extra medicatie voor het spel.',
       'catKitten': 'Kitten',
@@ -454,9 +409,7 @@ class AppLocalizations {
       'shopNeckwear': 'Dassen',
       'shopOutfits': 'Outfits',
       'shopToys': 'Speeltjes',
-      'shopSupporterExclusive': 'Exclusief voor supporters',
-      'shopSupporterLocked': 'Beloning bij eerste steun',
-      'medicationStreak': 'Medicatiestreak: {days} dagen',
+      'medicationStreak': 'Streak: {days}',
       'medicationStreakBest': 'Beste: {days}',
       'shopRegularItems': 'Gewone items',
       'shopStreakItems': 'Streak-items',
@@ -517,11 +470,12 @@ class AppLocalizations {
           'Je typt alles hier. De app opent nooit een andere mailapp en bewaart je bericht niet op dit apparaat.',
       'contactTestBuildNotice':
           'De beveiligde serverrelay moet vóór publicatie nog worden gekoppeld.',
-      'supportApp': 'Steun de app',
-      'supportAppBody':
-          'Veilig steunen en de eenmalige kattenbeloning worden beschikbaar in de storeversie.',
-      'supportStoreOnly':
-          'Betalen staat uit in deze testversie en zal via de officiële store verlopen.',
+      'buyMeCoffee': 'Trakteer me op koffie',
+      'buyMeCoffeeBody':
+          'Blij met de app? Via Ko-fi kun je de verdere ontwikkeling steunen.',
+      'buyMeCoffeeAction': 'Ko-fi openen',
+      'buyMeCoffeeOpenFailed':
+          'Ko-fi kon niet worden geopend. De link is daarom gekopieerd.',
     },
   };
 
@@ -540,9 +494,7 @@ class AppLocalizations {
   String get days => _get('days');
   String get enabled => _get('enabled');
   String get showMedicationName => _get('showMedicationName');
-  String get showMedicationNameBody => _get('showMedicationNameBody');
   String get allowEarlyDose => _get('allowEarlyDose');
-  String get allowEarlyDoseBody => _get('allowEarlyDoseBody');
   String doseDueAt(String time) => _get('doseDueAt').replaceAll('{time}', time);
   String earlyDoseAt(String time) =>
       _get('earlyDoseAt').replaceAll('{time}', time);
@@ -610,7 +562,6 @@ class AppLocalizations {
   String get loadError => _get('loadError');
   String get retry => _get('retry');
   String get genericMedication => _get('genericMedication');
-  String get privacyHint => _get('privacyHint');
   String get allDays => _get('allDays');
   String get adoptCat => _get('adoptCat');
   String get adoptCatBody => _get('adoptCatBody');
@@ -624,21 +575,13 @@ class AppLocalizations {
   String get catSettings => _get('catSettings');
   String get catSound => _get('catSound');
   String get catPurrSound => _get('catPurrSound');
-  String get catPurrSoundBody => _get('catPurrSoundBody');
   String get catMeowSound => _get('catMeowSound');
-  String get catMeowSoundBody => _get('catMeowSoundBody');
   String get dogPantSound => _get('dogPantSound');
-  String get dogPantSoundBody => _get('dogPantSoundBody');
   String get dogBarkSound => _get('dogBarkSound');
-  String get dogBarkSoundBody => _get('dogBarkSoundBody');
   String get chickenCluckSound => _get('chickenCluckSound');
-  String get chickenCluckSoundBody => _get('chickenCluckSoundBody');
   String get chickenCrowSound => _get('chickenCrowSound');
-  String get chickenCrowSoundBody => _get('chickenCrowSoundBody');
   String get catPersistentMeow => _get('catPersistentMeow');
-  String get catPersistentMeowBody => _get('catPersistentMeowBody');
   String get petPersistentReminder => _get('petPersistentReminder');
-  String get petPersistentReminderBody => _get('petPersistentReminderBody');
   String get catSafety => _get('catSafety');
   String get catKitten => _get('catKitten');
   String get catYoung => _get('catYoung');
@@ -701,8 +644,6 @@ class AppLocalizations {
   String get shopNeckwear => _get('shopNeckwear');
   String get shopOutfits => _get('shopOutfits');
   String get shopToys => _get('shopToys');
-  String get shopSupporterExclusive => _get('shopSupporterExclusive');
-  String get shopSupporterLocked => _get('shopSupporterLocked');
   String medicationStreak(int days) =>
       _get('medicationStreak').replaceAll('{days}', days.toString());
   String medicationStreakBest(int days) =>
@@ -760,9 +701,10 @@ class AppLocalizations {
   String get contactRelayUnavailable => _get('contactRelayUnavailable');
   String get contactPrivacyBody => _get('contactPrivacyBody');
   String get contactTestBuildNotice => _get('contactTestBuildNotice');
-  String get supportApp => _get('supportApp');
-  String get supportAppBody => _get('supportAppBody');
-  String get supportStoreOnly => _get('supportStoreOnly');
+  String get buyMeCoffee => _get('buyMeCoffee');
+  String get buyMeCoffeeBody => _get('buyMeCoffeeBody');
+  String get buyMeCoffeeAction => _get('buyMeCoffeeAction');
+  String get buyMeCoffeeOpenFailed => _get('buyMeCoffeeOpenFailed');
 
   String weekdayShort(int weekday) {
     const en = <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

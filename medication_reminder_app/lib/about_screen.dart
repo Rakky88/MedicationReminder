@@ -110,6 +110,18 @@ class _AboutScreenState extends State<AboutScreen> {
     if (mounted) _message(loc.appLinkOpenFailed);
   }
 
+  Future<void> _openKofi() async {
+    final loc = AppLocalizations.of(context);
+    final opened = await ExternalLinkService.openHttps(AppRelease.kofiUrl);
+    if (!mounted || opened) return;
+    try {
+      await Clipboard.setData(const ClipboardData(text: AppRelease.kofiUrl));
+    } on Object {
+      // The localized message also covers the uncommon copy failure.
+    }
+    if (mounted) _message(loc.buyMeCoffeeOpenFailed);
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -265,21 +277,27 @@ class _AboutScreenState extends State<AboutScreen> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  Text(
-                    loc.supportApp,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(loc.supportAppBody),
-                  const SizedBox(height: 12),
                   Row(
                     children: <Widget>[
-                      const Icon(Icons.lock_outline, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(loc.supportStoreOnly)),
+                      const Icon(Icons.coffee_outlined),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          loc.buyMeCoffee,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
                     ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(loc.buyMeCoffeeBody),
+                  const SizedBox(height: 14),
+                  FilledButton.icon(
+                    onPressed: _openKofi,
+                    icon: const Icon(Icons.open_in_new),
+                    label: Text(loc.buyMeCoffeeAction),
                   ),
                 ],
               ),

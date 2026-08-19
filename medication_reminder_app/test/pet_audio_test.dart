@@ -44,10 +44,17 @@ void main() {
   test('all hungry sound variants are available to Android notifications', () {
     for (final species in PetSpecies.values) {
       final names = PetSoundCatalog.reminderSoundNames(species);
-      final channels = PetSoundCatalog.reminderChannelIds(species);
+      final notificationChannels = PetSoundCatalog.reminderChannelIds(species);
+      final alarmChannels = PetSoundCatalog.alarmChannelIds(species);
       expect(names, hasLength(20));
-      expect(channels, hasLength(20));
-      expect(channels.toSet(), hasLength(20));
+      expect(notificationChannels, hasLength(20));
+      expect(notificationChannels.toSet(), hasLength(20));
+      expect(alarmChannels, hasLength(20));
+      expect(alarmChannels.toSet(), hasLength(20));
+      expect(
+        notificationChannels.toSet().intersection(alarmChannels.toSet()),
+        isEmpty,
+      );
       for (final name in names) {
         expect(
           File(
@@ -69,6 +76,22 @@ void main() {
     for (final stem in <String>['cat_meow', 'dog_bark', 'chicken_crow']) {
       expect(source, contains('"$stem"'));
     }
+  });
+
+  test('alarm, follow-up, and in-app audio use separate Android usages', () {
+    final notificationSource = File(
+      'lib/notification_service_native.dart',
+    ).readAsStringSync();
+    final inAppSource = File('lib/pet_audio.dart').readAsStringSync();
+    final escalationSource = File(
+      'android/app/src/main/kotlin/com/example/medication_reminder_app/'
+      'MedicationEscalation.kt',
+    ).readAsStringSync();
+
+    expect(notificationSource, contains('AudioAttributesUsage.alarm'));
+    expect(notificationSource, contains('AndroidNotificationCategory.alarm'));
+    expect(inAppSource, contains('AndroidUsageType.media'));
+    expect(escalationSource, contains('AudioAttributes.USAGE_NOTIFICATION'));
   });
 }
 

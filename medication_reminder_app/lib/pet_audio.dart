@@ -76,7 +76,7 @@ class PetAudio {
       ctx: AudioContext(
         android: const AudioContextAndroid(
           contentType: AndroidContentType.sonification,
-          usageType: AndroidUsageType.alarm,
+          usageType: AndroidUsageType.media,
           audioFocus: AndroidAudioFocus.gainTransient,
         ),
       ),

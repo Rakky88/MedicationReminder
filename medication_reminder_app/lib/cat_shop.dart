@@ -8,7 +8,6 @@ class CatShopItem {
     required this.assetPath,
     required this.nameEn,
     required this.nameNl,
-    this.supporterExclusive = false,
     this.codeExclusive = false,
     this.requiresChickenUnlock = false,
     this.requiredMedicationStreak,
@@ -24,7 +23,6 @@ class CatShopItem {
   final String assetPath;
   final String nameEn;
   final String nameNl;
-  final bool supporterExclusive;
   final bool codeExclusive;
   final bool requiresChickenUnlock;
   final int? requiredMedicationStreak;
@@ -33,7 +31,7 @@ class CatShopItem {
   final double overlayDx;
   final double overlayDy;
 
-  bool get hiddenUntilOwned => supporterExclusive || codeExclusive;
+  bool get hiddenUntilOwned => codeExclusive;
   bool get isStreakReward => requiredMedicationStreak != null;
 
   String localizedName(String languageCode) =>
@@ -119,11 +117,10 @@ const catShopCatalog = <CatShopItem>[
   CatShopItem(
     id: 'supporter_hat',
     category: CatAccessoryCategory.hat,
-    price: 0,
+    price: 850,
     assetPath: 'assets/cats/supporter_hat.png',
     nameEn: 'Supporter crown',
     nameNl: 'Supporterskroon',
-    supporterExclusive: true,
   ),
   CatShopItem(
     id: 'streak_40_hat_consistency',
@@ -298,11 +295,10 @@ const catShopCatalog = <CatShopItem>[
   CatShopItem(
     id: 'supporter_glasses',
     category: CatAccessoryCategory.glasses,
-    price: 0,
+    price: 650,
     assetPath: 'assets/cats/supporter_glasses.png',
     nameEn: 'Supporter glasses',
     nameNl: 'Supportersbril',
-    supporterExclusive: true,
   ),
   CatShopItem(
     id: 'glasses_sun',
@@ -349,11 +345,10 @@ const catShopCatalog = <CatShopItem>[
   CatShopItem(
     id: 'supporter_outfit',
     category: CatAccessoryCategory.outfit,
-    price: 0,
+    price: 1100,
     assetPath: 'assets/cats/supporter_outfit.png',
     nameEn: 'Supporter cape',
     nameNl: 'Supporterscape',
-    supporterExclusive: true,
   ),
   CatShopItem(
     id: 'outfit_sweater',
@@ -391,11 +386,10 @@ const catShopCatalog = <CatShopItem>[
   CatShopItem(
     id: 'supporter_toy',
     category: CatAccessoryCategory.toy,
-    price: 0,
+    price: 700,
     assetPath: 'assets/cats/supporter_toy.png',
     nameEn: 'Supporter heart',
     nameNl: 'Supportershart',
-    supporterExclusive: true,
   ),
   CatShopItem(
     id: 'toy_mouse',

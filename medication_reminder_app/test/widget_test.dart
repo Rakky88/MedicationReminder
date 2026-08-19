@@ -21,8 +21,31 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const Key('home-brand-logo')), findsOneWidget);
+    expect(find.text('Medication Reminder'), findsOneWidget);
     expect(find.text('No medication scheduled'), findsOneWidget);
     expect(find.text('Add my first medication'), findsOneWidget);
+  });
+
+  testWidgets('compact app bar keeps the complete brand visible', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MedicationReminderApp(initialLocale: Locale('en')),
+    );
+    await tester.pumpAndSettle();
+
+    final appBarRect = tester.getRect(find.byType(AppBar));
+    final titleRect = tester.getRect(find.byKey(const Key('home-brand-title')));
+    expect(find.byKey(const Key('home-brand-logo')), findsOneWidget);
+    expect(titleRect.left, greaterThanOrEqualTo(appBarRect.left));
+    expect(titleRect.right, lessThanOrEqualTo(appBarRect.right));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('adds and displays a medication', (WidgetTester tester) async {
@@ -41,11 +64,17 @@ void main() {
       find.widgetWithText(TextFormField, 'Dosage or instructions (optional)'),
       '1 tablet',
     );
+    expect(find.textContaining('Off by default for every alarm'), findsNothing);
+    expect(
+      find.textContaining('Off keeps this medication private'),
+      findsNothing,
+    );
     await tester.tap(find.text('Save').last);
     await tester.pumpAndSettle();
 
     expect(find.text('Vitamin D'), findsOneWidget);
     expect(find.text('1 tablet'), findsOneWidget);
+    expect(find.textContaining('Medication names stay hidden'), findsNothing);
   });
 
   testWidgets('hides all dose actions after the current alarm was taken', (

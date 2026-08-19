@@ -1,5 +1,25 @@
 # Versiegeschiedenis
 
+## V0.01.02 — 2026-08-19
+
+- Toon op het hoofdscherm het app-logo naast een automatisch passend, volledig
+  zichtbaar opschrift **Medication Reminder**.
+- Verkort **Medication streak** naar **Streak** en verwijder de overbodige
+  privacyuitleg op het hoofdscherm.
+- Verwijder de twee lange toelichtingen uit het medicatieformulier en laat in de
+  huisdierinstellingen alleen de titels van de drie geluidsschakelaars staan.
+- Speel het eerste geplande medicatiealarm op Android via afzonderlijke
+  alarmkanalen af, met het diergeluid of anders het standaard alarmgeluid. Houd
+  vervolg- en snoozemeldingen op de notificatiekanalen.
+- Speel miauwen, spinnen en de equivalente hond- en kipgeluiden in de geopende
+  app via het gewone mediakanaal af.
+- Voeg onderaan **Over deze app** een rechtstreekse Ko-fi-knop toe voor
+  `https://ko-fi.com/rgroot88` en verwijder de oude storesteun-placeholder.
+- Maak de voormalige supporterskroon, -bril, -cape en het supportershart als
+  gewone winkelitems koopbaar voor respectievelijk 850, 650, 1100 en 700 happy
+  points.
+- Verhoog het Android-buildnummer naar 6 voor updates over V0.01.01.
+
 ## V0.01.01 — 2026-08-15
 
 - Zet het Android-buildnummer op 5, zodat deze APK als update over V0.00.04

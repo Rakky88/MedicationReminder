@@ -198,20 +198,10 @@ class _CatScreenState extends State<CatScreen> {
       PetSpecies.dog => loc.dogPantSound,
       PetSpecies.chicken => loc.chickenCluckSound,
     };
-    final happySoundBody = switch (_species) {
-      PetSpecies.cat => loc.catPurrSoundBody,
-      PetSpecies.dog => loc.dogPantSoundBody,
-      PetSpecies.chicken => loc.chickenCluckSoundBody,
-    };
     final reminderSoundTitle = switch (_species) {
       PetSpecies.cat => loc.catMeowSound,
       PetSpecies.dog => loc.dogBarkSound,
       PetSpecies.chicken => loc.chickenCrowSound,
-    };
-    final reminderSoundBody = switch (_species) {
-      PetSpecies.cat => loc.catMeowSoundBody,
-      PetSpecies.dog => loc.dogBarkSoundBody,
-      PetSpecies.chicken => loc.chickenCrowSoundBody,
     };
     final previewBase =
         _profile ??
@@ -312,7 +302,6 @@ class _CatScreenState extends State<CatScreen> {
             value: _purrEnabled,
             onChanged: (value) => setState(() => _purrEnabled = value),
             title: Text(happySoundTitle),
-            subtitle: Text(happySoundBody),
             secondary: const Icon(Icons.vibration),
           ),
           SwitchListTile.adaptive(
@@ -320,7 +309,6 @@ class _CatScreenState extends State<CatScreen> {
             value: _meowEnabled,
             onChanged: (value) => setState(() => _meowEnabled = value),
             title: Text(reminderSoundTitle),
-            subtitle: Text(reminderSoundBody),
             secondary: const Icon(Icons.record_voice_over_outlined),
           ),
           SwitchListTile.adaptive(
@@ -332,11 +320,6 @@ class _CatScreenState extends State<CatScreen> {
               _species == PetSpecies.cat
                   ? loc.catPersistentMeow
                   : loc.petPersistentReminder,
-            ),
-            subtitle: Text(
-              _species == PetSpecies.cat
-                  ? loc.catPersistentMeowBody
-                  : loc.petPersistentReminderBody,
             ),
             secondary: const Icon(Icons.notification_important_outlined),
           ),

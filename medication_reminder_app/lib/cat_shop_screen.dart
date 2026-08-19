@@ -261,8 +261,6 @@ class _ShopItemCard extends StatelessWidget {
               Text(
                 item.isStreakReward
                     ? loc.shopStreakRequirement(item.requiredMedicationStreak!)
-                    : item.supporterExclusive
-                    ? loc.shopSupporterExclusive
                     : '${_formatPrice(item.price)} ♥',
                 style: Theme.of(context).textTheme.labelLarge,
               ),
@@ -309,13 +307,9 @@ class _ShopItemCard extends StatelessWidget {
                 child: owned
                     ? const SizedBox.shrink()
                     : FilledButton(
-                        onPressed: item.supporterExclusive || !streakUnlocked
-                            ? null
-                            : onBuy,
+                        onPressed: !streakUnlocked ? null : onBuy,
                         child: Text(
-                          item.supporterExclusive
-                              ? loc.shopSupporterLocked
-                              : !streakUnlocked
+                          !streakUnlocked
                               ? loc.shopStreakLocked(
                                   item.requiredMedicationStreak!,
                                 )

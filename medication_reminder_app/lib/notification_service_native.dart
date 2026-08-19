@@ -31,6 +31,7 @@ class NotificationService {
   static const snoozeAction = 'snooze';
   static const _categoryId = 'medication_reminder';
   static const _channelId = 'medication_reminders_v1';
+  static const _alarmChannelId = 'medication_alarms_v1';
   static const _androidRollingWeeks = 26;
   // Each dated dose uses one plugin alarm plus a follow-up and boundary alarm
   // in the native escalation layer. Keep enough room below Android's common
@@ -394,6 +395,7 @@ class NotificationService {
     required _NotificationAppearance appearance,
     String? summaryText,
     bool allowMascotSound = true,
+    bool useAlarmAudio = false,
   }) {
     final largeBitmap = images == null
         ? null
@@ -405,8 +407,41 @@ class NotificationService {
     final accent = _accents[appearance.accentIndex];
     final hasMascotSound = allowMascotSound && mascot?.soundEnabled == true;
     final soundNames = _soundNamesFor(mascot?.species ?? PetSpecies.cat);
-    final channelIds = _channelIdsFor(mascot?.species ?? PetSpecies.cat);
+    final channelIds = useAlarmAudio
+        ? _alarmChannelIdsFor(mascot?.species ?? PetSpecies.cat)
+        : _channelIdsFor(mascot?.species ?? PetSpecies.cat);
     final soundIndex = appearance.soundIndex % soundNames.length;
+    final dutch = copy.languageCode == 'nl';
+    final channelId = hasMascotSound
+        ? channelIds[soundIndex]
+        : useAlarmAudio
+        ? _alarmChannelId
+        : _channelId;
+    final channelName = useAlarmAudio
+        ? (dutch ? 'Medicatiealarmen' : 'Medication alarms')
+        : hasMascotSound
+        ? (dutch
+              ? 'Medicatieherinneringen met huisdier'
+              : 'Medication reminders with pet')
+        : (dutch ? 'Medicatieherinneringen' : 'Medication reminders');
+    final channelDescription = useAlarmAudio
+        ? (dutch
+              ? 'Het eerste alarm voor geplande medicatie'
+              : 'The first alarm for scheduled medication')
+        : hasMascotSound
+        ? (dutch
+              ? 'Herinneringen met het geluid van je geadopteerde huisdier'
+              : 'Reminders with the sound of your adopted pet')
+        : (dutch
+              ? 'Herinneringen voor geplande medicatie'
+              : 'Reminders for scheduled medication');
+    final AndroidNotificationSound? androidSound = hasMascotSound
+        ? RawResourceAndroidNotificationSound(soundNames[soundIndex])
+        : useAlarmAudio
+        ? const UriAndroidNotificationSound(
+            'content://settings/system/alarm_alert',
+          )
+        : null;
     final openButton = AndroidNotificationAction(
       openAction,
       copy.openAction,
@@ -417,32 +452,24 @@ class NotificationService {
       copy.snoozeAction,
       showsUserInterface: true,
     );
-    final dutch = copy.languageCode == 'nl';
     return NotificationDetails(
       android: AndroidNotificationDetails(
-        hasMascotSound ? channelIds[soundIndex] : _channelId,
-        hasMascotSound
-            ? (dutch
-                  ? 'Medicatieherinneringen met huisdier'
-                  : 'Medication reminders with pet')
-            : (dutch ? 'Medicatieherinneringen' : 'Medication reminders'),
-        channelDescription: hasMascotSound
-            ? (dutch
-                  ? 'Herinneringen met het geluid van je geadopteerde huisdier'
-                  : 'Reminders with the sound of your adopted pet')
-            : (dutch
-                  ? 'Herinneringen voor geplande medicatie'
-                  : 'Reminders for scheduled medication'),
+        channelId,
+        channelName,
+        channelDescription: channelDescription,
         importance: Importance.high,
         priority: Priority.high,
-        category: AndroidNotificationCategory.reminder,
+        category: useAlarmAudio
+            ? AndroidNotificationCategory.alarm
+            : AndroidNotificationCategory.reminder,
         visibility: NotificationVisibility.private,
         color: accent,
         colorized: true,
         largeIcon: largeBitmap,
-        sound: hasMascotSound
-            ? RawResourceAndroidNotificationSound(soundNames[soundIndex])
-            : null,
+        sound: androidSound,
+        audioAttributesUsage: useAlarmAudio
+            ? AudioAttributesUsage.alarm
+            : AudioAttributesUsage.notification,
         styleInformation: pictureBitmap == null
             ? null
             : BigPictureStyleInformation(
@@ -469,6 +496,9 @@ class NotificationService {
 
   List<String> _channelIdsFor(PetSpecies species) =>
       PetSoundCatalog.reminderChannelIds(species);
+
+  List<String> _alarmChannelIdsFor(PetSpecies species) =>
+      PetSoundCatalog.alarmChannelIds(species);
 
   List<String> _soundNamesFor(PetSpecies species) =>
       PetSoundCatalog.reminderSoundNames(species);
@@ -576,6 +606,7 @@ class NotificationService {
           images: images,
           appearance: appearance,
           summaryText: body,
+          useAlarmAudio: true,
         ),
         androidScheduleMode: scheduleMode,
         payload: _payload(reminder.slot.medication.id, doseKey),

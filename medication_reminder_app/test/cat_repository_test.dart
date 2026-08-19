@@ -728,22 +728,22 @@ void main() {
     expect(await CatRepository.instance.isChickenUnlocked(), isFalse);
   });
 
-  test('exclusive reward items cannot be bought with happy points', () async {
+  test('former supporter items can be bought with happy points', () async {
     final adult = CatProfile(
       name: 'Milo',
       variant: PetVariant.catOrange,
       adoptedAt: DateTime(2026, 6, 1),
       feedCount: 60,
-      happyPoints: 1000,
+      happyPoints: 2000,
     );
     SharedPreferences.setMockInitialValues(<String, Object>{
       'adopted_cat_v1': jsonEncode(adult.toJson()),
     });
 
-    await CatRepository.instance.purchaseAccessory(
+    final supporterPurchase = await CatRepository.instance.purchaseAccessory(
       itemId: 'supporter_hat',
       category: CatAccessoryCategory.hat,
-      price: 0,
+      price: 850,
     );
     final updated = await CatRepository.instance.purchaseAccessory(
       itemId: 'doctor_hat_fezz',
@@ -751,12 +751,12 @@ void main() {
       price: 0,
     );
 
-    expect(updated?.ownedAccessoryIds, isNot(contains('supporter_hat')));
+    expect(supporterPurchase?.ownedAccessoryIds, contains('supporter_hat'));
     expect(updated?.ownedAccessoryIds, isNot(contains('doctor_hat_fezz')));
-    expect(updated?.happyPoints, 1000);
+    expect(updated?.happyPoints, 1150);
   });
 
-  test('hidden reward items never appear in the shop', () {
+  test('former supporter items appear in the regular shop', () {
     final adult = CatProfile(
       name: 'Milo',
       variant: PetVariant.catOrange,
@@ -766,13 +766,13 @@ void main() {
 
     expect(
       visibleCatShopCatalog(adult).map((item) => item.id),
-      isNot(contains('supporter_hat')),
+      contains('supporter_hat'),
     );
     expect(
       visibleCatShopCatalog(
         adult.copyWith(ownedAccessoryIds: const <String>{'supporter_hat'}),
       ).map((item) => item.id),
-      isNot(contains('supporter_hat')),
+      contains('supporter_hat'),
     );
   });
 

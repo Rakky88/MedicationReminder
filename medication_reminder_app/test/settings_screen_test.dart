@@ -31,13 +31,13 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('about screen identifies the maker and safe store status', (
+  testWidgets('about screen identifies the maker and links to Ko-fi', (
     tester,
   ) async {
     await tester.pumpWidget(localized(const AboutScreen()));
 
     expect(find.text('Made by Rick Groot · 2026'), findsOneWidget);
-    expect(find.text('Version V0.01.01'), findsOneWidget);
+    expect(find.text('Version V0.01.02'), findsOneWidget);
     expect(find.text('Share or update the app'), findsOneWidget);
     expect(find.text('Copy Android download link'), findsOneWidget);
     expect(find.text('Open contact form'), findsOneWidget);
@@ -54,7 +54,9 @@ void main() {
     );
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.textContaining('official store billing'), findsOneWidget);
+    expect(find.text('Buy me a coffee'), findsOneWidget);
+    expect(find.text('Open Ko-fi'), findsOneWidget);
+    expect(find.text('Support the app'), findsNothing);
 
     await tester.drag(find.byType(ListView), const Offset(0, 500));
     await tester.pumpAndSettle();
@@ -81,13 +83,16 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -450));
     await tester.pumpAndSettle();
     expect(find.text('Purring sound'), findsOneWidget);
+    expect(find.textContaining('purr after a recorded dose'), findsNothing);
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('Meowing sound'), findsOneWidget);
+    expect(find.textContaining('meow in reminders'), findsNothing);
     expect(
       find.text('Keep repeating reminders until I respond'),
       findsOneWidget,
     );
+    expect(find.textContaining('After 3 ignored reminders'), findsNothing);
     expect(find.text('Temporary sound test'), findsNothing);
   });
 
@@ -180,7 +185,8 @@ void main() {
     expect(find.text('Owned'), findsOneWidget);
     expect(find.text('Remove'), findsNothing);
     expect(find.text('Use'), findsNothing);
-    expect(find.text('Supporter crown'), findsNothing);
+    expect(find.text('Supporter crown'), findsOneWidget);
+    expect(find.text('850 ♥'), findsOneWidget);
   });
 
   testWidgets('shop has a streak tab with visible locked and free rewards', (

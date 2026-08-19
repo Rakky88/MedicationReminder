@@ -2,7 +2,7 @@
 
 Een privacyvriendelijke Flutter-app voor eenvoudige, ADHD-vriendelijke medicatieherinneringen. De app bewaart medicijnen, schema's en innamegeschiedenis lokaal op het apparaat.
 
-## Huidige status — V0.01.01
+## Huidige status — V0.01.02
 
 De ondertekende Android-releasebuild werkt. De meest recente geverifieerde APK
 staat na een build in:
@@ -12,7 +12,7 @@ staat na een build in:
 Geverifieerd met Flutter 3.44.9 en Dart 3.12.2:
 
 - `flutter analyze`: geen issues
-- `flutter test`: 137 tests geslaagd
+- `flutter test`: 140 tests geslaagd
 - `flutter build apk --release`: geslaagd en met de vaste releasekey ondertekend
 
 De vaste openbare Android-downloadlink is:
@@ -82,6 +82,9 @@ in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
   afzonderlijk geschudde verzameling: alle twintig varianten komen langs voordat
   een geluid opnieuw mag worden gekozen. Ook Android-meldingen kunnen willekeurig
   kiezen uit twintig miauwen, blaffen of kukeleku-geluiden.
+- Het eerste geplande Android-alarm gebruikt het alarmvolume met het gekozen
+  diergeluid of het standaard alarmgeluid. Vervolg- en snoozemeldingen gebruiken
+  het notificatievolume; diergeluiden in de geopende app gebruiken mediavolume.
 - Elk dier groeit na 14 succesvolle medicatiedagen naar de jonge fase en na 60
   succesvolle medicatiedagen naar de volwassen fase. Meerdere geldige
   innames op dezelfde kalenderdag leveren samen maximaal één groeidag op. De
@@ -151,17 +154,15 @@ in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
   verschijnt rechtsonder een opvallende, pulserende ronde speelknop. Eén geldige
   klik geeft een bericht van de kat en eenmalig 10 happy points.
 - Voor ieder huisdier hebben het vrolijke en hongerige geluid ieder een eigen
-  schakelaar, met soortspecifieke tekst. Een derde, duidelijk uitgelegde schakelaar
-  bepaalt of meldingen na drie genegeerde meldingen of drie
+  schakelaar met een korte soortspecifieke titel. Een derde schakelaar bepaalt of
+  meldingen na drie genegeerde meldingen of drie
   snoozes iedere vijf minuten blijven terugkomen. Als deze uitstaat, stopt die
   extra herhaalketen; gewone herinneringen blijven werken.
-- Niet-verkrijgbare beloningsitems worden niet in de shop getoond. De vier
-  supportersitems verschijnen dus pas nadat ze daadwerkelijk zijn ontgrendeld.
-  Na een later door de store geverifieerde eerste bijdrage kan de app eenmalig
-  100 happy points en de supporterskroon, -bril, -cape en het supportershart
-  geven. Volgende bijdragen geven geen tweede beloning.
+- De voormalige supporterskroon, -bril, -cape en het supportershart staan als
+  gewone items voor 850, 650, 1100 en 700 happy points in de shop. Alleen
+  code-items blijven buiten de gewone winkelroute.
 
-## Informatie, contact en veilige ondersteuning
+## Informatie, contact en Ko-fi
 
 Via het informatie-icoon staat in de app: **Gemaakt door Rick Groot · 2026**.
 Contact verloopt volledig via een formulier in de app; er wordt geen externe
@@ -178,18 +179,16 @@ ingesteld met `--dart-define=CONTACT_FORM_ENDPOINT=https://...`. De huidige
 testbuild meldt daarom eerlijk dat verzenden nog niet gekoppeld is.
 
 **Instellingen** en **Over deze app** zijn samengevoegd tot één informatiescherm.
-Daar staat het codeveld tussen Contact en Doneren. De app toont geen hints naar
-actieve codes. De ingebouwde Doctor-set geeft na een geldige invoer een fez,
+Daar staat het codeveld tussen Contact en de Ko-fi-knop. De app toont geen hints
+naar actieve codes. De ingebouwde Doctor-set geeft na een geldige invoer een fez,
 strikje, tweed-outfit en TARDIS-speeltje rechtstreeks in de garderobe; deze
 items verschijnen nooit in de shop. Een latere beveiligde codeserver kan via
 `--dart-define=SPECIAL_CODE_ENDPOINT=https://...` aanvullende eenmalige
 campagnecodes leveren.
 
-Betalen is in de debugbuild bewust uitgeschakeld. Omdat de bijdrage digitale
-happy points en exclusieve items geeft, moet de winkelversie officiële Google
-Play Billing / Apple In-App Purchase gebruiken. De lokale, idempotente
-beloningslogica en sprites staan klaar; product-ID's, storeaccounts en veilige
-serververificatie van transacties zijn nog nodig om echte betalingen aan te zetten.
+Onderaan opent **Trakteer me op koffie** rechtstreeks de gratis Ko-fi-pagina
+<https://ko-fi.com/rgroot88>. Een bijdrage staat los van appbeloningen en
+ontgrendelt daarom geen exclusieve digitale items.
 
 ## Updates zonder voortgang te verliezen
 
