@@ -13,6 +13,7 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'async_operation_queue.dart';
+import 'app_localizations.dart';
 import 'medication.dart';
 import 'cat.dart';
 import 'cat_notification_messages.dart';
@@ -122,16 +123,12 @@ class NotificationService {
       requestBadgePermission: false,
       requestSoundPermission: false,
       notificationCategories: <DarwinNotificationCategory>[
-        _darwinCategory(
-          languageCode: 'nl',
-          openLabel: 'App openen',
-          snoozeLabel: '10 min uitstellen',
-        ),
-        _darwinCategory(
-          languageCode: 'en',
-          openLabel: 'Open app',
-          snoozeLabel: 'Snooze 10 min',
-        ),
+        for (final locale in supportedAppLocales)
+          _darwinCategory(
+            languageCode: locale.languageCode,
+            openLabel: AppLocalizations(locale).notificationOpen,
+            snoozeLabel: AppLocalizations(locale).notificationSnooze,
+          ),
       ],
     );
 
@@ -411,30 +408,22 @@ class NotificationService {
         ? _alarmChannelIdsFor(mascot?.species ?? PetSpecies.cat)
         : _channelIdsFor(mascot?.species ?? PetSpecies.cat);
     final soundIndex = appearance.soundIndex % soundNames.length;
-    final dutch = copy.languageCode == 'nl';
+    final channelCopy = _notificationChannelCopy(copy.languageCode);
     final channelId = hasMascotSound
         ? channelIds[soundIndex]
         : useAlarmAudio
         ? _alarmChannelId
         : _channelId;
     final channelName = useAlarmAudio
-        ? (dutch ? 'Medicatiealarmen' : 'Medication alarms')
+        ? channelCopy.alarms
         : hasMascotSound
-        ? (dutch
-              ? 'Medicatieherinneringen met huisdier'
-              : 'Medication reminders with pet')
-        : (dutch ? 'Medicatieherinneringen' : 'Medication reminders');
+        ? channelCopy.petReminders
+        : channelCopy.reminders;
     final channelDescription = useAlarmAudio
-        ? (dutch
-              ? 'Het eerste alarm voor geplande medicatie'
-              : 'The first alarm for scheduled medication')
+        ? channelCopy.alarmsDescription
         : hasMascotSound
-        ? (dutch
-              ? 'Herinneringen met het geluid van je geadopteerde huisdier'
-              : 'Reminders with the sound of your adopted pet')
-        : (dutch
-              ? 'Herinneringen voor geplande medicatie'
-              : 'Reminders for scheduled medication');
+        ? channelCopy.petRemindersDescription
+        : channelCopy.remindersDescription;
     final AndroidNotificationSound? androidSound = hasMascotSound
         ? RawResourceAndroidNotificationSound(soundNames[soundIndex])
         : useAlarmAudio
@@ -636,12 +625,10 @@ class NotificationService {
         'lastMessageIndex': mascot == null ? -1 : _lastCatMessageIndex ?? -1,
         'largeImagePath': images?.transparentPath,
         'accentedImagePaths': images?.accentedPaths ?? const <String>[],
-        'channelName': copy.languageCode == 'nl'
-            ? 'Medicatieherinneringen'
-            : 'Medication reminders',
-        'catChannelName': copy.languageCode == 'nl'
-            ? 'Medicatieherinneringen met huisdier'
-            : 'Medication reminders with pet',
+        'channelName': _notificationChannelCopy(copy.languageCode).reminders,
+        'catChannelName': _notificationChannelCopy(
+          copy.languageCode,
+        ).petReminders,
       });
     }
 
@@ -1339,3 +1326,57 @@ class _NotificationImages {
   final String transparentPath;
   final List<String> accentedPaths;
 }
+
+({
+  String alarms,
+  String reminders,
+  String petReminders,
+  String alarmsDescription,
+  String remindersDescription,
+  String petRemindersDescription,
+})
+_notificationChannelCopy(String languageCode) => switch (languageCode) {
+  'nl' => (
+    alarms: 'Medicatiealarmen',
+    reminders: 'Medicatieherinneringen',
+    petReminders: 'Medicatieherinneringen met huisdier',
+    alarmsDescription: 'Het eerste alarm voor geplande medicatie',
+    remindersDescription: 'Herinneringen voor geplande medicatie',
+    petRemindersDescription:
+        'Herinneringen met het geluid van je geadopteerde huisdier',
+  ),
+  'de' => (
+    alarms: 'Medikamentenalarme',
+    reminders: 'Medikamentenerinnerungen',
+    petReminders: 'Medikamentenerinnerungen mit Haustier',
+    alarmsDescription: 'Der erste Alarm für geplante Medikamente',
+    remindersDescription: 'Erinnerungen für geplante Medikamente',
+    petRemindersDescription:
+        'Erinnerungen mit dem Geräusch deines adoptierten Haustiers',
+  ),
+  'fr' => (
+    alarms: 'Alarmes de médicaments',
+    reminders: 'Rappels de médicaments',
+    petReminders: 'Rappels de médicaments avec animal',
+    alarmsDescription: 'La première alarme pour un médicament programmé',
+    remindersDescription: 'Rappels pour les médicaments programmés',
+    petRemindersDescription: 'Rappels avec le son de votre animal adopté',
+  ),
+  'es' => (
+    alarms: 'Alarmas de medicación',
+    reminders: 'Recordatorios de medicación',
+    petReminders: 'Recordatorios de medicación con mascota',
+    alarmsDescription: 'La primera alarma de la medicación programada',
+    remindersDescription: 'Recordatorios de la medicación programada',
+    petRemindersDescription:
+        'Recordatorios con el sonido de tu mascota adoptada',
+  ),
+  _ => (
+    alarms: 'Medication alarms',
+    reminders: 'Medication reminders',
+    petReminders: 'Medication reminders with pet',
+    alarmsDescription: 'The first alarm for scheduled medication',
+    remindersDescription: 'Reminders for scheduled medication',
+    petRemindersDescription: 'Reminders with the sound of your adopted pet',
+  ),
+};

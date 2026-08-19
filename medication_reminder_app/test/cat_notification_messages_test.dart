@@ -5,7 +5,7 @@ import 'package:medication_reminder_app/medication.dart';
 import 'package:medication_reminder_app/notification_models.dart';
 
 void main() {
-  for (final languageCode in <String>['nl', 'en']) {
+  for (final languageCode in <String>['en', 'nl', 'de', 'fr', 'es']) {
     test('contains 500 unique $languageCode cat reminder messages', () {
       final messages = List<String>.generate(
         CatNotificationMessages.count,
@@ -22,7 +22,7 @@ void main() {
         messages.every((message) => message.contains('MiloDemon123')),
         isTrue,
       );
-      expect(messages.every((message) => message.length <= 64), isTrue);
+      expect(messages.every((message) => message.length <= 82), isTrue);
       expect(
         messages.where((message) => message.contains('Donna')),
         hasLength(3),
@@ -43,7 +43,7 @@ void main() {
       weekdays: <int>[DateTime.monday],
       showNameInNotifications: true,
     );
-    for (final languageCode in <String>['nl', 'en']) {
+    for (final languageCode in <String>['en', 'nl', 'de', 'fr', 'es']) {
       for (var index = 0; index < CatNotificationMessages.count; index++) {
         final body = medicationNotificationBody(
           body: CatNotificationMessages.messageAt(

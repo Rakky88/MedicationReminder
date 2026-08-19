@@ -1,11 +1,191 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'app_branding.dart';
 import 'app_localizations.dart';
 import 'app_release.dart';
 import 'cat_repository.dart';
 import 'external_link_service.dart';
 import 'special_code_service.dart';
+
+class _AboutBrandHero extends StatelessWidget {
+  const _AboutBrandHero({
+    required this.title,
+    required this.madeBy,
+    required this.version,
+  });
+
+  final String title;
+  final String madeBy;
+  final String version;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final cardStart = Color.alphaBlend(
+      colors.primary.withValues(alpha: 0.07),
+      colors.surfaceContainerLow,
+    );
+    final cardEnd = Color.alphaBlend(
+      colors.secondary.withValues(alpha: 0.08),
+      colors.surfaceContainerLow,
+    );
+
+    return Container(
+      key: const ValueKey<String>('about-brand-hero'),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[cardStart, cardEnd],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: colors.outlineVariant.withValues(alpha: 0.65),
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.09),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: <Widget>[
+          Positioned(
+            top: -72,
+            right: -54,
+            child: _BrandGlow(
+              size: 170,
+              color: colors.secondary.withValues(alpha: 0.08),
+            ),
+          ),
+          Positioned(
+            bottom: -68,
+            left: -48,
+            child: _BrandGlow(
+              size: 150,
+              color: colors.primary.withValues(alpha: 0.08),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+            child: Column(
+              children: <Widget>[
+                AppLogoMark(
+                  size: 112,
+                  imageKey: const ValueKey<String>('about-brand-logo'),
+                  semanticLabel: title,
+                ),
+                const SizedBox(height: 14),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: AppWordmark(
+                    title: title,
+                    textKey: const ValueKey<String>('about-brand-title'),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -1.1,
+                      height: 1,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 13),
+                Container(
+                  width: 58,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: <Color>[colors.primary, colors.secondary],
+                    ),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: <Widget>[
+                    _AboutInfoPill(
+                      icon: Icons.person_outline_rounded,
+                      label: madeBy,
+                    ),
+                    _AboutInfoPill(
+                      key: const ValueKey<String>('about-version-badge'),
+                      icon: Icons.sell_outlined,
+                      label: version,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrandGlow extends StatelessWidget {
+  const _BrandGlow({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+    );
+  }
+}
+
+class _AboutInfoPill extends StatelessWidget {
+  const _AboutInfoPill({super.key, required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.surface.withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.7)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 16, color: colors.primary),
+          const SizedBox(width: 7),
+          Flexible(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -123,38 +303,10 @@ class _AboutScreenState extends State<AboutScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: <Widget>[
-          Card.filled(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: <Widget>[
-                  Image.asset(
-                    'assets/branding/app_logo.png',
-                    width: 92,
-                    height: 92,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    loc.title,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    loc.madeBy,
-                    style: Theme.of(context).textTheme.titleMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    loc.appVersion(AppRelease.displayVersion),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
+          _AboutBrandHero(
+            title: loc.title,
+            madeBy: loc.madeBy,
+            version: loc.appVersion(AppRelease.displayVersion),
           ),
           const SizedBox(height: 12),
           Card(

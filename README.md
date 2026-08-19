@@ -2,7 +2,7 @@
 
 Een privacyvriendelijke Flutter-app voor eenvoudige, ADHD-vriendelijke medicatieherinneringen. De app bewaart medicijnen, schema's en innamegeschiedenis lokaal op het apparaat.
 
-## Huidige status — V0.01.03
+## Huidige status — V0.02.00
 
 De ondertekende Android-releasebuild werkt. De meest recente geverifieerde APK
 staat na een build in:
@@ -12,7 +12,7 @@ staat na een build in:
 Geverifieerd met Flutter 3.44.9 en Dart 3.12.2:
 
 - `flutter analyze`: geen issues
-- `flutter test`: 141 tests geslaagd
+- `flutter test`: 149 tests geslaagd
 - `flutter build apk --release`: geslaagd en met de vaste releasekey ondertekend
 
 De vaste openbare Android-downloadlink is:
@@ -262,12 +262,11 @@ Je kunt `app-release.apk` ook naar een draaiende emulator slepen om hem handmati
 - `lib/medication_form_screen.dart`: toevoegen en bewerken
 - `lib/log_screen.dart`: innamegeschiedenis
 - `lib/adherence_chart_screen.dart`: instelbare innamegrafieken
-- `lib/about_screen.dart`, `lib/contact_screen.dart` en `lib/support_service.dart`:
-  maker en intern contactformulier met beveiligde relay-aansluiting
 - `lib/about_screen.dart` en `lib/special_code_service.dart`: samengevoegde
-  informatie, contact, speciale codes en ondersteuning
+  informatie, download/update, speciale codes en Ko-fi-ondersteuning
 - `lib/notification_service_native.dart`: rechten, tijdzone en notificatieplanning
-- `lib/app_localizations.dart`: Nederlandse en Engelse teksten
+- `lib/app_localizations.dart` en `lib/app_translations.dart`: Engelse,
+  Nederlandse, Duitse, Franse en Spaanse teksten
 - `lib/cat.dart`: huisdierprofiel, soorten, varianten, groei en hongerniveaus
 - `lib/pet_audio.dart`: hoorbare, niet direct herhalende geluidsselectie
 - `lib/pet_sound_catalog.dart`: gedeelde catalogus voor alle zes geluidssets
@@ -279,8 +278,9 @@ Je kunt `app-release.apk` ook naar een draaiende emulator slepen om hem handmati
 - `assets/cats/`: transparante groei-sprites voor vijf katten, vijf honden en de
   kip, plus uitgelijnde winkel- en supportersoverlays
 - `assets/branding/`: het speelse klok/poot/capsule-logo; de launcher behoudt
-  zijn veilige achtergrond, terwijl het hoofdscherm een strak uitgesneden
-  transparant beeldmerk naast de vetgedrukte tweekleurige appnaam gebruikt
+  zijn veilige achtergrond, terwijl het hoofd- en informatiescherm een strak
+  uitgesneden transparant beeldmerk met de vetgedrukte tweekleurige appnaam
+  gebruiken
 - `assets/sounds/`: twintig echte varianten voor miauwen, spinnen, blaffen,
   hijgen, kukeleku en tokken; bronopnamen staan buiten de appbundle
 - `tool/normalize_cat_sprites.py`: reproduceerbare uitsnede en centrering van de

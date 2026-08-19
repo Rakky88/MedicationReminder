@@ -13,6 +13,16 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
+  testWidgets('uses English when no language was selected yet', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const MedicationReminderApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Medication Reminder'), findsOneWidget);
+    expect(find.text('No medication scheduled'), findsOneWidget);
+  });
+
   testWidgets('shows onboarding when there are no medications', (
     WidgetTester tester,
   ) async {

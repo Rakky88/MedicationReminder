@@ -10,72 +10,10 @@ import 'cat.dart';
 import 'cat_avatar.dart';
 import 'cat_shop.dart';
 
-// V11 is a focused recheck of every combination selected in the completed V10
-// repair review. Only these tiles are shown, so approved fixes stay out of the
-// next round.
+// V14 contains only the two cat glasses selected in the completed V13 review.
+// Every other combination remains approved and stays out of this last check.
 const _reviewTargets = <String, Set<PetVariant>>{
-  'chicken_glasses_egg': <PetVariant>{
-    PetVariant.catTuxedo,
-    PetVariant.dogDachshund,
-  },
-  'doctor_bow_tie': <PetVariant>{PetVariant.dogDachshund},
-  'doctor_hat_fezz': <PetVariant>{PetVariant.dogDachshund},
-  'dragon_mode': <PetVariant>{
-    PetVariant.catOrange,
-    PetVariant.catTuxedo,
-    PetVariant.catGray,
-    PetVariant.catCalico,
-    PetVariant.catBlackBib,
-    PetVariant.dogGolden,
-    PetVariant.dogBeagle,
-    PetVariant.dogBlackLab,
-    PetVariant.dogBorderCollie,
-    PetVariant.dogDachshund,
-  },
-  'glasses_round': <PetVariant>{
-    PetVariant.catOrange,
-    PetVariant.catTuxedo,
-    PetVariant.catGray,
-    PetVariant.dogDachshund,
-  },
-  'glasses_star': <PetVariant>{PetVariant.dogBeagle, PetVariant.dogDachshund},
-  'glasses_sun': <PetVariant>{PetVariant.dogDachshund},
-  'hat_cap': <PetVariant>{PetVariant.dogDachshund},
-  'hat_crown': <PetVariant>{PetVariant.dogDachshund},
-  'hat_wizard': <PetVariant>{
-    PetVariant.dogGolden,
-    PetVariant.dogBeagle,
-    PetVariant.dogBlackLab,
-    PetVariant.dogBorderCollie,
-    PetVariant.dogDachshund,
-  },
-  'streak_1000_outfit_millennium': <PetVariant>{
-    PetVariant.catOrange,
-    PetVariant.catTuxedo,
-    PetVariant.catGray,
-    PetVariant.catCalico,
-    PetVariant.catBlackBib,
-    PetVariant.dogGolden,
-    PetVariant.dogBeagle,
-    PetVariant.dogBlackLab,
-    PetVariant.dogBorderCollie,
-    PetVariant.dogDachshund,
-    PetVariant.chickenHen,
-  },
-  'streak_100_glasses_century': <PetVariant>{PetVariant.dogDachshund},
-  'streak_250_hat_laurel': <PetVariant>{
-    PetVariant.dogDachshund,
-    PetVariant.chickenHen,
-  },
-  'streak_300_glasses_prism': <PetVariant>{PetVariant.dogDachshund},
-  'streak_365_glasses_year_star': <PetVariant>{PetVariant.dogDachshund},
-  'streak_365_hat_year_crown': <PetVariant>{PetVariant.dogDachshund},
-  'streak_40_hat_consistency': <PetVariant>{PetVariant.dogDachshund},
-  'supporter_glasses': <PetVariant>{
-    PetVariant.dogBeagle,
-    PetVariant.dogDachshund,
-  },
-  'supporter_hat': <PetVariant>{PetVariant.dogBeagle, PetVariant.dogDachshund},
+  'glasses_round': <PetVariant>{PetVariant.catTuxedo, PetVariant.catGray},
 };
 
 final _auditCatalog = catShopCatalog
@@ -105,16 +43,17 @@ class _AccessoryAuditScreen extends StatefulWidget {
 }
 
 class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
-  static const _preferencesKey = 'accessory_visual_audit_v11_fixed_recheck';
-  static const _exportFileName = 'accessory_visual_audit_v11_fixed_recheck.txt';
+  static const _preferencesKey = 'accessory_visual_audit_v14_fixed_recheck';
+  static const _exportFileName = 'accessory_visual_audit_v14_fixed_recheck.txt';
 
   final Set<String> _issues = <String>{};
   int _page = 0;
   bool _loaded = false;
 
-  int get _totalPages => _auditCatalog.length + 2;
-  bool get _dragonPage => _page == _auditCatalog.length;
-  bool get _summaryPage => _page == _auditCatalog.length + 1;
+  bool get _hasDragonPage => _reviewTargets.containsKey('dragon_mode');
+  int get _totalPages => _auditCatalog.length + (_hasDragonPage ? 1 : 0) + 1;
+  bool get _dragonPage => _hasDragonPage && _page == _auditCatalog.length;
+  bool get _summaryPage => _page == _totalPages - 1;
   String get _pageId => _dragonPage ? 'dragon_mode' : _auditCatalog[_page].id;
   List<PetVariant> get _pageVariants => PetVariant.values
       .where(_reviewTargets[_pageId]!.contains)
@@ -217,7 +156,7 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 2, 8, 0),
               child: Text(
-                'V11 hercontrole: tik alleen als de reparatie nog niet goed is. '
+                'V14 eindcontrole: tik alleen als de reparatie nog niet goed is. '
                 'Rood = geselecteerd. Totaal: ${_issues.length}',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,

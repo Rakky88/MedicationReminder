@@ -551,52 +551,73 @@ private fun petReminderMessage(
 ): String {
     val name = if (rawName.length <= 12) rawName else rawName.take(11) + "…"
     val normalized = index.mod(500)
-    val dutch = languageCode == "nl"
     val cat = speciesCode == "cat"
-    val special = if (dutch && cat) {
-        listOf(
-            "Donna kijkt jaloers. $name: medicatietijd!",
-            "Donna wil aandacht. $name zegt: dosis!",
-            "$name helpt. Donna kijkt jaloers: dosis!",
-            "dimi jaagt $name bijna weg. Eerst je dosis!",
-            "$name waakt. dimi kijkt jaloers: dosis!",
-            "dimi moppert op $name. Medicatietijd!",
+    val special = when (languageCode) {
+        "nl" -> if (cat) listOf(
+            "Donna kijkt jaloers. $name: medicatietijd!", "Donna wil aandacht. $name zegt: dosis!",
+            "$name helpt. Donna kijkt jaloers: dosis!", "dimi jaagt $name bijna weg. Eerst je dosis!",
+            "$name waakt. dimi kijkt jaloers: dosis!", "dimi moppert op $name. Medicatietijd!",
+        ) else listOf(
+            "$name vraagt aandacht: medicatietijd!", "$name staat klaar: je dosis wacht.",
+            "$name helpt: tijd voor je dosis!", "$name geeft een seintje: dosis!",
+            "$name wacht. Open de app!", "$name zegt: zorg goed voor jezelf!",
         )
-    } else if (!dutch && cat) {
-        listOf(
-            "Donna looks jealous. $name says: dose time!",
-            "Donna wants attention. $name says: dose!",
-            "$name helps. Donna looks jealous: dose time!",
-            "dimi may chase $name away. Dose first!",
-            "$name guards. dimi looks jealous: dose time!",
-            "dimi grumbles at $name. Medication time!",
+        "de" -> if (cat) listOf(
+            "Donna schaut neidisch. $name sagt: Zeit für die Dosis!", "Donna möchte Aufmerksamkeit. $name sagt: Dosis!",
+            "$name hilft. Donna schaut neidisch: Zeit für die Dosis!", "dimi verjagt $name vielleicht. Erst die Dosis!",
+            "$name passt auf. dimi schaut neidisch: Zeit für die Dosis!", "dimi brummt $name an. Medikamentenzeit!",
+        ) else listOf(
+            "$name möchte Aufmerksamkeit: Medikamentenzeit!", "$name ist bereit: Deine Dosis ist fällig.",
+            "$name erinnert dich: Zeit für die Dosis!", "$name gibt ein Zeichen: Zeit für die Dosis!",
+            "$name wartet. Öffne die App!", "$name sagt: Pass gut auf dich auf!",
         )
-    } else if (dutch) {
-        listOf(
-            "$name vraagt aandacht: medicatietijd!",
-            "$name staat klaar: je dosis wacht.",
-            "$name helpt: tijd voor je dosis!",
-            "$name geeft een seintje: dosis!",
-            "$name wacht. Open de app!",
-            "$name zegt: zorg goed voor jezelf!",
+        "fr" -> if (cat) listOf(
+            "Donna est jalouse. $name dit : c’est l’heure de la dose !", "Donna veut de l’attention. $name dit : la dose !",
+            "$name vous aide. Donna est jalouse : c’est l’heure de la dose !", "dimi pourrait chasser $name. La dose d’abord !",
+            "$name monte la garde. dimi est jalouse : c’est l’heure de la dose !", "dimi grogne contre $name. C’est l’heure du médicament !",
+        ) else listOf(
+            "$name veut votre attention : c’est l’heure du médicament !", "$name est prêt : votre dose est prévue.",
+            "$name vous rappelle : c’est l’heure de la dose !", "$name vous fait signe : c’est l’heure de la dose !",
+            "$name attend. Ouvrez l’app !", "$name dit : prenez soin de vous !",
         )
-    } else {
-        listOf(
-            "$name wants attention: medication time!",
-            "$name is ready: your dose is due.",
-            "$name reminds you: dose time!",
-            "$name gives a signal: dose time!",
-            "$name waits. Open the app!",
-            "$name says: take care of yourself!",
+        "es" -> if (cat) listOf(
+            "Donna mira con celos. $name dice: ¡hora de la dosis!", "Donna quiere atención. $name dice: ¡la dosis!",
+            "$name ayuda. Donna mira con celos: ¡hora de la dosis!", "dimi podría echar a $name. ¡Primero la dosis!",
+            "$name vigila. dimi mira con celos: ¡hora de la dosis!", "dimi gruñe a $name. ¡Hora del medicamento!",
+        ) else listOf(
+            "$name quiere atención: ¡hora del medicamento!", "$name está listo: tu dosis está pendiente.",
+            "$name te recuerda: ¡hora de la dosis!", "$name te hace una señal: ¡hora de la dosis!",
+            "$name espera. ¡Abre la app!", "$name dice: ¡cuídate mucho!",
+        )
+        else -> if (cat) listOf(
+            "Donna looks jealous. $name says: dose time!", "Donna wants attention. $name says: dose!",
+            "$name helps. Donna looks jealous: dose time!", "dimi may chase $name away. Dose first!",
+            "$name guards. dimi looks jealous: dose time!", "dimi grumbles at $name. Medication time!",
+        ) else listOf(
+            "$name wants attention: medication time!", "$name is ready: your dose is due.",
+            "$name reminds you: dose time!", "$name gives a signal: dose time!",
+            "$name waits. Open the app!", "$name says: take care of yourself!",
         )
     }
     if (normalized < special.size) return special[normalized]
-    val openings = if (dutch) SHORT_DUTCH_OPENINGS else SHORT_ENGLISH_OPENINGS
-    val endings = if (dutch) SHORT_DUTCH_ENDINGS else SHORT_ENGLISH_ENDINGS
+    val openings = when (languageCode) {
+        "nl" -> SHORT_DUTCH_OPENINGS
+        "de" -> SHORT_GERMAN_OPENINGS
+        "fr" -> SHORT_FRENCH_OPENINGS
+        "es" -> SHORT_SPANISH_OPENINGS
+        else -> SHORT_ENGLISH_OPENINGS
+    }
+    val endings = when (languageCode) {
+        "nl" -> SHORT_DUTCH_ENDINGS
+        "de" -> SHORT_GERMAN_ENDINGS
+        "fr" -> SHORT_FRENCH_ENDINGS
+        "es" -> SHORT_SPANISH_ENDINGS
+        else -> SHORT_ENGLISH_ENDINGS
+    }
     val sound = when (speciesCode) {
-        "dog" -> if (dutch) "blaft" else "barks"
-        "chicken" -> if (dutch) "tokt" else "clucks"
-        else -> if (dutch) "miauwt" else "meows"
+        "dog" -> when (languageCode) { "nl" -> "blaft"; "de" -> "bellt"; "fr" -> "aboie"; "es" -> "ladra"; else -> "barks" }
+        "chicken" -> when (languageCode) { "nl" -> "tokt"; "de" -> "gackert"; "fr" -> "caquette"; "es" -> "cacarea"; else -> "clucks" }
+        else -> when (languageCode) { "nl" -> "miauwt"; "de" -> "miaut"; "fr" -> "miaule"; "es" -> "maúlla"; else -> "meows" }
     }
     val value = normalized - special.size
     return "$name ${openings[value / endings.size].replace("{sound}", sound)} " +
@@ -609,16 +630,17 @@ private fun persistentPetReminderMessage(
     speciesCode: String,
 ): String {
     val name = if (catName.length <= 12) catName else catName.take(11) + "…"
-    val dutch = languageCode == "nl"
     val keepsCalling = when (speciesCode) {
-        "dog" -> if (dutch) "blijft blaffen" else "keeps barking"
-        "chicken" -> if (dutch) "blijft tokken" else "keeps clucking"
-        else -> if (dutch) "blijft miauwen" else "keeps meowing"
+        "dog" -> when (languageCode) { "nl" -> "blijft blaffen"; "de" -> "bellt weiter"; "fr" -> "continue d’aboyer"; "es" -> "sigue ladrando"; else -> "keeps barking" }
+        "chicken" -> when (languageCode) { "nl" -> "blijft tokken"; "de" -> "gackert weiter"; "fr" -> "continue de caqueter"; "es" -> "sigue cacareando"; else -> "keeps clucking" }
+        else -> when (languageCode) { "nl" -> "blijft miauwen"; "de" -> "miaut weiter"; "fr" -> "continue de miauler"; "es" -> "sigue maullando"; else -> "keeps meowing" }
     }
-    return if (dutch) {
-        "$name $keepsCalling: open of stel uit."
-    } else {
-        "$name $keepsCalling: open or snooze."
+    return when (languageCode) {
+        "nl" -> "$name $keepsCalling: open of stel uit."
+        "de" -> "$name $keepsCalling: öffnen oder verschieben."
+        "fr" -> "$name $keepsCalling : ouvrez ou reportez."
+        "es" -> "$name $keepsCalling: abre o pospón."
+        else -> "$name $keepsCalling: open or snooze."
     }
 }
 
@@ -684,6 +706,75 @@ private val SHORT_ENGLISH_ENDINGS = listOf(
     "give your dose a moment.", "the team votes: dose.",
     "check today’s dose.", "protocol says: dose time.",
     "finish it in the app.", "your dose says hello.",
+)
+
+private val SHORT_GERMAN_OPENINGS = listOf(
+    "tippt auf die Uhr:", "steht bereit:", "{sound} sanft:",
+    "schaut dich an:", "dreht eine schnelle Runde:", "{sound} in deiner Nähe:",
+    "startet die Erinnerung:", "hat Neuigkeiten:", "meldet sich:",
+    "ist dein Dosis-Coach:", "springt auf:", "hat ein Update:",
+    "steht stolz da:", "öffnet den Planer:", "unterbricht das Nickerchen:",
+    "zeigt auf die Uhr:", "testet das Mikrofon:", "übernimmt die Erinnerung:",
+    "tippt den Alarm an:",
+)
+
+private val SHORT_GERMAN_ENDINGS = listOf(
+    "Medikamentenzeit!", "deine Dosis wartet.", "die Zeit für deine Dosis ist da.",
+    "öffne die App.", "dein Medikament wartet.", "die Uhr sagt: Dosis.",
+    "deine Dosis ist bereit.", "pass gut auf dich auf.", "deine Dosis ist fällig.",
+    "ein kleiner hilfreicher Hinweis.", "die Dosisrunde beginnt.", "schau in die App.",
+    "dein Helfer ist da.", "Dosiszeit bestätigt.", "genau nach Plan.",
+    "keine Panik, nur deine Dosis.", "Zeit für deine Routine.", "deine Erinnerung ist da.",
+    "die Medikamentenuhr klingelt.", "ein Hinweis für deine Dosis.",
+    "nimm dir einen Moment für deine Dosis.", "das Team stimmt für die Dosis.",
+    "prüfe die heutige Dosis.", "das Protokoll sagt: Dosiszeit.",
+    "schließe es in der App ab.", "deine Dosis sagt Hallo.",
+)
+
+private val SHORT_FRENCH_OPENINGS = listOf(
+    "tapote la montre :", "se tient prêt :", "{sound} doucement :",
+    "vous regarde :", "fait un petit tour :", "{sound} tout près :",
+    "active le mode rappel :", "a une nouvelle :", "vient faire son rapport :",
+    "est votre coach de dose :", "se lève d’un bond :", "a une mise à jour :",
+    "se tient fièrement :", "ouvre le planning :", "interrompt la sieste :",
+    "montre l’horloge :", "teste le microphone :", "prend son tour de rappel :",
+    "tapote l’alarme :",
+)
+
+private val SHORT_FRENCH_ENDINGS = listOf(
+    "c’est l’heure du médicament !", "votre dose vous attend.", "l’heure de votre dose est arrivée.",
+    "ouvrez l’app.", "votre médicament vous attend.", "l’horloge dit : la dose.",
+    "votre dose est prête.", "prenez soin de vous.", "votre dose est prévue.",
+    "un petit rappel utile.", "la tournée des doses commence.", "consultez l’app.",
+    "votre assistant est là.", "heure de la dose confirmée.", "pile à l’heure.",
+    "pas de panique, juste votre dose.", "c’est l’heure de votre routine.", "votre rappel est arrivé.",
+    "l’horloge du médicament sonne.", "un petit rappel pour votre dose.",
+    "accordez un moment à votre dose.", "l’équipe vote : la dose.",
+    "vérifiez la dose du jour.", "le protocole dit : heure de la dose.",
+    "terminez dans l’app.", "votre dose vous dit bonjour.",
+)
+
+private val SHORT_SPANISH_OPENINGS = listOf(
+    "toca el reloj:", "está listo:", "{sound} suavemente:",
+    "te mira:", "da una vuelta rápida:", "{sound} cerca:",
+    "activa el modo recordatorio:", "tiene noticias:", "se presenta:",
+    "es tu guía de dosis:", "se levanta de un salto:", "tiene una novedad:",
+    "se pone con orgullo:", "abre el planificador:", "interrumpe la siesta:",
+    "señala el reloj:", "prueba el micrófono:", "se encarga del recordatorio:",
+    "toca la alarma:",
+)
+
+private val SHORT_SPANISH_ENDINGS = listOf(
+    "¡hora del medicamento!", "tu dosis está esperando.", "ha llegado la hora de tu dosis.",
+    "abre la app.", "tu medicamento espera.", "el reloj dice: dosis.",
+    "tu dosis está lista.", "cuídate mucho.", "tu dosis está pendiente.",
+    "un pequeño aviso útil.", "empieza la ronda de dosis.", "consulta la app.",
+    "tu ayudante está aquí.", "hora de la dosis confirmada.", "justo a tiempo.",
+    "sin pánico, solo tu dosis.", "hora de tu rutina.", "tu recordatorio está aquí.",
+    "suena el reloj del medicamento.", "un aviso para tu dosis.",
+    "dedica un momento a tu dosis.", "el equipo vota: dosis.",
+    "comprueba la dosis de hoy.", "el protocolo dice: hora de la dosis.",
+    "termínalo en la app.", "tu dosis dice hola.",
 )
 
 private fun catReminderMessage(name: String, languageCode: String, index: Int): String {

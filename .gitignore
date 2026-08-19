@@ -3,6 +3,7 @@
 .signing/
 
 # Generated QA screenshots and source-audio working files
+/tmp/
 medication_reminder_app/tmp/
 medication_reminder_app/.source_audio/
 medication_reminder_app/android/build/

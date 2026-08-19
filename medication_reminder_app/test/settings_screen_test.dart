@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medication_reminder_app/about_screen.dart';
+import 'package:medication_reminder_app/app_branding.dart';
 import 'package:medication_reminder_app/app_localizations.dart';
 import 'package:medication_reminder_app/cat.dart';
 import 'package:medication_reminder_app/cat_avatar.dart';
@@ -36,8 +37,24 @@ void main() {
   ) async {
     await tester.pumpWidget(localized(const AboutScreen()));
 
+    expect(
+      find.byKey(const ValueKey<String>('about-brand-hero')),
+      findsOneWidget,
+    );
+    final logo = tester.widget<Image>(
+      find.byKey(const ValueKey<String>('about-brand-logo')),
+    );
+    expect((logo.image as AssetImage).assetName, appLogoMarkAsset);
+    expect(
+      find.byKey(const ValueKey<String>('about-brand-title')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('about-version-badge')),
+      findsOneWidget,
+    );
     expect(find.text('Made by Rick Groot · 2026'), findsOneWidget);
-    expect(find.text('Version V0.01.03'), findsOneWidget);
+    expect(find.text('Version V0.02.00'), findsOneWidget);
     expect(find.text('Share or update the app'), findsOneWidget);
     expect(find.text('Copy Android download link'), findsOneWidget);
     expect(find.text('Open contact form'), findsNothing);
@@ -62,6 +79,26 @@ void main() {
     );
     expect(find.text('Open tip form'), findsOneWidget);
     expect(find.text('Support the app'), findsNothing);
+  });
+
+  testWidgets('about brand hero stays intact on a compact screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(localized(const AboutScreen()));
+
+    final hero = find.byKey(const ValueKey<String>('about-brand-hero'));
+    expect(hero, findsOneWidget);
+    expect(tester.getSize(hero).width, lessThanOrEqualTo(280));
+    expect(
+      find.byKey(const ValueKey<String>('about-brand-logo')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('cat settings separate purring and meowing controls', (

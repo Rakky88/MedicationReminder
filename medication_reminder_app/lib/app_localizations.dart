@@ -1,6 +1,34 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import 'app_translations.dart';
+
+const List<Locale> supportedAppLocales = <Locale>[
+  Locale('en'),
+  Locale('nl'),
+  Locale('de'),
+  Locale('fr'),
+  Locale('es'),
+];
+
+const Set<String> supportedAppLanguageCodes = <String>{
+  'en',
+  'nl',
+  'de',
+  'fr',
+  'es',
+};
+
+/// Returns English when this installation has no stored language choice.
+/// A valid stored choice is returned unchanged, so app updates preserve it.
+Locale appLocaleFromStoredCode(String? languageCode) {
+  if (languageCode != null &&
+      supportedAppLanguageCodes.contains(languageCode)) {
+    return Locale(languageCode);
+  }
+  return const Locale('en');
+}
+
 class AppLocalizations {
   AppLocalizations(this.locale);
 
@@ -10,7 +38,7 @@ class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
-  static const Map<String, Map<String, String>> _values = {
+  static final Map<String, Map<String, String>> _values = {
     'en': {
       'title': 'Medication Reminder',
       'addMedication': 'Add medication',
@@ -479,7 +507,14 @@ class AppLocalizations {
       'buyMeCoffeeOpenFailed':
           'Ko-fi kon niet worden geopend. De link is daarom gekopieerd.',
     },
+    'de': appTranslationsDe,
+    'fr': appTranslationsFr,
+    'es': appTranslationsEs,
   };
+
+  @visibleForTesting
+  static Map<String, String> translationsFor(String languageCode) =>
+      Map<String, String>.unmodifiable(_values[languageCode] ?? const {});
 
   String _get(String key) =>
       _values[locale.languageCode]?[key] ?? _values['en']![key] ?? key;
@@ -712,7 +747,16 @@ class AppLocalizations {
   String weekdayShort(int weekday) {
     const en = <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const nl = <String>['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
-    final values = locale.languageCode == 'nl' ? nl : en;
+    const de = <String>['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    const fr = <String>['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    const es = <String>['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    final values = switch (locale.languageCode) {
+      'nl' => nl,
+      'de' => de,
+      'fr' => fr,
+      'es' => es,
+      _ => en,
+    };
     return values[(weekday - 1).clamp(0, 6)];
   }
 }
@@ -722,7 +766,7 @@ class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
 
   @override
   bool isSupported(Locale locale) =>
-      const <String>['en', 'nl'].contains(locale.languageCode);
+      supportedAppLanguageCodes.contains(locale.languageCode);
 
   @override
   Future<AppLocalizations> load(Locale locale) =>

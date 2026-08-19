@@ -118,7 +118,13 @@ String? notificationMedicationSuffix({
   required String languageCode,
 }) {
   if (!medication.showNameInNotifications) return null;
-  final label = languageCode == 'nl' ? 'Medicijn' : 'Medication';
+  final label = switch (languageCode) {
+    'nl' => 'Medicijn',
+    'de' => 'Medikament',
+    'fr' => 'Médicament',
+    'es' => 'Medicamento',
+    _ => 'Medication',
+  };
   final rawName = medication.name.trim();
   final visibleName = rawName.length <= 16
       ? rawName

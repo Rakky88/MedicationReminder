@@ -139,6 +139,27 @@ void main() {
       ),
       'Tijd voor medicatie. Medicijn: Sensitive name.',
     );
+    expect(
+      notificationMedicationSuffix(
+        medication: visibleMedication,
+        languageCode: 'de',
+      ),
+      'Medikament: Sensitive name.',
+    );
+    expect(
+      notificationMedicationSuffix(
+        medication: visibleMedication,
+        languageCode: 'fr',
+      ),
+      'Médicament: Sensitive name.',
+    );
+    expect(
+      notificationMedicationSuffix(
+        medication: visibleMedication,
+        languageCode: 'es',
+      ),
+      'Medicamento: Sensitive name.',
+    );
   });
 
   test('a visible medication name is shortened for readable reminders', () {

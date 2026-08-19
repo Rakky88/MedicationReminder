@@ -71,6 +71,25 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     });
   }
 
+  Future<void> _editTime(String currentValue) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _decodeTime(currentValue),
+    );
+    if (picked == null || !mounted) return;
+    final newValue = _encodeTime(picked);
+    if (newValue == currentValue || _times.contains(newValue)) return;
+
+    setState(() {
+      final allowBeforeDue = _allowBeforeDueTimes.remove(currentValue);
+      final index = _times.indexOf(currentValue);
+      if (index < 0) return;
+      _times[index] = newValue;
+      _times.sort();
+      if (allowBeforeDue) _allowBeforeDueTimes.add(newValue);
+    });
+  }
+
   void _save() {
     final loc = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
@@ -194,6 +213,12 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
                               _allowBeforeDueTimes.remove(value);
                             }
                           }),
+                        ),
+                        IconButton(
+                          key: ValueKey<String>('edit-time-$value'),
+                          tooltip: loc.edit,
+                          onPressed: () => _editTime(value),
+                          icon: const Icon(Icons.edit_outlined),
                         ),
                         IconButton(
                           tooltip: loc.delete,

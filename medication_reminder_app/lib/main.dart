@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 
 import 'app_localizations.dart';
+import 'app_branding.dart';
 import 'about_screen.dart';
 import 'cat.dart';
 import 'pet_audio.dart';
@@ -46,9 +47,7 @@ Future<void> main() async {
     debugPrint('Notification startup failed: $error\n$stack');
   }
   runApp(
-    MedicationReminderApp(
-      initialLocale: languageCode == null ? null : Locale(languageCode),
-    ),
+    MedicationReminderApp(initialLocale: appLocaleFromStoredCode(languageCode)),
   );
 }
 
@@ -57,7 +56,29 @@ class _SafeErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dutch = PlatformDispatcher.instance.locale.languageCode == 'nl';
+    final languageCode = PlatformDispatcher.instance.locale.languageCode;
+    final (title, body) = switch (languageCode) {
+      'nl' => (
+        'Er ging iets mis',
+        'Sluit de app volledig en open hem opnieuw. Je opgeslagen voortgang blijft bewaard.',
+      ),
+      'de' => (
+        'Etwas ist schiefgegangen',
+        'Schließe die App vollständig und öffne sie erneut. Dein gespeicherter Fortschritt bleibt erhalten.',
+      ),
+      'fr' => (
+        'Une erreur s’est produite',
+        'Fermez complètement l’application, puis rouvrez-la. Votre progression enregistrée sera conservée.',
+      ),
+      'es' => (
+        'Algo ha salido mal',
+        'Cierra la app por completo y vuelve a abrirla. Tu progreso guardado se conservará.',
+      ),
+      _ => (
+        'Something went wrong',
+        'Close the app completely and open it again. Your saved progress remains stored.',
+      ),
+    };
     return Material(
       child: SafeArea(
         child: Center(
@@ -68,17 +89,9 @@ class _SafeErrorView extends StatelessWidget {
               children: <Widget>[
                 const Icon(Icons.error_outline, size: 52),
                 const SizedBox(height: 16),
-                Text(
-                  dutch ? 'Er ging iets mis' : 'Something went wrong',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
+                Text(title, style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 8),
-                Text(
-                  dutch
-                      ? 'Sluit de app volledig en open hem opnieuw. Je opgeslagen voortgang blijft bewaard.'
-                      : 'Close the app completely and open it again. Your saved progress remains stored.',
-                  textAlign: TextAlign.center,
-                ),
+                Text(body, textAlign: TextAlign.center),
               ],
             ),
           ),
@@ -98,7 +111,9 @@ class MedicationReminderApp extends StatefulWidget {
 }
 
 class _MedicationReminderAppState extends State<MedicationReminderApp> {
-  late Locale? _locale = widget.initialLocale;
+  late Locale _locale = appLocaleFromStoredCode(
+    widget.initialLocale?.languageCode,
+  );
 
   Future<void> _setLocale(Locale locale) async {
     await MedicationRepository.instance.setPreferredLocale(locale.languageCode);
@@ -130,7 +145,7 @@ class _MedicationReminderAppState extends State<MedicationReminderApp> {
       title: 'Medication Reminder',
       debugShowCheckedModeBanner: false,
       locale: _locale,
-      supportedLocales: const <Locale>[Locale('en'), Locale('nl')],
+      supportedLocales: supportedAppLocales,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         AppLocalizationsDelegate(),
         GlobalMaterialLocalizations.delegate,
@@ -792,13 +807,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       theme.colorScheme.surfaceTint,
       3 * _appBarScrollProgress,
     );
-    final titleBreak = loc.title.lastIndexOf(' ');
-    final titleLead = titleBreak < 0
-        ? loc.title
-        : loc.title.substring(0, titleBreak + 1);
-    final titleAccent = titleBreak < 0
-        ? ''
-        : loc.title.substring(titleBreak + 1);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: appBarColor,
@@ -811,41 +819,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         titleSpacing: 12,
         title: Row(
           children: <Widget>[
-            Image.asset(
-              'assets/branding/app_logo_mark.png',
-              key: const Key('home-brand-logo'),
-              width: 38,
-              height: 38,
-              fit: BoxFit.contain,
+            AppLogoMark(
+              size: 38,
+              imageKey: const Key('home-brand-logo'),
+              semanticLabel: loc.title,
             ),
             const SizedBox(width: 9),
             Expanded(
               child: FittedBox(
                 alignment: Alignment.centerLeft,
                 fit: BoxFit.scaleDown,
-                child: Text.rich(
-                  TextSpan(
-                    children: <InlineSpan>[
-                      TextSpan(
-                        text: titleLead,
-                        style: TextStyle(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF80CBC4)
-                              : const Color(0xFF00695C),
-                        ),
-                      ),
-                      TextSpan(
-                        text: titleAccent,
-                        style: TextStyle(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF90CAF9)
-                              : const Color(0xFF1565C0),
-                        ),
-                      ),
-                    ],
-                  ),
-                  key: const Key('home-brand-title'),
-                  maxLines: 1,
+                child: AppWordmark(
+                  title: loc.title,
+                  textKey: const Key('home-brand-title'),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.7,
@@ -879,8 +865,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               }
             },
             itemBuilder: (_) => <PopupMenuEntry<String>>[
-              const PopupMenuItem(value: 'nl', child: Text('Nederlands')),
               const PopupMenuItem(value: 'en', child: Text('English')),
+              const PopupMenuItem(value: 'nl', child: Text('Nederlands')),
+              const PopupMenuItem(value: 'de', child: Text('Deutsch')),
+              const PopupMenuItem(value: 'fr', child: Text('Français')),
+              const PopupMenuItem(value: 'es', child: Text('Español')),
               const PopupMenuDivider(),
               PopupMenuItem(
                 value: 'test',
@@ -1408,32 +1397,20 @@ class _HomeError extends StatelessWidget {
 }
 
 NotificationCopy _notificationCopy(String languageCode, [CatProfile? pet]) {
-  final dutch = languageCode == 'nl';
+  final locale = appLocaleFromStoredCode(languageCode);
+  final loc = AppLocalizations(locale);
+  final hasCat = pet?.species == PetSpecies.cat;
   return NotificationCopy(
-    title: dutch ? 'Medicatieherinnering' : 'Medication Reminder',
-    body: dutch
-        ? 'Het is tijd om je medicatie in te nemen.'
-        : 'It is time to take your medication.',
-    languageCode: dutch ? 'nl' : 'en',
-    openAction: dutch ? 'App openen' : 'Open app',
-    snoozeAction: dutch ? '10 min uitstellen' : 'Snooze 10 min',
-    catBody: pet?.species == PetSpecies.cat
-        ? (dutch
-              ? '${pet?.name ?? 'Je kat'} miauwt: tijd voor je medicatie!'
-              : '${pet?.name ?? 'Your cat'} is meowing: medication time!')
-        : (dutch
-              ? 'Het is tijd voor je medicatie.'
-              : 'It is time for your medication.'),
-    followUpBody: dutch
-        ? 'Nog geen reactie. Open de app of stel deze melding uit.'
-        : 'No response yet. Open the app or snooze this reminder.',
-    escalatedBody: pet?.species != PetSpecies.cat
-        ? (dutch
-              ? 'Deze melding blijft terugkomen. Open de app of stel haar uit.'
-              : 'This reminder keeps repeating. Open the app or snooze it.')
-        : (dutch
-              ? '${pet?.name ?? 'Je kat'} blijft miauwen. Open de app of stel uit.'
-              : 'Your cat keeps meowing. Open the app or snooze the reminder.'),
+    title: loc.title,
+    body: loc.reminderBody,
+    languageCode: locale.languageCode,
+    openAction: loc.notificationOpen,
+    snoozeAction: loc.notificationSnooze,
+    catBody: hasCat ? loc.catNotificationBody(pet!.name) : loc.reminderBody,
+    followUpBody: loc.reminderFollowUpBody,
+    escalatedBody: hasCat
+        ? loc.reminderEscalatedBody
+        : loc.reminderEscalatedNoCatBody,
   );
 }
 

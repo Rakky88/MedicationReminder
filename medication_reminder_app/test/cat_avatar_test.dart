@@ -41,9 +41,6 @@ void main() {
     }
     for (final path in <String>[
       'assets/branding/app_logo.png',
-      'assets/cats/chicken_hat_straw.png',
-      'assets/cats/chicken_glasses_egg.png',
-      'assets/cats/chicken_outfit_overalls.png',
       'assets/cats/chicken_toy_corn.png',
     ]) {
       expect((await rootBundle.load(path)).lengthInBytes, greaterThan(0));

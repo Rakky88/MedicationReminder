@@ -9,82 +9,6 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test(
-    'all wearable overlays are centered and remain inside the canvas',
-    () async {
-      const zones = <String, (int, int)>{
-        'shop_hat_cap.png': (0, 140),
-        'shop_hat_wizard.png': (0, 140),
-        'shop_hat_crown.png': (0, 140),
-        'shop_glasses_round.png': (110, 215),
-        'shop_glasses_sun.png': (110, 215),
-        'shop_glasses_star.png': (110, 215),
-        'shop_outfit_hoodie.png': (230, 500),
-        'shop_outfit_cape.png': (230, 500),
-        'shop_outfit_sweater.png': (230, 500),
-        'supporter_hat.png': (0, 140),
-        'supporter_glasses.png': (110, 215),
-        'supporter_outfit.png': (230, 500),
-        'doctor_hat_fezz.png': (0, 140),
-        'doctor_bow_tie.png': (140, 250),
-      };
-
-      for (final entry in zones.entries) {
-        final bounds = await alphaBounds('assets/cats/${entry.key}');
-        expect(bounds.left, greaterThan(0), reason: entry.key);
-        expect(bounds.top, greaterThan(0), reason: entry.key);
-        expect(bounds.right, lessThan(512), reason: entry.key);
-        expect(bounds.bottom, lessThan(512), reason: entry.key);
-        expect(
-          bounds.top,
-          greaterThanOrEqualTo(entry.value.$1),
-          reason: entry.key,
-        );
-        expect(
-          bounds.bottom,
-          lessThanOrEqualTo(entry.value.$2),
-          reason: entry.key,
-        );
-        expect((bounds.center.dx - 256).abs(), lessThan(4), reason: entry.key);
-      }
-    },
-  );
-
-  test('outfits are large enough to cover an adult cat torso', () async {
-    for (final name in <String>[
-      'shop_outfit_hoodie.png',
-      'shop_outfit_cape.png',
-      'shop_outfit_sweater.png',
-      'supporter_outfit.png',
-    ]) {
-      final bounds = await alphaBounds('assets/cats/$name');
-      expect(bounds.width, greaterThanOrEqualTo(250), reason: name);
-      expect(bounds.height, greaterThanOrEqualTo(230), reason: name);
-    }
-  });
-
-  test('wizard hat material is opaque instead of see-through', () async {
-    final bytes = await rootBundle.load('assets/cats/shop_hat_wizard.png');
-    final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    final image = frame.image;
-    final data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-    final pixels = data!.buffer.asUint8List();
-    var visible = 0;
-    var translucent = 0;
-    for (var offset = 3; offset < pixels.length; offset += 4) {
-      final alpha = pixels[offset];
-      if (alpha <= 8) continue;
-      visible++;
-      if (alpha < 245) translucent++;
-    }
-    image.dispose();
-    codec.dispose();
-
-    expect(visible, greaterThan(10000));
-    expect(translucent / visible, lessThan(.03));
-  });
-
-  test(
     'every fitted hat and pair of glasses follows the pet landmarks',
     () async {
       const eyeLines = <PetVariant, double>{
@@ -208,7 +132,7 @@ void main() {
       PetVariant.dogBeagle: 260,
       PetVariant.dogBlackLab: 247,
       PetVariant.dogBorderCollie: 253,
-      PetVariant.dogDachshund: 244,
+      PetVariant.dogDachshund: 235,
       PetVariant.chickenHen: 256,
     };
     for (final variant in PetVariant.values) {
@@ -226,6 +150,55 @@ void main() {
       );
       expect(bounds.width, greaterThanOrEqualTo(65), reason: path);
     }
+  });
+
+  test('V12 review corrections retain their approved fit', () async {
+    for (final prefix in <String>['cat_gray', 'cat_orange', 'cat_tuxedo']) {
+      final glasses = await alphaBounds(
+        'assets/cats/fitted_accessories/${prefix}_glasses_round.png',
+      );
+      expect(glasses.width, greaterThanOrEqualTo(130), reason: prefix);
+    }
+    final grayGlasses = await alphaBounds(
+      'assets/cats/fitted_accessories/cat_gray_glasses_round.png',
+    );
+    final tuxedoGlasses = await alphaBounds(
+      'assets/cats/fitted_accessories/cat_tuxedo_glasses_round.png',
+    );
+    expect(grayGlasses.center.dx, lessThanOrEqualTo(245));
+    expect(tuxedoGlasses.center.dx, lessThanOrEqualTo(248));
+
+    final eggGlasses = await alphaBounds(
+      'assets/cats/fitted_accessories/'
+      'cat_tuxedo_chicken_glasses_egg.png',
+    );
+    expect(eggGlasses.width, greaterThanOrEqualTo(110));
+    expect(eggGlasses.center.dx, lessThanOrEqualTo(240));
+
+    for (final item in <String>['glasses_star', 'supporter_glasses']) {
+      final glasses = await alphaBounds(
+        'assets/cats/fitted_accessories/dog_beagle_$item.png',
+      );
+      expect(glasses.center.dx, greaterThanOrEqualTo(261), reason: item);
+    }
+
+    for (final item in <String>['hat_crown', 'supporter_hat']) {
+      final crown = await alphaBounds(
+        'assets/cats/fitted_accessories/dog_dachshund_$item.png',
+      );
+      expect(crown.width, greaterThanOrEqualTo(140), reason: item);
+    }
+
+    final beagleCrown = await alphaBounds(
+      'assets/cats/fitted_accessories/dog_beagle_supporter_hat.png',
+    );
+    expect(beagleCrown.bottom, lessThanOrEqualTo(82));
+
+    final chickenLaurel = await alphaBounds(
+      'assets/cats/fitted_accessories/'
+      'chicken_hen_streak_250_hat_laurel.png',
+    );
+    expect(chickenLaurel.bottom, greaterThanOrEqualTo(108));
   });
 
   test('every tailored outfit is a complete fitted adult pet sprite', () async {

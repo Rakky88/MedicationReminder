@@ -1,6 +1,36 @@
 # Versiegeschiedenis
 
-## In ontwikkeling
+## V0.02.00 — 2026-08-19
+
+- Start een nieuwe installatie voortaan expliciet in het Engels, ongeacht de
+  telefoontaal. Blijf bij een update altijd de eerder gekozen taal uit de
+  lokale appopslag gebruiken.
+- Voeg volledige Duitse, Franse en Spaanse vertalingen toe naast Engels en
+  Nederlands. Vertaal ook shopnamen, weekdagen, medicijnnamen in meldingen,
+  actieknoppen, notificatiekanalen en de 500 wisselende dierherinneringen.
+- Verwijder na een reproduceerbare runtime-audit 28 ongebruikte bron- en
+  tussensprites uit de APK. Alle 361 werkelijk gebruikte groei-, outfit-,
+  accessoire-, speelgoed- en Dragon-sprites blijven aanwezig; de onnodige
+  verpakte afbeeldingsdata daalt met 11,03 MiB.
+
+- Voeg naast het prullenbakje van iedere herinneringstijd een penknop toe om
+  die tijd rechtstreeks te bewerken. Open de kiezer op de bestaande tijd en
+  behoud daarbij de instelling voor vroegtijdig innemen.
+- Geef **Over deze app** een nieuwe responsieve merkheader met een vrijstaand
+  transparant logo, tweekleurige appnaam, subtiele merkkleuren en compacte
+  badges voor maker, jaar en versie. Gebruik hetzelfde transparante beeldmerk
+  overal waar het logo binnen de app wordt getoond.
+- Verwerk de afgeronde V12-garderobeselectie in een gerichte V13-eindcontrole.
+  Til de Beagle-kroon op, verbreed beide geselecteerde teckelkronen, laat de
+  kippenlauwerkrans iets zakken, maak de drie kattenbrillen breder en lijn de
+  twee Beagle-brillen en de grotere eierbril opnieuw horizontaal uit.
+- Rond de V13-selectie af met een minimale V14-hercontrole: verschuif alleen de
+  ronde bril van de grijze kat en tuxedo-kat vijf pixels naar links.
+- Vereenvoudig de tien Dragon-kostuums voor katten en honden naar V6: behoud
+  de natuurlijke voorpoten maar verwijder de geforceerde ronde pootgaten en
+  laat de groene schubben bij de schouders doorlopen. Behoud voor het kuiken
+  exact de goedgekeurde V5-bron. Geef de millenniumkip daarnaast echte
+  zwart-gouden vleugelopeningen.
 
 ## V0.01.03 — 2026-08-19
 

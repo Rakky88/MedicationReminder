@@ -51,7 +51,22 @@ DRESSED_GRIDS = {
     "streak_1000_outfit_millennium": "streak_1000_outfit_millennium_paws_v4_grid_transparent.png",
 }
 
-DRAGON_MODE_GRID = "dragon_mode_young_paws_v4_grid_transparent.png"
+# A single reviewed animal can use a dedicated high-detail source without
+# regenerating or shifting the ten already approved cells in its outfit grid.
+DRESSED_PET_OVERRIDES = {
+    (
+        "streak_1000_outfit_millennium",
+        "chicken_hen",
+    ): "streak_1000_outfit_millennium_chicken_wingholes_v5_transparent.png",
+}
+
+DRAGON_MODE_GRID = "dragon_mode_young_no_armholes_v6_grid_transparent.png"
+
+# The V12 review approved the original V5 chick as-is. Keep sourcing that
+# exact cell while the ten cat/dog cells use the simplified V6 shoulder vest.
+STAGE_COSTUME_OVERRIDES = {
+    ("dragon_mode", "chicken_hen"): "dragon_mode_young_paws_v5_grid_transparent.png",
+}
 
 DOCTOR_ITEM_SOURCES = {
     "doctor_hat_fezz": "doctor_fezz_transparent.png",
@@ -180,7 +195,7 @@ PET_NECK_FITS = {
     "dog_beagle": (90, 44, 260, 212),
     "dog_black_lab": (106, 50, 247, 170),
     "dog_border_collie": (106, 50, 253, 194),
-    "dog_dachshund": (80, 38, 244, 222),
+    "dog_dachshund": (80, 38, 235, 222),
     "chicken_hen": (94, 46, 256, 220),
 }
 
@@ -190,11 +205,11 @@ def fitted_accessory_correction(
     prefix: str,
 ) -> tuple[float, float, float]:
     """Return the user-reviewed X/Y scale and vertical offset to bake in."""
-    if item_id == "supporter_hat" and prefix in {
-        "cat_orange",
-        "chicken_hen",
-    }:
+    if item_id == "supporter_hat" and prefix == "cat_orange":
         return (0.86, 0.88, -0.035)
+    if item_id == "supporter_hat" and prefix == "chicken_hen":
+        # The tiara was floating just above the comb in the V11 review.
+        return (0.86, 0.88, -0.025)
     if item_id == "hat_cap" and prefix == "chicken_hen":
         return (0.88, 0.88, -0.035)
     if item_id == "glasses_round" and prefix != "dog_dachshund":
@@ -290,36 +305,46 @@ def fitted_accessory_placement_adjustment(
     } and prefix == "dog_dachshund":
         scale_x *= 0.92
 
-    # V9 review corrections are deliberately scoped to the exact combinations
-    # selected by the user. Values are additional source-local X/Y scales and
-    # Y-seat offsets; approved pets using the same item remain untouched.
+    # User-review corrections are deliberately scoped to the exact
+    # combinations that need them. Values are additional source-local X/Y
+    # scales and Y-seat offsets; approved pets using the same item remain
+    # untouched. Negative crown offsets lift the band away from the eyes.
     review_adjustments = {
-        ("chicken_glasses_egg", "cat_tuxedo"): (0.82, 0.86, 5),
+        ("chicken_glasses_egg", "cat_tuxedo"): (0.88, 0.92, 0),
         ("chicken_glasses_egg", "dog_dachshund"): (0.75, 0.82, 6),
         ("chicken_hat_straw", "dog_dachshund"): (1.00, 1.10, 12),
         ("doctor_hat_fezz", "dog_border_collie"): (0.72, 0.84, 9),
-        ("doctor_hat_fezz", "dog_dachshund"): (0.60, 0.84, 9),
-        ("glasses_round", "cat_gray"): (1.00, 1.10, 15),
-        ("glasses_round", "cat_orange"): (1.00, 1.10, 15),
-        ("glasses_round", "cat_tuxedo"): (1.00, 1.10, 15),
+        ("doctor_hat_fezz", "dog_dachshund"): (0.60, 0.84, 4),
+        ("glasses_round", "cat_gray"): (1.10, 1.10, 5),
+        ("glasses_round", "cat_orange"): (1.10, 1.10, 5),
+        ("glasses_round", "cat_tuxedo"): (1.10, 1.10, 5),
         ("glasses_round", "dog_dachshund"): (0.78, 0.90, 8),
-        ("glasses_star", "dog_beagle"): (0.88, 0.95, 10),
+        ("glasses_star", "dog_beagle"): (0.88, 0.95, 2),
         ("glasses_star", "dog_dachshund"): (0.78, 0.88, 8),
         ("glasses_sun", "dog_dachshund"): (0.76, 0.90, 8),
         ("hat_cap", "dog_dachshund"): (0.90, 1.00, 14),
-        ("hat_crown", "dog_dachshund"): (1.00, 1.00, 10),
+        ("hat_crown", "dog_golden"): (1.00, 1.00, -4),
+        ("hat_crown", "dog_black_lab"): (1.00, 1.00, -6),
+        ("hat_crown", "dog_dachshund"): (1.18, 1.00, -4),
         ("streak_100_glasses_century", "dog_dachshund"): (0.78, 0.90, 8),
-        ("streak_250_hat_laurel", "chicken_hen"): (1.18, 1.12, 8),
+        ("streak_250_hat_laurel", "chicken_hen"): (1.18, 1.12, 17),
         ("streak_250_hat_laurel", "dog_dachshund"): (1.00, 1.08, 12),
         ("streak_300_glasses_prism", "dog_dachshund"): (0.84, 0.90, 8),
         ("streak_365_glasses_year_star", "dog_dachshund"): (0.84, 0.90, 8),
-        ("streak_365_hat_year_crown", "dog_dachshund"): (1.00, 1.05, 12),
+        ("streak_365_hat_year_crown", "dog_black_lab"): (1.00, 1.00, -6),
+        ("streak_365_hat_year_crown", "dog_dachshund"): (1.00, 1.05, 4),
         ("streak_40_hat_consistency", "dog_dachshund"): (1.10, 1.10, 12),
         ("supporter_glasses", "cat_tuxedo"): (1.08, 1.08, 10),
-        ("supporter_glasses", "dog_beagle"): (0.82, 0.90, 8),
+        ("supporter_glasses", "dog_beagle"): (0.82, 0.90, 0),
         ("supporter_glasses", "dog_dachshund"): (0.78, 0.88, 8),
-        ("supporter_hat", "dog_beagle"): (0.82, 0.92, 8),
-        ("supporter_hat", "dog_dachshund"): (0.82, 0.92, 10),
+        ("supporter_hat", "dog_golden"): (1.00, 1.00, -4),
+        ("supporter_hat", "dog_beagle"): (0.82, 0.92, -8),
+        ("supporter_hat", "dog_black_lab"): (1.00, 1.00, -6),
+        ("supporter_hat", "dog_border_collie"): (1.00, 1.00, -8),
+        ("supporter_hat", "dog_dachshund"): (1.12, 0.92, 0),
+        ("hat_wizard", "dog_golden"): (1.00, 1.00, -4),
+        ("hat_wizard", "dog_beagle"): (1.00, 1.00, -6),
+        ("hat_wizard", "dog_dachshund"): (1.00, 1.00, -6),
     }
     review_scale_x, review_scale_y, review_offset_y = review_adjustments.get(
         (item_id, prefix),
@@ -730,13 +755,19 @@ def normalize_dressed_pets(outfit_ids: set[str] | None = None) -> None:
             continue
         sheet = Image.open(dressed_source / filename).convert("RGBA")
         for index, prefix in enumerate(ADULT_PETS):
-            row, column = divmod(index, 4)
-            dressed = fitted_grid_cell(
-                sheet,
-                row=row,
-                column=column,
-                name=f"{prefix} {outfit_id}",
-            )
+            override_name = DRESSED_PET_OVERRIDES.get((outfit_id, prefix))
+            if override_name is None:
+                row, column = divmod(index, 4)
+                dressed = fitted_grid_cell(
+                    sheet,
+                    row=row,
+                    column=column,
+                    name=f"{prefix} {outfit_id}",
+                )
+            else:
+                override = Image.open(dressed_source / override_name).convert("RGBA")
+                dressed = visible_crop(override, f"{prefix} {outfit_id} override")
+                override.close()
             target_height = TARGET_HEIGHTS[-1]
             scale = min(
                 target_height / dressed.height,
@@ -773,12 +804,22 @@ def normalize_stage_costume_grid(
     target_height = TARGET_HEIGHTS[STAGES.index(stage)]
     for index, prefix in enumerate(ADULT_PETS):
         row, column = divmod(index, 4)
+        override_name = STAGE_COSTUME_OVERRIDES.get((costume_id, prefix))
+        cell_sheet = sheet
+        override_sheet = None
+        if override_name is not None:
+            override_sheet = Image.open(SOURCE / "dressed" / override_name).convert(
+                "RGBA"
+            )
+            cell_sheet = override_sheet
         dressed = fitted_grid_cell(
-            sheet,
+            cell_sheet,
             row=row,
             column=column,
             name=f"{prefix} {costume_id} {stage}",
         )
+        if override_sheet is not None:
+            override_sheet.close()
         scale = min(target_height / dressed.height, max_width / dressed.width)
         dressed = dressed.resize(
             (round(dressed.width * scale), round(dressed.height * scale)),
@@ -887,7 +928,17 @@ def normalize_fitted_head_accessories(item_ids: set[str] | None = None) -> None:
             elif item_id == "hat_crown" and prefix == "dog_beagle":
                 target_y -= 8
             canvas = Image.new("RGBA", (CANVAS_SIZE, CANVAS_SIZE), (0, 0, 0, 0))
-            target_x = PET_HEAD_CENTER_X[prefix]
+            review_x_offsets = {
+                ("chicken_glasses_egg", "cat_tuxedo"): -8,
+                ("glasses_round", "cat_gray"): -5,
+                ("glasses_round", "cat_tuxedo"): -5,
+                ("glasses_star", "dog_beagle"): 8,
+                ("supporter_glasses", "dog_beagle"): 8,
+            }
+            target_x = PET_HEAD_CENTER_X[prefix] + review_x_offsets.get(
+                (item_id, prefix),
+                0,
+            )
             canvas.alpha_composite(
                 content,
                 (round(target_x - anchor_x), round(target_y - anchor_y)),
