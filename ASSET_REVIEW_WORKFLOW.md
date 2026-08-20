@@ -41,9 +41,10 @@ De app gebruikt alleen de genormaliseerde bestanden onder `assets/cats/`,
 
 ## 2. Interactieve controle op Android
 
-1. Voeg nieuwe catalogus-ID's toe aan `_reviewItemIds` in
-   `lib/emulator_accessory_audit_main.dart`. De Dragon-modepagina is apart
-   ingebouwd en gebruikt automatisch de jonge levensfase.
+1. `lib/emulator_accessory_audit_main.dart` maakt automatisch alle combinaties
+   van iedere volwassen-petoutfit met iedere bril, hoed en strik. Een pagina
+   toont dezelfde combinatie op alle elf huisdieren. Gebruik de twee keuzelijsten
+   om rechtstreeks naar een bepaalde outfit of accessoire te springen.
 2. Verhoog voor een nieuwe, lege ronde zowel `_preferencesKey` als
    `_exportFileName` van bijvoorbeeld `v8` naar `v9`. Zo blijven oude vinkjes
    nooit stil in een nieuwe ronde staan.
@@ -58,8 +59,9 @@ De app gebruikt alleen de genormaliseerde bestanden onder `assets/cats/`,
 ```
 
 4. Ga samen pagina voor pagina langs. Tik alleen op een dier wanneer de
-   pasvorm niet goed is; rood betekent geselecteerd. Gebruik op de laatste
-   pagina **Kopieer lijst**.
+   combinatie van outfit en accessoire niet goed is; rood betekent geselecteerd.
+   De exportregel bevat altijd `outfit|accessoire|huisdier`. Gebruik op de
+   laatste pagina **Kopieer lijst**.
 5. Dezelfde lijst wordt automatisch geëxporteerd naar:
 
 ```text

@@ -36,6 +36,9 @@ class CatAvatar extends StatelessWidget {
     final toy = canWearAccessories
         ? catShopItemById(profile.equippedId(CatAccessoryCategory.toy))
         : null;
+    final accessoryOutfitId = showsDragonModeCostume(profile)
+        ? null
+        : tailoredOutfitId(profile);
 
     return Semantics(
       label: hunger == 0
@@ -66,9 +69,12 @@ class CatAvatar extends StatelessWidget {
                     fit: fit,
                   ),
                   if (outfit?.adaptiveOverlay == true) _accessoryImage(outfit!),
-                  if (neckwear != null) _accessoryImage(neckwear),
-                  if (hat != null) _accessoryImage(hat),
-                  if (glasses != null) _accessoryImage(glasses),
+                  if (neckwear != null)
+                    _accessoryImage(neckwear, outfitId: accessoryOutfitId),
+                  if (hat != null)
+                    _accessoryImage(hat, outfitId: accessoryOutfitId),
+                  if (glasses != null)
+                    _accessoryImage(glasses, outfitId: accessoryOutfitId),
                   if (hunger >= 2 && profile.stage == CatStage.adult)
                     CustomPaint(painter: _HungryRibsPainter(hunger / 5)),
                 ],
@@ -102,28 +108,37 @@ class CatAvatar extends StatelessWidget {
     );
   }
 
-  Widget _accessoryImage(CatShopItem item) {
-    final transform = item.adaptiveTransform(profile.variant);
+  Widget _accessoryImage(CatShopItem item, {String? outfitId}) {
+    final transform = item.adaptiveTransform(
+      profile.variant,
+      outfitId: outfitId,
+    );
     return LayoutBuilder(
-      builder: (context, constraints) => Transform.translate(
-        offset: Offset(
-          constraints.maxWidth * transform.dx,
-          constraints.maxHeight * transform.dy,
-        ),
-        child: Transform.scale(
-          scaleX: transform.effectiveScaleX,
-          scaleY: transform.effectiveScaleY,
-          child: Image.asset(
-            item.fittedAssetPath(profile.variant),
-            key: item.adaptiveOverlay
-                ? ValueKey<String>(
-                    'adaptive-${profile.variant.name}-${item.id}',
-                  )
-                : null,
-            fit: fit,
+      builder: (context, constraints) {
+        // BoxFit.contain renders the square sprite against the shortest side.
+        // Using that same side for translation keeps the measured position
+        // exact in rectangular cards as well as square shop previews.
+        final canvasExtent = constraints.biggest.shortestSide;
+        return Transform.translate(
+          offset: Offset(
+            canvasExtent * transform.dx,
+            canvasExtent * transform.dy,
           ),
-        ),
-      ),
+          child: Transform.scale(
+            scaleX: transform.effectiveScaleX,
+            scaleY: transform.effectiveScaleY,
+            child: Image.asset(
+              item.fittedAssetPath(profile.variant),
+              key: item.adaptiveOverlay
+                  ? ValueKey<String>(
+                      'adaptive-${profile.variant.name}-${item.id}',
+                    )
+                  : null,
+              fit: fit,
+            ),
+          ),
+        );
+      },
     );
   }
 

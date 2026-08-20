@@ -29,8 +29,18 @@ class MainActivity : FlutterActivity() {
                             ?.mapNotNull { (it as? Number)?.toInt() }
                             ?.toSet()
                             ?: emptySet()
-                        EscalationStore.replacePlans(this, plans, medicationIds)
-                        result.success(null)
+                        val resolvedDoseKeys =
+                            (arguments?.get("resolvedDoseKeys") as? List<*>)
+                                ?.mapNotNull { it as? String }
+                                ?.toSet()
+                                ?: emptySet()
+                        val everyAlarmScheduled = EscalationStore.replacePlans(
+                            this,
+                            plans,
+                            medicationIds,
+                            resolvedDoseKeys,
+                        )
+                        result.success(everyAlarmScheduled)
                     }
 
                     "snoozeEscalation" -> {

@@ -1,13 +1,12 @@
 """Create aligned pet sprites, fitted wardrobe overlays, and launcher icons."""
 
 from pathlib import Path
-from collections import deque
-
 from PIL import Image, ImageDraw, ImageFont
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "design_assets" / "pets"
+ACCESSORY_SOURCE = SOURCE / "accessories"
 OUTPUT = ROOT / "assets" / "cats"
 CANVAS_SIZE = 512
 STAGES = ("kitten", "young", "adult")
@@ -174,12 +173,12 @@ PET_HEAD_CENTER_X = {
     "cat_tuxedo": 249,
     "cat_gray": 247,
     "cat_calico": 247,
-    "cat_black_bib": 224,
-    "dog_golden": 257,
+    "cat_black_bib": 246,
+    "dog_golden": 271,
     "dog_beagle": 260,
-    "dog_black_lab": 247,
-    "dog_border_collie": 253,
-    "dog_dachshund": 235,
+    "dog_black_lab": 260,
+    "dog_border_collie": 270,
+    "dog_dachshund": 262,
     "chicken_hen": 256,
 }
 
@@ -190,12 +189,12 @@ PET_NECK_FITS = {
     "cat_tuxedo": (84, 40, 246, 222),
     "cat_gray": (84, 40, 245, 222),
     "cat_calico": (96, 46, 244, 214),
-    "cat_black_bib": (90, 44, 224, 220),
-    "dog_golden": (108, 52, 257, 174),
+    "cat_black_bib": (90, 44, 246, 220),
+    "dog_golden": (108, 52, 271, 174),
     "dog_beagle": (90, 44, 260, 212),
-    "dog_black_lab": (106, 50, 247, 170),
-    "dog_border_collie": (106, 50, 253, 194),
-    "dog_dachshund": (80, 38, 235, 222),
+    "dog_black_lab": (106, 50, 260, 170),
+    "dog_border_collie": (106, 50, 270, 194),
+    "dog_dachshund": (80, 38, 262, 222),
     "chicken_hen": (94, 46, 256, 220),
 }
 
@@ -482,66 +481,6 @@ def contiguous_true_runs(values: list[bool]) -> list[tuple[int, int]]:
     return runs
 
 
-def guarded_pet_crop(image: Image.Image, name: str) -> Image.Image:
-    """Ignore disconnected remnants from neighbouring growth-sheet cells."""
-    guard = round(image.width * 0.08)
-    guarded = image.crop((guard, 0, image.width - guard, image.height))
-    alpha = guarded.getchannel("A")
-    bounds = alpha.getbbox()
-    if bounds is None:
-        raise RuntimeError(f"No visible pet pixels found for {name}")
-    pixels = alpha.load()
-    width, height = alpha.size
-    seen = bytearray(width * height)
-    largest: tuple[int, tuple[int, int, int, int]] | None = None
-    left, top, right, bottom = bounds
-    for y in range(top, bottom):
-        for x in range(left, right):
-            offset = y * width + x
-            if seen[offset] or pixels[x, y] < 12:
-                continue
-            seen[offset] = 1
-            queue = deque([(x, y)])
-            count = 0
-            min_x = max_x = x
-            min_y = max_y = y
-            while queue:
-                current_x, current_y = queue.popleft()
-                count += 1
-                min_x = min(min_x, current_x)
-                max_x = max(max_x, current_x)
-                min_y = min(min_y, current_y)
-                max_y = max(max_y, current_y)
-                for next_x, next_y in (
-                    (current_x - 1, current_y),
-                    (current_x + 1, current_y),
-                    (current_x, current_y - 1),
-                    (current_x, current_y + 1),
-                ):
-                    if not (0 <= next_x < width and 0 <= next_y < height):
-                        continue
-                    next_offset = next_y * width + next_x
-                    if seen[next_offset] or pixels[next_x, next_y] < 12:
-                        continue
-                    seen[next_offset] = 1
-                    queue.append((next_x, next_y))
-            component = (count, (min_x, min_y, max_x + 1, max_y + 1))
-            if largest is None or component[0] > largest[0]:
-                largest = component
-    if largest is None:
-        raise RuntimeError(f"No connected pet pixels found for {name}")
-    _, (left, top, right, bottom) = largest
-    padding = 3
-    return guarded.crop(
-        (
-            max(0, left - padding),
-            max(0, top - padding),
-            min(width, right + padding),
-            min(height, bottom + padding),
-        )
-    )
-
-
 def separated_growth_crop(
     sheet: Image.Image,
     *,
@@ -549,12 +488,12 @@ def separated_growth_crop(
     stage_count: int,
     name: str,
 ) -> Image.Image:
-    """Extract a stage whose artwork crosses the nominal third boundaries.
+    """Extract a complete stage using the source sheet's transparent gaps.
 
-    The chicken source has three clearly separated silhouettes, but the adult
-    hen starts inside the middle third. Dividing that sheet into equal cells
-    therefore removed part of her left wing and torso. Transparent column gaps
-    are the actual boundaries and preserve the complete artwork.
+    Several animals cross their nominal third boundaries with a tail, ear or
+    wing. Cropping equal thirds (and then adding a guard) produced conspicuous
+    straight cut edges. The transparent gaps are the real boundaries and keep
+    every silhouette intact.
     """
     alpha = sheet.getchannel("A").point(lambda value: 255 if value > 8 else 0)
     occupied_columns = [
@@ -627,20 +566,12 @@ def normalize_growth_sheets() -> None:
     for prefix, filename in GROWTH_SHEETS.items():
         sheet = Image.open(SOURCE / filename).convert("RGBA")
         for index, stage in enumerate(STAGES):
-            left = round(index * sheet.width / len(STAGES))
-            right = round((index + 1) * sheet.width / len(STAGES))
-            if prefix == "chicken_hen":
-                pet = separated_growth_crop(
-                    sheet,
-                    stage_index=index,
-                    stage_count=len(STAGES),
-                    name=f"{prefix} {stage}",
-                )
-            else:
-                pet = guarded_pet_crop(
-                    sheet.crop((left, 0, right, sheet.height)),
-                    f"{prefix} {stage}",
-                )
+            pet = separated_growth_crop(
+                sheet,
+                stage_index=index,
+                stage_count=len(STAGES),
+                name=f"{prefix} {stage}",
+            )
             target_height = TARGET_HEIGHTS[index]
             scale = min(target_height / pet.height, DISPLAY_WIDTH / pet.width)
             pet = pet.resize(
@@ -860,7 +791,9 @@ def normalize_fitted_head_accessories(item_ids: set[str] | None = None) -> None:
         ) in HEAD_ACCESSORIES.items():
             if item_ids is not None and item_id not in item_ids:
                 continue
-            source = Image.open(OUTPUT / f"{source_name}.png").convert("RGBA")
+            source = Image.open(
+                ACCESSORY_SOURCE / f"{source_name}.png"
+            ).convert("RGBA")
             if content_box is None:
                 content_box = source.getchannel("A").getbbox()
             if content_box is None:
@@ -960,7 +893,9 @@ def normalize_fitted_head_accessories(item_ids: set[str] | None = None) -> None:
 
 def normalize_fitted_neckwear() -> None:
     """Create a bow tie fitted to every adult pet's neck landmark."""
-    source = Image.open(OUTPUT / "doctor_bow_tie.png").convert("RGBA")
+    source = Image.open(ACCESSORY_SOURCE / "doctor_bow_tie.png").convert(
+        "RGBA"
+    )
     item = visible_crop(source, "doctor_bow_tie")
     fitted_output = OUTPUT / "fitted_accessories"
     fitted_output.mkdir(parents=True, exist_ok=True)
@@ -977,6 +912,23 @@ def normalize_fitted_neckwear() -> None:
             item_id="doctor_bow_tie",
             prefix=prefix,
         )
+        # Some review corrections resize around the canvas centre. Re-align the
+        # finished pixels with the measured neck landmark so that a non-centred
+        # pet does not pull the bow tie sideways during that final resize.
+        bounds = corrected.getchannel("A").getbbox()
+        if bounds is None:
+            raise RuntimeError(f"No visible bow tie pixels found for {prefix}")
+        visible_center_x = (bounds[0] + bounds[2] - 1) / 2
+        offset_x = round(center_x - visible_center_x)
+        if offset_x:
+            aligned = Image.new(
+                "RGBA",
+                (CANVAS_SIZE, CANVAS_SIZE),
+                (0, 0, 0, 0),
+            )
+            aligned.alpha_composite(corrected, (offset_x, 0))
+            corrected.close()
+            corrected = aligned
         output = fitted_output / f"{prefix}_doctor_bow_tie.png"
         corrected.save(output, optimize=True)
         print(output.relative_to(OUTPUT), corrected.getchannel("A").getbbox())
@@ -1436,6 +1388,25 @@ def generate_growth_reference_grid() -> None:
     grid.close()
 
 
+def cleanup_intermediate_assets() -> None:
+    """Keep normalization inputs out of the packaged runtime asset folder."""
+    names = {
+        "chicken_hat_straw",
+        "chicken_glasses_egg",
+        "chicken_outfit_overalls",
+        "doctor_hat_fezz",
+        "doctor_bow_tie",
+        "shop_outfit_hoodie",
+        "shop_outfit_cape",
+        "shop_outfit_sweater",
+        "supporter_outfit",
+    }
+    for name in names:
+        path = OUTPUT / f"{name}.png"
+        if path.exists():
+            path.unlink()
+
+
 def main() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
     normalize_growth_sheets()
@@ -1458,6 +1429,7 @@ def main() -> None:
     generate_adult_reference_grid()
     generate_doctor_who_preview()
     generate_growth_reference_grid()
+    cleanup_intermediate_assets()
 
 
 if __name__ == "__main__":

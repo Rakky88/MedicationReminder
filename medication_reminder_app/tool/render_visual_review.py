@@ -2,6 +2,7 @@
 
 Usage:
     python tool/render_visual_review.py path/to/export.txt --output tmp/review.png
+    python tool/render_visual_review.py --all --output tmp/full_review.png
 """
 
 from __future__ import annotations
@@ -29,6 +30,26 @@ VARIANT_PREFIXES = {
     "chickenHen": "chicken_hen",
 }
 
+# (asset filename, scale, horizontal offset, vertical offset). The three
+# streak toys use the same centre-based scale and canvas-relative translation
+# as CatAvatar; the other toys are already positioned on the shared canvas.
+TOY_OVERLAYS = {
+    "toy_yarn": ("shop_toy_yarn.png", 1.0, 0.0, 0.0),
+    "doctor_tardis_toy": ("doctor_tardis_toy.png", 1.0, 0.0, 0.0),
+    "supporter_toy": ("supporter_toy.png", 1.0, 0.0, 0.0),
+    "toy_mouse": ("shop_toy_mouse.png", 1.0, 0.0, 0.0),
+    "toy_teddy": ("shop_toy_teddy.png", 1.0, 0.0, 0.0),
+    "chicken_toy_corn": ("chicken_toy_corn.png", 1.0, 0.0, 0.0),
+    "streak_200_toy_rocket": ("streak_200_toy_rocket.png", 0.58, 0.155, 0.155),
+    "streak_365_toy_year_cake": (
+        "streak_365_toy_year_cake.png",
+        0.55,
+        0.155,
+        0.155,
+    ),
+    "streak_750_toy_comet": ("streak_750_toy_comet.png", 0.50, 0.205, 0.175),
+}
+
 
 def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     try:
@@ -39,6 +60,8 @@ def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
 
 def render_composition(item_id: str, prefix: str) -> Image.Image:
     assets = ROOT / "assets" / "cats"
+    if item_id == "base_adult":
+        return Image.open(assets / f"{prefix}_adult.png").convert("RGBA")
     if item_id == "dragon_mode":
         return Image.open(
             assets / "fitted" / f"{prefix}_dragon_mode_young.png"
@@ -49,6 +72,28 @@ def render_composition(item_id: str, prefix: str) -> Image.Image:
         )
 
     body = Image.open(assets / f"{prefix}_adult.png").convert("RGBA")
+    if item_id in TOY_OVERLAYS:
+        filename, scale, dx, dy = TOY_OVERLAYS[item_id]
+        with Image.open(assets / filename).convert("RGBA") as toy:
+            # Image.asset first applies BoxFit.contain to the 512px avatar.
+            # Some streak sources are 1254px, so reproduce that fit before
+            # applying CatAvatar's Transform.scale/translate.
+            fitted = toy.resize(body.size, Image.Resampling.LANCZOS)
+            if scale == 1:
+                body.alpha_composite(fitted)
+            else:
+                size = round(fitted.width * scale), round(fitted.height * scale)
+                scaled = fitted.resize(size, Image.Resampling.LANCZOS)
+                body.alpha_composite(
+                    scaled,
+                    (
+                        round((fitted.width - scaled.width) / 2 + fitted.width * dx),
+                        round((fitted.height - scaled.height) / 2 + fitted.height * dy),
+                    ),
+                )
+                scaled.close()
+            fitted.close()
+        return body
     overlay_path = assets / "fitted_accessories" / f"{prefix}_{item_id}.png"
     if item_id not in HEAD_ACCESSORIES and item_id != "doctor_bow_tie":
         body.close()
@@ -69,6 +114,23 @@ def parse_selections(path: Path) -> list[tuple[str, str]]:
             raise ValueError(f"Unknown pet variant in review export: {variant}")
         selections.append((item_id, variant))
     return selections
+
+
+def all_selections() -> list[tuple[str, str]]:
+    """Return every pet/item combination rendered by the wardrobe UI."""
+    item_ids = (
+        "base_adult",
+        *DRESSED_GRIDS,
+        *HEAD_ACCESSORIES,
+        "doctor_bow_tie",
+        *TOY_OVERLAYS,
+        "dragon_mode",
+    )
+    return [
+        (item_id, variant)
+        for item_id in item_ids
+        for variant in VARIANT_PREFIXES
+    ]
 
 
 def render_pages(
@@ -125,11 +187,29 @@ def render_pages(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("selection_file", type=Path)
+    parser.add_argument("selection_file", type=Path, nargs="?")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="render every pet with every wearable and toy",
+    )
+    parser.add_argument("--per-page", type=int, default=20)
     parser.add_argument("--output", type=Path, default=ROOT / "tmp" / "review.png")
     arguments = parser.parse_args()
-    selections = parse_selections(arguments.selection_file)
-    for output in render_pages(selections, arguments.output):
+    if arguments.all == (arguments.selection_file is not None):
+        parser.error("provide either a selection file or --all")
+    if arguments.per_page < 1:
+        parser.error("--per-page must be at least 1")
+    selections = (
+        all_selections()
+        if arguments.all
+        else parse_selections(arguments.selection_file)
+    )
+    for output in render_pages(
+        selections,
+        arguments.output,
+        per_page=arguments.per_page,
+    ):
         print(output)
 
 

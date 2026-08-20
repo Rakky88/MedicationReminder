@@ -194,8 +194,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   MedicationStreakState _medicationStreak = MedicationStreakState.empty;
   CatActivity _catActivity = CatActivity.normal;
   String? _lastMeowDoseKey;
+  bool _startupPetSoundPlayed = false;
   int? _highlightedMedicationId;
   String? _activePlayMomentKey;
+  bool _reminderPermissionsReady = true;
+  bool _requestingReminderPermissions = false;
 
   @override
   void initState() {
@@ -354,7 +357,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _catActivity = due == null ? CatActivity.normal : CatActivity.doseDue;
       }
     });
-    if (due != null &&
+    if (profile != null && !_startupPetSoundPlayed) {
+      _startupPetSoundPlayed = true;
+      _lastMeowDoseKey = due?.slot.key;
+      unawaited(
+        due == null
+            ? PetAudio.instance.happy(profile)
+            : PetAudio.instance.hungry(profile),
+      );
+    } else if (due != null &&
         profile != null &&
         profile.hungrySoundEnabled &&
         due.slot.key != _lastMeowDoseKey) {
@@ -367,6 +378,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     try {
       final medications = await _repository.getMedications();
       final logs = await _repository.getDoseLogs(includeHidden: true);
+      if (!mounted) return false;
+      final hasActiveReminders = medications.any((item) => item.enabled);
+      if (hasActiveReminders &&
+          !await _notifications.hasRequiredPermissions()) {
+        await _notifications.clearReminders();
+        if (mounted && _reminderPermissionsReady) {
+          setState(() => _reminderPermissionsReady = false);
+        }
+        return false;
+      }
+      if (mounted && !_reminderPermissionsReady) {
+        setState(() => _reminderPermissionsReady = true);
+      }
       if (!mounted) return false;
       await _notifications.syncReminders(
         medications,
@@ -384,6 +408,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _showMessage(AppLocalizations.of(context).notificationError);
       }
       return false;
+    }
+  }
+
+  Future<void> _requestReminderPermissions() async {
+    if (_requestingReminderPermissions) return;
+    setState(() => _requestingReminderPermissions = true);
+    try {
+      final allowed = await _notifications.requestPermissions();
+      if (!mounted) return;
+      setState(() => _reminderPermissionsReady = allowed);
+      if (allowed) {
+        await _syncReminders();
+      } else if (mounted) {
+        _showMessage(AppLocalizations.of(context).alarmAccessDenied);
+      }
+    } on Object catch (error, stack) {
+      debugPrint('Could not request reminder access: $error\n$stack');
+      if (mounted) {
+        _showMessage(AppLocalizations.of(context).notificationError);
+      }
+    } finally {
+      if (mounted) setState(() => _requestingReminderPermissions = false);
     }
   }
 
@@ -443,11 +489,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _interactWithCat() async {
     final cat = _cat;
     if (cat == null) return;
-    if (_catActivity == CatActivity.doseDue || cat.hungerPoints > 0) {
-      await PetAudio.instance.hungry(cat);
-    } else {
-      await PetAudio.instance.happy(cat);
-    }
+    await PetAudio.instance.happy(cat);
   }
 
   Future<void> _playWithCat() async {
@@ -537,6 +579,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
     if (!mounted) return;
     if (log == null) {
+      await _resolveAlarmSession(medication, doseKey: doseKey);
       _showMessage(loc.duplicate);
       return;
     }
@@ -564,16 +607,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     } on Object catch (error, stack) {
       debugPrint('Could not update medication streak: $error\n$stack');
     }
-    try {
-      if (log.doseKey case final doseKey?) {
-        await _notifications.resolveDose(doseKey);
-      } else {
-        await _notifications.resolveMedication(medication.id);
-      }
-    } on Object catch (error, stack) {
-      // The full reminder sync below also resolves this logged dose.
-      debugPrint('Could not immediately resolve dose reminder: $error\n$stack');
-    }
+    await _resolveAlarmSession(medication, doseKey: log.doseKey);
     if (!mounted) return;
     setState(() {
       _highlightedMedicationId = null;
@@ -649,6 +683,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  Future<void> _resolveAlarmSession(
+    Medication medication, {
+    String? doseKey,
+  }) async {
+    try {
+      if (doseKey != null) {
+        await _notifications.resolveDose(doseKey);
+      } else {
+        await _notifications.resolveMedication(medication.id);
+      }
+    } on Object catch (error, stack) {
+      // The full reminder sync below also resolves this logged dose.
+      debugPrint('Could not immediately resolve dose reminder: $error\n$stack');
+    }
   }
 
   Future<void> _confirmDoseMissed(
@@ -874,6 +924,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               children: <Widget>[
+                if (!_reminderPermissionsReady) ...<Widget>[
+                  _ReminderPermissionCard(
+                    requesting: _requestingReminderPermissions,
+                    onAllow: () =>
+                        _startUserAction(_requestReminderPermissions),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 if (_cat == null)
                   CatAdoptionCard(
                     onAdopt: () => _startUserAction(_openCatScreen),
@@ -965,6 +1023,65 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           .map((log) => log.doseKey)
           .whereType<String>()
           .toSet(),
+    );
+  }
+}
+
+class _ReminderPermissionCard extends StatelessWidget {
+  const _ReminderPermissionCard({
+    required this.requesting,
+    required this.onAllow,
+  });
+
+  final bool requesting;
+  final VoidCallback onAllow;
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      color: colors.errorContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Icon(Icons.alarm_off_outlined, color: colors.onErrorContainer),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    loc.alarmAccessTitle,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: colors.onErrorContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    loc.alarmAccessBody,
+                    style: TextStyle(color: colors.onErrorContainer),
+                  ),
+                  const SizedBox(height: 10),
+                  FilledButton.icon(
+                    onPressed: requesting ? null : onAllow,
+                    icon: requesting
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.settings_outlined),
+                    label: Text(loc.alarmAccessAction),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1397,7 +1514,12 @@ NotificationMascot? _mascot(CatProfile? cat) => cat == null
         hungerPoints: cat.hungerPoints,
         accessories: <NotificationMascotAccessory>[
           ...equippedPetOverlayItems(cat).map((item) {
-            final transform = item.adaptiveTransform(cat.variant);
+            final transform = item.adaptiveTransform(
+              cat.variant,
+              outfitId: showsDragonModeCostume(cat)
+                  ? null
+                  : tailoredOutfitId(cat),
+            );
             return NotificationMascotAccessory(
               path: item.fittedAssetPath(cat.variant),
               scale: transform.scale,

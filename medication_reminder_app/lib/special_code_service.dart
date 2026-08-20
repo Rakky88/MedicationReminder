@@ -19,7 +19,7 @@ class SpecialCodeService {
   SpecialCodeService._();
 
   static const _endpoint = String.fromEnvironment('SPECIAL_CODE_ENDPOINT');
-  static const _doctorWhoCode = 'DOCTORWHO';
+  static const _doctorWhoCode = 'BOWTIESAREFLY';
   static const _doctorWhoRedemptionId = 'built-in:doctor-who:v1';
   static const _doctorWhoItemIds = <String>{
     'doctor_hat_fezz',

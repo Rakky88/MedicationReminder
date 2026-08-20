@@ -75,17 +75,22 @@ void main() {
     );
   });
 
-  test('persistent meowing preference survives storage', () {
+  test('persistent reminders are opt-in and an explicit choice survives', () {
+    final fresh = CatProfile(
+      name: 'Milo',
+      variant: PetVariant.catTuxedo,
+      adoptedAt: DateTime(2026, 8, 1),
+    );
     final restored = CatProfile.fromJson(
-      CatProfile(
-        name: 'Milo',
-        variant: PetVariant.catTuxedo,
-        adoptedAt: DateTime(2026, 8, 1),
-        persistentMeowEnabled: false,
-      ).toJson(),
+      fresh.copyWith(persistentMeowEnabled: true).toJson(),
+    );
+    final legacy = CatProfile.fromJson(
+      fresh.toJson()..remove('persistentMeowEnabled'),
     );
 
-    expect(restored.persistentMeowEnabled, isFalse);
+    expect(fresh.persistentMeowEnabled, isFalse);
+    expect(restored.persistentMeowEnabled, isTrue);
+    expect(legacy.persistentMeowEnabled, isFalse);
   });
 
   test('dragon mode is opt-in, persists, and only shows while young', () {

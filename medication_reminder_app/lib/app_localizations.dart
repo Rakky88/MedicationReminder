@@ -95,6 +95,12 @@ class AppLocalizations {
       'noUpcoming': 'No upcoming reminders',
       'notificationDenied':
           'Notifications are disabled. The medication was saved with reminders off.',
+      'alarmAccessTitle': 'Medication alarms are blocked',
+      'alarmAccessBody':
+          'Allow notifications and exact alarms so medication reminders can sound at the set time.',
+      'alarmAccessAction': 'Allow alarms',
+      'alarmAccessDenied':
+          'Alarm access is still off. Reminders cannot be scheduled yet.',
       'notificationError':
           'The medication was saved, but reminders could not be scheduled.',
       'testNotification': 'Test notification',
@@ -244,25 +250,6 @@ class AppLocalizations {
       'appLinkCopied': 'The Android download link has been copied.',
       'appLinkOpenFailed':
           'The browser could not be opened. The download link has been copied instead.',
-      'contact': 'Contact',
-      'contactBody': 'Send feedback or ask a question without leaving the app.',
-      'contactAction': 'Open contact form',
-      'contactSubject': 'Medication Reminder contact',
-      'contactReplyEmail': 'Your email address',
-      'contactEmailInvalid': 'Enter a valid email address so we can reply.',
-      'contactSubjectLabel': 'Subject',
-      'contactSubjectRequired': 'Enter a subject.',
-      'contactMessage': 'Message',
-      'contactMessageRequired': 'Write at least 10 characters.',
-      'contactSend': 'Send securely',
-      'contactSent': 'Thank you! Your message has been sent.',
-      'contactSendFailed': 'Your message could not be sent. Try again later.',
-      'contactRelayUnavailable':
-          'Secure sending is not connected in this test build yet.',
-      'contactPrivacyBody':
-          'You type everything here. The app never opens another mail app and does not store your message on this device.',
-      'contactTestBuildNotice':
-          'The secure server relay still needs to be connected before publishing.',
       'buyMeCoffee': 'Buy me a coffee',
       'buyMeCoffeeBody':
           'Enjoying the app? You can support its development through Ko-fi.',
@@ -327,6 +314,12 @@ class AppLocalizations {
       'noUpcoming': 'Geen komende herinneringen',
       'notificationDenied':
           'Notificaties staan uit. Het medicijn is opgeslagen met herinneringen uitgeschakeld.',
+      'alarmAccessTitle': 'Medicatiealarmen worden geblokkeerd',
+      'alarmAccessBody':
+          'Sta notificaties en exacte alarmen toe, zodat medicatieherinneringen op de ingestelde tijd kunnen afgaan.',
+      'alarmAccessAction': 'Alarmen toestaan',
+      'alarmAccessDenied':
+          'Alarmtoegang staat nog uit. Herinneringen kunnen nog niet worden gepland.',
       'notificationError':
           'Het medicijn is opgeslagen, maar herinneringen konden niet worden gepland.',
       'testNotification': 'Testnotificatie',
@@ -479,28 +472,6 @@ class AppLocalizations {
       'appLinkCopied': 'De Android-downloadlink is gekopieerd.',
       'appLinkOpenFailed':
           'De browser kon niet worden geopend. De downloadlink is daarom gekopieerd.',
-      'contact': 'Contact',
-      'contactBody':
-          'Stuur feedback of stel een vraag zonder de app te verlaten.',
-      'contactAction': 'Contactformulier openen',
-      'contactSubject': 'Contact over Medicatieherinnering',
-      'contactReplyEmail': 'Jouw e-mailadres',
-      'contactEmailInvalid':
-          'Vul een geldig e-mailadres in zodat we kunnen antwoorden.',
-      'contactSubjectLabel': 'Onderwerp',
-      'contactSubjectRequired': 'Vul een onderwerp in.',
-      'contactMessage': 'Bericht',
-      'contactMessageRequired': 'Schrijf minimaal 10 tekens.',
-      'contactSend': 'Veilig versturen',
-      'contactSent': 'Bedankt! Je bericht is verstuurd.',
-      'contactSendFailed':
-          'Je bericht kon niet worden verstuurd. Probeer het later opnieuw.',
-      'contactRelayUnavailable':
-          'Veilig versturen is in deze testversie nog niet gekoppeld.',
-      'contactPrivacyBody':
-          'Je typt alles hier. De app opent nooit een andere mailapp en bewaart je bericht niet op dit apparaat.',
-      'contactTestBuildNotice':
-          'De beveiligde serverrelay moet vóór publicatie nog worden gekoppeld.',
       'buyMeCoffee': 'Trakteer me op koffie',
       'buyMeCoffeeBody':
           'Blij met de app? Via Ko-fi kun je de verdere ontwikkeling steunen.',
@@ -578,6 +549,10 @@ class AppLocalizations {
   String get nextDose => _get('nextDose');
   String get noUpcoming => _get('noUpcoming');
   String get notificationDenied => _get('notificationDenied');
+  String get alarmAccessTitle => _get('alarmAccessTitle');
+  String get alarmAccessBody => _get('alarmAccessBody');
+  String get alarmAccessAction => _get('alarmAccessAction');
+  String get alarmAccessDenied => _get('alarmAccessDenied');
   String get notificationError => _get('notificationError');
   String get testNotification => _get('testNotification');
   String get notificationSent => _get('notificationSent');
@@ -725,22 +700,6 @@ class AppLocalizations {
   String get downloadOrUpdate => _get('downloadOrUpdate');
   String get appLinkCopied => _get('appLinkCopied');
   String get appLinkOpenFailed => _get('appLinkOpenFailed');
-  String get contact => _get('contact');
-  String get contactBody => _get('contactBody');
-  String get contactAction => _get('contactAction');
-  String get contactSubject => _get('contactSubject');
-  String get contactReplyEmail => _get('contactReplyEmail');
-  String get contactEmailInvalid => _get('contactEmailInvalid');
-  String get contactSubjectLabel => _get('contactSubjectLabel');
-  String get contactSubjectRequired => _get('contactSubjectRequired');
-  String get contactMessage => _get('contactMessage');
-  String get contactMessageRequired => _get('contactMessageRequired');
-  String get contactSend => _get('contactSend');
-  String get contactSent => _get('contactSent');
-  String get contactSendFailed => _get('contactSendFailed');
-  String get contactRelayUnavailable => _get('contactRelayUnavailable');
-  String get contactPrivacyBody => _get('contactPrivacyBody');
-  String get contactTestBuildNotice => _get('contactTestBuildNotice');
   String get buyMeCoffee => _get('buyMeCoffee');
   String get buyMeCoffeeBody => _get('buyMeCoffeeBody');
   String get paypalPayment => _get('paypalPayment');

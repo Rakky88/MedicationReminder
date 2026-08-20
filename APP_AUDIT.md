@@ -1,7 +1,28 @@
-# App-audit — V0.00.03
+# App-audit — V0.02.05
 
-Datum: 15 augustus 2026
-Status: code-audit afgerond; onderstaande verbeterideeën zijn **niet geïmplementeerd**.
+Datum: 20 augustus 2026
+Status: code-, alarm- en visuele regressie-audit afgerond; onderstaande
+verbeterideeën zijn **niet geïmplementeerd**.
+
+## In V0.02.05 gerepareerd en gecontroleerd
+
+- Lokale telefoontijden worden via een volledige IANA-aliaslaag aan de compacte
+  tijdzonedatabase gekoppeld. Daardoor blijft een medicatiemoment ook in zones
+  zoals `Europe/Amsterdam` correct over zomer- en wintertijd.
+- Basisalarmen en snoozes gebruiken exact geplande Android-alarmen en
+  `USAGE_ALARM`; genegeerde vervolgmeldingen gebruiken `USAGE_NOTIFICATION`.
+  De gekozen huisdiergeluiden blijven per route behouden en zonder diergeluid
+  gebruikt Android het eigen alarm- of notificatiegeluid.
+- Iedere snooze is opnieuw exact tien minuten. Negeren geeft standaard drie
+  meldingen met vijf minuten ertussen; alleen de expliciete herhaalinstelling
+  laat die keten doorlopen. Die instelling staat voor nieuwe profielen en zonder
+  huisdier standaard uit.
+- **Taken** en **Not taken** annuleren alle plugin- en native onderdelen van de
+  betreffende dosissessie. Appstart, een tik op het dier en voeren spelen het
+  huisdiergeluid als gewone media af.
+- Alle 1.980 combinaties van elf huisdieren, twintig outfits en negen
+  hoofd-/halsaccessoires zijn automatisch begrensd en in drie aanvullende
+  visuele controlerondes bekeken.
 
 ## Bekeken onderdelen
 
@@ -11,7 +32,7 @@ Status: code-audit afgerond; onderstaande verbeterideeën zijn **niet geïmpleme
 - Android- en iOS-notificatieplanning, snooze, vervolgmeldingen en tijdzones
 - Geschiedenis en week-, maand-, jaar- en totaaloverzichten
 - Huisdiergroei, honger, geluid, spelen, shop en garderobe
-- Speciale codes, waaronder de verborgen `DOCTORWHO`-set
+- Speciale codes, waaronder de verborgen ingebouwde outfitset
 - Contactrelay, externe links en de openbare download/updateknop
 - Android-manifest, signing, GitHub-releaseworkflow en assets
 - Statische analyse, Flutter-tests, package-status, builds en echte Android-appdata
@@ -85,9 +106,9 @@ Deze punten zijn niet automatisch als fout te bewijzen en zijn niet gewijzigd:
    appopslag, maar niet in een eigen versleutelde database. Androids standaard
    back-upgedrag en het gewenste privacybeleid moeten vóór brede publicatie
    bewust worden gekozen en beschreven.
-7. **Openbare code is niet geheim.** De app geeft in de UI geen hint over
-   `DOCTORWHO`, maar de ingebouwde code is wel vindbaar in de openbare
-   broncode/APK. Alleen servervalidatie kan toekomstige campagnecodes echt
+7. **Openbare code is niet geheim.** De app geeft in de UI geen hint over de
+   ingebouwde code, maar deze blijft vindbaar in de openbare broncode/APK.
+   Alleen servervalidatie kan toekomstige campagnecodes echt
    geheim, intrekbaar en wereldwijd eenmalig maken.
 8. **Contact en externe steun.** De contactrelay is voorbereid maar pas actief
    met een endpoint en serversecrets. De Ko-fi-link opent extern en is bewust

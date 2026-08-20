@@ -60,9 +60,9 @@ void main() {
     expect(preferences.getString('adopted_cat_v1'), damaged);
   });
 
-  test('DOCTORWHO grants four hidden items exactly once', () async {
+  test('the built-in code grants four hidden items exactly once', () async {
     final redemption = await SpecialCodeService.redeem(
-      code: 'DOCTORWHO',
+      code: 'BOWTIESAREFLY',
       languageCode: 'en',
     );
     final first = await CatRepository.instance.registerCodeReward(

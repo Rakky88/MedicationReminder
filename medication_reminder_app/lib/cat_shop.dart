@@ -1,4 +1,5 @@
 import 'cat.dart';
+import 'outfit_accessory_fits.dart';
 
 class CatShopItem {
   const CatShopItem({
@@ -55,7 +56,10 @@ class CatShopItem {
     };
   }
 
-  CatAccessoryTransform adaptiveTransform(PetVariant variant) {
+  CatAccessoryTransform adaptiveTransform(
+    PetVariant variant, {
+    String? outfitId,
+  }) {
     var scale = overlayScale;
     var dy = overlayDy;
     if (adaptiveOverlay &&
@@ -95,7 +99,55 @@ class CatShopItem {
         _ => 0,
       };
     }
-    return CatAccessoryTransform(scale: scale, dx: overlayDx, dy: dy);
+    final base = CatAccessoryTransform(scale: scale, dx: overlayDx, dy: dy);
+    if (adaptiveOverlay ||
+        (category != CatAccessoryCategory.hat &&
+            category != CatAccessoryCategory.glasses &&
+            category != CatAccessoryCategory.neckwear)) {
+      return base;
+    }
+    final outfitFit = outfitFaceFitFor(outfitId, variant);
+    if (outfitFit == null) return base;
+
+    // Fitted overlays were approved on the naked adult. Move and scale their
+    // complete 512px canvas by the measured head transform of this outfit.
+    // Because the neck landmark is part of the same registration, bow ties
+    // follow the dressed collar instead of remaining at the naked-pet neck.
+    final landmarks = petAccessoryLandmarks[variant.index];
+    final targetScale = outfitFit.$3;
+    final anchorX = category == CatAccessoryCategory.neckwear
+        ? landmarks.$3
+        : landmarks.$1;
+    final anchorY = category == CatAccessoryCategory.neckwear
+        ? landmarks.$4
+        : landmarks.$2;
+    final targetX = outfitFit.$1 + (anchorX - landmarks.$1) * targetScale;
+    final targetY = outfitFit.$2 + (anchorY - landmarks.$2) * targetScale;
+    var targetScaleX = targetScale;
+    var targetScaleY = targetScale;
+    if (category == CatAccessoryCategory.hat) {
+      final baseTop = fittedHatTopInsetFor(id, variant);
+      if (baseTop != null && baseTop < anchorY) {
+        const safeTop = 2.0;
+        final maximumScaleY = (targetY - safeTop) / (anchorY - baseTop);
+        if (maximumScaleY < targetScaleY) targetScaleY = maximumScaleY;
+      }
+    }
+    const canvasCenter = 256.0;
+    const canvasSize = 512.0;
+    final dx =
+        (targetX - (canvasCenter + (anchorX - canvasCenter) * targetScaleX)) /
+        canvasSize;
+    final outfitDy =
+        (targetY - (canvasCenter + (anchorY - canvasCenter) * targetScaleY)) /
+        canvasSize;
+    return CatAccessoryTransform(
+      scale: 1,
+      scaleX: targetScaleX,
+      scaleY: targetScaleY,
+      dx: dx,
+      dy: outfitDy,
+    );
   }
 }
 
@@ -171,11 +223,7 @@ const Map<String, List<String>> _additionalShopNames = {
     'Atuendo del milenio',
   ],
   'hat_cap': ['Rote Kappe', 'Casquette rouge', 'Gorra roja'],
-  'doctor_hat_fezz': [
-    'Fez des Elften Doctors',
-    'Fez du Onzième Docteur',
-    'Fez del Undécimo Doctor',
-  ],
+  'doctor_hat_fezz': ['Fezz', 'Fezz', 'Fezz'],
   'hat_wizard': ['Zaubererhut', 'Chapeau de sorcier', 'Sombrero de mago'],
   'hat_crown': ['Goldene Krone', 'Couronne dorée', 'Corona dorada'],
   'glasses_round': ['Runde Brille', 'Lunettes rondes', 'Gafas redondas'],
@@ -186,26 +234,18 @@ const Map<String, List<String>> _additionalShopNames = {
   ],
   'glasses_sun': ['Sonnenbrille', 'Lunettes de soleil', 'Gafas de sol'],
   'glasses_star': ['Sternbrille', 'Lunettes étoiles', 'Gafas de estrellas'],
-  'doctor_bow_tie': [
-    'Fliege des Elften Doctors',
-    'Nœud papillon du Onzième Docteur',
-    'Pajarita del Undécimo Doctor',
-  ],
+  'doctor_bow_tie': ['Rote Fliege', 'Nœud papillon rouge', 'Pajarita roja'],
   'outfit_hoodie': [
     'Blauer Kapuzenpullover',
     'Sweat à capuche bleu',
     'Sudadera azul con capucha',
   ],
-  'doctor_outfit': [
-    'Outfit des Elften Doctors',
-    'Tenue du Onzième Docteur',
-    'Atuendo del Undécimo Doctor',
-  ],
+  'doctor_outfit': ['Tweed-Outfit', 'Tenue en tweed', 'Atuendo de tweed'],
   'supporter_outfit': ['Supporter-Umhang', 'Cape de soutien', 'Capa de apoyo'],
   'outfit_sweater': ['Grüner Pullover', 'Pull vert', 'Jersey verde'],
   'outfit_cape': ['Königlicher Umhang', 'Cape royale', 'Capa real'],
   'toy_yarn': ['Wollknäuel', 'Pelote de laine', 'Ovillo de lana'],
-  'doctor_tardis_toy': ['TARDIS-Spielzeug', 'Jouet TARDIS', 'Juguete TARDIS'],
+  'doctor_tardis_toy': ['Blaue Box', 'Boîte bleue', 'Caja azul'],
   'supporter_toy': ['Supporter-Herz', 'Cœur de soutien', 'Corazón de apoyo'],
   'toy_mouse': ['Spielzeugmaus', 'Souris en jouet', 'Ratón de juguete'],
   'toy_teddy': ['Teddybär', 'Ours en peluche', 'Osito de peluche'],
@@ -397,8 +437,8 @@ const catShopCatalog = <CatShopItem>[
     category: CatAccessoryCategory.hat,
     price: 0,
     assetPath: 'assets/cats/fitted_accessories/cat_orange_doctor_hat_fezz.png',
-    nameEn: 'Eleventh Doctor fez',
-    nameNl: 'Fez van de Elfde Doctor',
+    nameEn: 'Fezz',
+    nameNl: 'Fezz',
     codeExclusive: true,
   ),
   CatShopItem(
@@ -455,8 +495,8 @@ const catShopCatalog = <CatShopItem>[
     category: CatAccessoryCategory.neckwear,
     price: 0,
     assetPath: 'assets/cats/fitted_accessories/cat_orange_doctor_bow_tie.png',
-    nameEn: 'Eleventh Doctor bow tie',
-    nameNl: 'Strikje van de Elfde Doctor',
+    nameEn: 'Red bowtie',
+    nameNl: 'Rode strik',
     codeExclusive: true,
   ),
   CatShopItem(
@@ -472,8 +512,8 @@ const catShopCatalog = <CatShopItem>[
     category: CatAccessoryCategory.outfit,
     price: 0,
     assetPath: 'assets/cats/fitted/cat_orange_doctor_outfit.png',
-    nameEn: 'Eleventh Doctor outfit',
-    nameNl: 'Outfit van de Elfde Doctor',
+    nameEn: 'Tweed outfit',
+    nameNl: 'Tweed-outfit',
     codeExclusive: true,
   ),
   CatShopItem(
@@ -513,8 +553,8 @@ const catShopCatalog = <CatShopItem>[
     category: CatAccessoryCategory.toy,
     price: 0,
     assetPath: 'assets/cats/doctor_tardis_toy.png',
-    nameEn: 'TARDIS toy',
-    nameNl: 'TARDIS-speeltje',
+    nameEn: 'Blue box',
+    nameNl: 'Blauwe doos',
     codeExclusive: true,
   ),
   CatShopItem(
@@ -617,6 +657,14 @@ String petBodyAssetPath(CatProfile profile) {
   );
   if (outfit == null || outfit.adaptiveOverlay) return profile.assetPath;
   return outfit.fittedAssetPath(profile.variant);
+}
+
+String? tailoredOutfitId(CatProfile profile) {
+  if (profile.stage != CatStage.adult) return null;
+  final outfit = catShopItemById(
+    profile.equippedId(CatAccessoryCategory.outfit),
+  );
+  return outfit == null || outfit.adaptiveOverlay ? null : outfit.id;
 }
 
 List<CatShopItem> equippedPetOverlayItems(CatProfile profile) =>

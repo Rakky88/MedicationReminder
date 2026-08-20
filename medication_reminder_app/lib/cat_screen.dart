@@ -52,7 +52,7 @@ class _CatScreenState extends State<CatScreen> {
     _variant = _profile?.variant ?? variants[Random().nextInt(variants.length)];
     _purrEnabled = _profile?.purrEnabled ?? true;
     _meowEnabled = _profile?.meowEnabled ?? true;
-    _persistentMeowEnabled = _profile?.persistentMeowEnabled ?? true;
+    _persistentMeowEnabled = _profile?.persistentMeowEnabled ?? false;
     _dragonMode = _profile?.dragonMode ?? false;
     _loadUnlocks();
   }

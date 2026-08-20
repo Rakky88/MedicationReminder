@@ -11,14 +11,21 @@ import 'cat_avatar.dart';
 import 'cat_shop.dart';
 import 'gradual_app_bar.dart';
 
-// V14 contains only the two cat glasses selected in the completed V13 review.
-// Every other combination remains approved and stays out of this last check.
-const _reviewTargets = <String, Set<PetVariant>>{
-  'glasses_round': <PetVariant>{PetVariant.catTuxedo, PetVariant.catGray},
-};
+// V15 verifies the real layering problem: every head/neck wearable on every
+// full-body outfit, for all eleven adult pets. One page contains all pets for
+// one outfit/wearable pair, so a selected issue always identifies the exact
+// three-part combination that needs a source-local correction.
+final _auditOutfits = catShopCatalog
+    .where((item) => item.category == CatAccessoryCategory.outfit)
+    .toList(growable: false);
 
-final _auditCatalog = catShopCatalog
-    .where((item) => _reviewTargets.containsKey(item.id))
+final _auditWearables = catShopCatalog
+    .where(
+      (item) =>
+          item.category == CatAccessoryCategory.hat ||
+          item.category == CatAccessoryCategory.glasses ||
+          item.category == CatAccessoryCategory.neckwear,
+    )
     .toList(growable: false);
 
 void main() {
@@ -44,21 +51,19 @@ class _AccessoryAuditScreen extends StatefulWidget {
 }
 
 class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
-  static const _preferencesKey = 'accessory_visual_audit_v14_fixed_recheck';
-  static const _exportFileName = 'accessory_visual_audit_v14_fixed_recheck.txt';
+  static const _preferencesKey = 'accessory_visual_audit_v15_outfit_layers';
+  static const _exportFileName = 'accessory_visual_audit_v15_outfit_layers.txt';
 
   final Set<String> _issues = <String>{};
   int _page = 0;
   bool _loaded = false;
 
-  bool get _hasDragonPage => _reviewTargets.containsKey('dragon_mode');
-  int get _totalPages => _auditCatalog.length + (_hasDragonPage ? 1 : 0) + 1;
-  bool get _dragonPage => _hasDragonPage && _page == _auditCatalog.length;
-  bool get _summaryPage => _page == _totalPages - 1;
-  String get _pageId => _dragonPage ? 'dragon_mode' : _auditCatalog[_page].id;
-  List<PetVariant> get _pageVariants => PetVariant.values
-      .where(_reviewTargets[_pageId]!.contains)
-      .toList(growable: false);
+  int get _combinationPages => _auditOutfits.length * _auditWearables.length;
+  bool get _summaryPage => _page == _combinationPages;
+  int get _outfitIndex => _page ~/ _auditWearables.length;
+  int get _wearableIndex => _page % _auditWearables.length;
+  CatShopItem get _outfit => _auditOutfits[_outfitIndex];
+  CatShopItem get _wearable => _auditWearables[_wearableIndex];
 
   @override
   void initState() {
@@ -77,7 +82,8 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
     });
   }
 
-  String _issueKey(PetVariant variant) => '$_pageId|${variant.name}';
+  String _issueKey(PetVariant variant) =>
+      '${_outfit.id}|${_wearable.id}|${variant.name}';
 
   void _toggleIssue(PetVariant variant) {
     final key = _issueKey(variant);
@@ -88,12 +94,24 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
   }
 
   void _toggleWholePage() {
-    final keys = _pageVariants.map(_issueKey).toSet();
+    final keys = PetVariant.values.map(_issueKey).toSet();
     final allSelected = _issues.containsAll(keys);
     setState(
       () => allSelected ? _issues.removeAll(keys) : _issues.addAll(keys),
     );
     unawaited(_persistIssues());
+  }
+
+  void _selectOutfit(String? id) {
+    final index = _auditOutfits.indexWhere((item) => item.id == id);
+    if (index < 0) return;
+    setState(() => _page = index * _auditWearables.length + _wearableIndex);
+  }
+
+  void _selectWearable(String? id) {
+    final index = _auditWearables.indexWhere((item) => item.id == id);
+    if (index < 0) return;
+    setState(() => _page = _outfitIndex * _auditWearables.length + index);
   }
 
   Future<void> _persistIssues() async {
@@ -133,15 +151,13 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
     if (!_loaded) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    final item = _page < _auditCatalog.length ? _auditCatalog[_page] : null;
-    final title = _summaryPage
-        ? 'Resultaten'
-        : _dragonPage
-        ? 'dragon_mode'
-        : '${item!.id} (${item.category.name})';
     return Scaffold(
       appBar: GradualAppBar(
-        title: Text('${_page + 1}/$_totalPages $title'),
+        title: Text(
+          _summaryPage
+              ? 'Resultaten'
+              : '${_page + 1}/$_combinationPages outfitcontrole',
+        ),
         actions: <Widget>[
           if (!_summaryPage)
             IconButton(
@@ -153,16 +169,41 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
       ),
       body: Column(
         children: <Widget>[
-          if (!_summaryPage)
+          if (!_summaryPage) ...<Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 3, 8, 0),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: _AuditSelector(
+                      label: 'Outfit',
+                      value: _outfit.id,
+                      items: _auditOutfits,
+                      onChanged: _selectOutfit,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _AuditSelector(
+                      label: 'Bril / hoed / strik',
+                      value: _wearable.id,
+                      items: _auditWearables,
+                      onChanged: _selectWearable,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 2, 8, 0),
               child: Text(
-                'V14 eindcontrole: tik alleen als de reparatie nog niet goed is. '
-                'Rood = geselecteerd. Totaal: ${_issues.length}',
+                'Tik alleen op een dier als deze combinatie niet goed zit. '
+                'Rood = fout · geselecteerd: ${_issues.length}',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
+          ],
           Expanded(
             child: _summaryPage
                 ? _AuditSummary(issues: _issues, onCopy: _copyResults)
@@ -170,14 +211,15 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(6),
                     crossAxisCount: 3,
-                    childAspectRatio: .76,
+                    childAspectRatio: .78,
                     mainAxisSpacing: 3,
                     crossAxisSpacing: 3,
-                    children: _pageVariants
+                    children: PetVariant.values
                         .map(
                           (variant) => _PetAuditTile(
                             variant: variant,
-                            item: item,
+                            outfit: _outfit,
+                            wearable: _wearable,
                             selected: _issues.contains(_issueKey(variant)),
                             onTap: () => _toggleIssue(variant),
                           ),
@@ -200,12 +242,10 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: FilledButton(
-                    onPressed: _page == _totalPages - 1
+                    onPressed: _summaryPage
                         ? _copyResults
                         : () => setState(() => _page++),
-                    child: Text(
-                      _page == _totalPages - 1 ? 'KOPIEER LIJST' : 'VOLGENDE',
-                    ),
+                    child: Text(_summaryPage ? 'KOPIEER LIJST' : 'VOLGENDE'),
                   ),
                 ),
               ],
@@ -217,34 +257,70 @@ class _AccessoryAuditScreenState extends State<_AccessoryAuditScreen> {
   }
 }
 
+class _AuditSelector extends StatelessWidget {
+  const _AuditSelector({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String value;
+  final List<CatShopItem> items;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) => DropdownButtonFormField<String>(
+    initialValue: value,
+    isExpanded: true,
+    decoration: InputDecoration(
+      labelText: label,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    ),
+    items: items
+        .map(
+          (item) => DropdownMenuItem<String>(
+            value: item.id,
+            child: Text(
+              item.localizedName('nl'),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        )
+        .toList(growable: false),
+    onChanged: onChanged,
+  );
+}
+
 class _PetAuditTile extends StatelessWidget {
   const _PetAuditTile({
     required this.variant,
-    required this.item,
+    required this.outfit,
+    required this.wearable,
     required this.selected,
     required this.onTap,
   });
 
   final PetVariant variant;
-  final CatShopItem? item;
+  final CatShopItem outfit;
+  final CatShopItem wearable;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final equippedItem = item;
     final profile = CatProfile(
       name: variant.name,
       variant: variant,
       adoptedAt: DateTime(2026, 1, 1),
-      feedCount: equippedItem == null ? 14 : 60,
-      dragonMode: equippedItem == null,
-      ownedAccessoryIds: equippedItem == null
-          ? const <String>{}
-          : <String>{equippedItem.id},
-      equippedAccessories: equippedItem == null
-          ? const <String, String>{}
-          : <String, String>{equippedItem.category.name: equippedItem.id},
+      feedCount: 60,
+      ownedAccessoryIds: <String>{outfit.id, wearable.id},
+      equippedAccessories: <String, String>{
+        CatAccessoryCategory.outfit.name: outfit.id,
+        wearable.category.name: wearable.id,
+      },
     );
     return Material(
       color: Colors.transparent,
@@ -329,7 +405,7 @@ class _AuditSummary extends StatelessWidget {
               Icons.report_outlined,
               color: Color(0xFFC62828),
             ),
-            title: Text(issue.replaceFirst('|', ' — ')),
+            title: Text(issue.replaceAll('|', ' — ')),
           ),
         const SizedBox(height: 12),
         OutlinedButton.icon(

@@ -67,7 +67,7 @@ class CatRepository {
     required PetVariant variant,
     bool purrEnabled = true,
     bool meowEnabled = true,
-    bool persistentMeowEnabled = true,
+    bool persistentMeowEnabled = false,
   }) => _operations.run(
     () => _adopt(
       name: name,

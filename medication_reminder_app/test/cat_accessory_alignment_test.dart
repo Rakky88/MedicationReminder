@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medication_reminder_app/cat.dart';
 import 'package:medication_reminder_app/cat_shop.dart';
+import 'package:medication_reminder_app/outfit_accessory_fits.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -29,12 +30,12 @@ void main() {
         PetVariant.catTuxedo: 249,
         PetVariant.catGray: 247,
         PetVariant.catCalico: 247,
-        PetVariant.catBlackBib: 224,
-        PetVariant.dogGolden: 257,
+        PetVariant.catBlackBib: 246,
+        PetVariant.dogGolden: 271,
         PetVariant.dogBeagle: 260,
-        PetVariant.dogBlackLab: 247,
-        PetVariant.dogBorderCollie: 253,
-        PetVariant.dogDachshund: 235,
+        PetVariant.dogBlackLab: 260,
+        PetVariant.dogBorderCollie: 270,
+        PetVariant.dogDachshund: 262,
         PetVariant.chickenHen: 256,
       };
       final headItems = catShopCatalog.where(
@@ -96,12 +97,12 @@ void main() {
       PetVariant.catTuxedo: 249,
       PetVariant.catGray: 247,
       PetVariant.catCalico: 247,
-      PetVariant.catBlackBib: 224,
-      PetVariant.dogGolden: 257,
+      PetVariant.catBlackBib: 246,
+      PetVariant.dogGolden: 271,
       PetVariant.dogBeagle: 260,
-      PetVariant.dogBlackLab: 247,
-      PetVariant.dogBorderCollie: 253,
-      PetVariant.dogDachshund: 235,
+      PetVariant.dogBlackLab: 260,
+      PetVariant.dogBorderCollie: 270,
+      PetVariant.dogDachshund: 262,
       PetVariant.chickenHen: 256,
     };
     final glasses = catShopCatalog.where(
@@ -127,12 +128,12 @@ void main() {
       PetVariant.catTuxedo: 246,
       PetVariant.catGray: 245,
       PetVariant.catCalico: 244,
-      PetVariant.catBlackBib: 224,
-      PetVariant.dogGolden: 257,
+      PetVariant.catBlackBib: 246,
+      PetVariant.dogGolden: 271,
       PetVariant.dogBeagle: 260,
-      PetVariant.dogBlackLab: 247,
-      PetVariant.dogBorderCollie: 253,
-      PetVariant.dogDachshund: 235,
+      PetVariant.dogBlackLab: 260,
+      PetVariant.dogBorderCollie: 270,
+      PetVariant.dogDachshund: 262,
       PetVariant.chickenHen: 256,
     };
     for (final variant in PetVariant.values) {
@@ -218,6 +219,129 @@ void main() {
     }
   });
 
+  test('every tailored outfit has a reviewed fit for every pet', () {
+    final tailoredOutfitIds = catShopCatalog
+        .where(
+          (item) =>
+              item.category == CatAccessoryCategory.outfit &&
+              !item.adaptiveOverlay,
+        )
+        .map((item) => item.id)
+        .toSet();
+    expect(outfitFaceFits.keys.toSet(), tailoredOutfitIds);
+    expect(petAccessoryLandmarks, hasLength(PetVariant.values.length));
+    for (final entry in outfitFaceFits.entries) {
+      expect(
+        entry.value,
+        hasLength(PetVariant.values.length),
+        reason: entry.key,
+      );
+      for (final fit in entry.value) {
+        expect(fit.$1, inInclusiveRange(220, 292), reason: entry.key);
+        expect(fit.$2, inInclusiveRange(95, 182), reason: entry.key);
+        expect(fit.$3, inInclusiveRange(.82, 1.04), reason: entry.key);
+      }
+    }
+  });
+
+  test('all 1,980 outfit wearable transforms follow their landmark', () {
+    final outfits = catShopCatalog.where(
+      (item) =>
+          item.category == CatAccessoryCategory.outfit && !item.adaptiveOverlay,
+    );
+    final wearables = catShopCatalog.where(
+      (item) =>
+          !item.adaptiveOverlay &&
+          (item.category == CatAccessoryCategory.hat ||
+              item.category == CatAccessoryCategory.glasses ||
+              item.category == CatAccessoryCategory.neckwear),
+    );
+    var checked = 0;
+    for (final outfit in outfits) {
+      for (final wearable in wearables) {
+        for (final variant in PetVariant.values) {
+          final fit = outfitFaceFitFor(outfit.id, variant)!;
+          final landmarks = petAccessoryLandmarks[variant.index];
+          final isNeckwear = wearable.category == CatAccessoryCategory.neckwear;
+          final anchorX = isNeckwear ? landmarks.$3 : landmarks.$1;
+          final anchorY = isNeckwear ? landmarks.$4 : landmarks.$2;
+          final expectedX = fit.$1 + (anchorX - landmarks.$1) * fit.$3;
+          final expectedY = fit.$2 + (anchorY - landmarks.$2) * fit.$3;
+          final transform = wearable.adaptiveTransform(
+            variant,
+            outfitId: outfit.id,
+          );
+          final actualX =
+              256 +
+              (anchorX - 256) * transform.effectiveScaleX +
+              transform.dx * 512;
+          final actualY =
+              256 +
+              (anchorY - 256) * transform.effectiveScaleY +
+              transform.dy * 512;
+          expect(
+            actualX,
+            closeTo(expectedX, .000001),
+            reason: '${outfit.id}|${wearable.id}|${variant.name}',
+          );
+          expect(
+            actualY,
+            closeTo(expectedY, .000001),
+            reason: '${outfit.id}|${wearable.id}|${variant.name}',
+          );
+          checked++;
+        }
+      }
+    }
+    expect(checked, 1980);
+  });
+
+  test('every transformed outfit wearable remains fully in frame', () async {
+    final outfits = catShopCatalog.where(
+      (item) =>
+          item.category == CatAccessoryCategory.outfit && !item.adaptiveOverlay,
+    );
+    final wearables = catShopCatalog.where(
+      (item) =>
+          !item.adaptiveOverlay &&
+          (item.category == CatAccessoryCategory.hat ||
+              item.category == CatAccessoryCategory.glasses ||
+              item.category == CatAccessoryCategory.neckwear),
+    );
+    for (final wearable in wearables) {
+      for (final variant in PetVariant.values) {
+        final source = await alphaBounds(wearable.fittedAssetPath(variant));
+        for (final outfit in outfits) {
+          final transform = wearable.adaptiveTransform(
+            variant,
+            outfitId: outfit.id,
+          );
+          final bounds = transformedBounds(source, transform);
+          expect(
+            bounds.left,
+            greaterThan(0),
+            reason: '${outfit.id}|${wearable.id}|${variant.name}',
+          );
+          expect(
+            bounds.top,
+            greaterThan(0),
+            reason: '${outfit.id}|${wearable.id}|${variant.name}',
+          );
+          expect(
+            bounds.right,
+            lessThan(512),
+            reason: '${outfit.id}|${wearable.id}|${variant.name}',
+          );
+          expect(
+            bounds.bottom,
+            lessThan(512),
+            reason: '${outfit.id}|${wearable.id}|${variant.name}',
+          );
+        }
+      }
+    }
+  });
+
   test('every Dragon mode sprite is a complete fitted young pet', () async {
     for (final variant in PetVariant.values) {
       final path =
@@ -266,6 +390,16 @@ void main() {
     }
   });
 }
+
+ui.Rect transformedBounds(
+  ui.Rect source,
+  CatAccessoryTransform transform,
+) => ui.Rect.fromLTRB(
+  256 + (source.left - 256) * transform.effectiveScaleX + transform.dx * 512,
+  256 + (source.top - 256) * transform.effectiveScaleY + transform.dy * 512,
+  256 + (source.right - 256) * transform.effectiveScaleX + transform.dx * 512,
+  256 + (source.bottom - 256) * transform.effectiveScaleY + transform.dy * 512,
+);
 
 Future<ui.Rect> alphaBounds(String assetPath) async {
   final bytes = await rootBundle.load(assetPath);

@@ -48,6 +48,26 @@ const Map<String, List<String>> _additionalTranslations = {
     'Notifications uniquement',
     'Solo notificaciones',
   ],
+  'alarmAccessTitle': [
+    'Medikamentenalarme sind blockiert',
+    'Les alarmes de médicaments sont bloquées',
+    'Las alarmas de medicación están bloqueadas',
+  ],
+  'alarmAccessBody': [
+    'Erlaube Benachrichtigungen und exakte Alarme, damit Medikamentenerinnerungen zur eingestellten Zeit ertönen.',
+    'Autorisez les notifications et les alarmes exactes afin que les rappels de médicaments sonnent à l’heure prévue.',
+    'Permite las notificaciones y las alarmas exactas para que los recordatorios de medicación suenen a la hora establecida.',
+  ],
+  'alarmAccessAction': [
+    'Alarme erlauben',
+    'Autoriser les alarmes',
+    'Permitir alarmas',
+  ],
+  'alarmAccessDenied': [
+    'Der Alarmzugriff ist noch deaktiviert. Erinnerungen können noch nicht geplant werden.',
+    'L’accès aux alarmes est toujours désactivé. Les rappels ne peuvent pas encore être programmés.',
+    'El acceso a las alarmas sigue desactivado. Los recordatorios aún no se pueden programar.',
+  ],
   'showMedicationName': [
     'Medikamentennamen in Benachrichtigungen anzeigen',
     'Afficher le nom du médicament dans les notifications',
@@ -652,74 +672,6 @@ const Map<String, List<String>> _additionalTranslations = {
     'Der Browser konnte nicht geöffnet werden. Der Downloadlink wurde stattdessen kopiert.',
     'Le navigateur n’a pas pu être ouvert. Le lien de téléchargement a été copié à la place.',
     'No se pudo abrir el navegador. Se ha copiado el enlace de descarga.',
-  ],
-  'contact': ['Kontakt', 'Contact', 'Contacto'],
-  'contactBody': [
-    'Sende Feedback oder stelle eine Frage, ohne die App zu verlassen.',
-    'Envoyez vos commentaires ou posez une question sans quitter l’application.',
-    'Envía comentarios o haz una pregunta sin salir de la app.',
-  ],
-  'contactAction': [
-    'Kontaktformular öffnen',
-    'Ouvrir le formulaire de contact',
-    'Abrir formulario de contacto',
-  ],
-  'contactSubject': [
-    'Kontakt zu Medication Reminder',
-    'Contact Medication Reminder',
-    'Contacto de Medication Reminder',
-  ],
-  'contactReplyEmail': [
-    'Deine E-Mail-Adresse',
-    'Votre adresse e-mail',
-    'Tu correo electrónico',
-  ],
-  'contactEmailInvalid': [
-    'Gib eine gültige E-Mail-Adresse ein, damit wir antworten können.',
-    'Saisissez une adresse e-mail valide afin que nous puissions répondre.',
-    'Introduce una dirección de correo válida para que podamos responder.',
-  ],
-  'contactSubjectLabel': ['Betreff', 'Objet', 'Asunto'],
-  'contactSubjectRequired': [
-    'Gib einen Betreff ein.',
-    'Saisissez un objet.',
-    'Introduce un asunto.',
-  ],
-  'contactMessage': ['Nachricht', 'Message', 'Mensaje'],
-  'contactMessageRequired': [
-    'Schreibe mindestens 10 Zeichen.',
-    'Écrivez au moins 10 caractères.',
-    'Escribe al menos 10 caracteres.',
-  ],
-  'contactSend': [
-    'Sicher senden',
-    'Envoyer en toute sécurité',
-    'Enviar de forma segura',
-  ],
-  'contactSent': [
-    'Vielen Dank! Deine Nachricht wurde gesendet.',
-    'Merci ! Votre message a été envoyé.',
-    '¡Gracias! Tu mensaje se ha enviado.',
-  ],
-  'contactSendFailed': [
-    'Deine Nachricht konnte nicht gesendet werden. Versuche es später erneut.',
-    'Votre message n’a pas pu être envoyé. Réessayez plus tard.',
-    'No se pudo enviar tu mensaje. Inténtalo de nuevo más tarde.',
-  ],
-  'contactRelayUnavailable': [
-    'Der sichere Versand ist in diesem Testbuild noch nicht verbunden.',
-    'L’envoi sécurisé n’est pas encore connecté dans cette version de test.',
-    'El envío seguro aún no está conectado en esta versión de prueba.',
-  ],
-  'contactPrivacyBody': [
-    'Du gibst alles hier ein. Die App öffnet keine andere E-Mail-App und speichert deine Nachricht nicht auf diesem Gerät.',
-    'Vous saisissez tout ici. L’application n’ouvre aucune autre app de messagerie et ne stocke pas votre message sur cet appareil.',
-    'Escribes todo aquí. La app no abre otra aplicación de correo ni guarda tu mensaje en este dispositivo.',
-  ],
-  'contactTestBuildNotice': [
-    'Die sichere Serverweiterleitung muss vor der Veröffentlichung noch verbunden werden.',
-    'Le relais sécurisé du serveur doit encore être connecté avant la publication.',
-    'El servidor seguro aún debe conectarse antes de publicar.',
   ],
   'buyMeCoffee': [
     'Spendier mir einen Kaffee',

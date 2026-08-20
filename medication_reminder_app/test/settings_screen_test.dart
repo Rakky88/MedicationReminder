@@ -55,7 +55,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Made by Rick Groot · 2026'), findsOneWidget);
-    expect(find.text('Version V0.02.04'), findsOneWidget);
+    expect(find.text('Version V0.02.05'), findsOneWidget);
     expect(find.text('Share or update the app'), findsOneWidget);
     expect(find.text('Copy Android download link'), findsOneWidget);
     expect(find.text('Open contact form'), findsNothing);

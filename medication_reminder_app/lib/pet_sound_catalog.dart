@@ -47,7 +47,7 @@ abstract final class PetSoundCatalog {
   ) => List<String>.generate(
     variantCount,
     (index) =>
-        'medication_${species.name}_alarm_voice_${(index + 1).toString().padLeft(2, '0')}_v1',
+        'medication_${species.name}_alarm_voice_${(index + 1).toString().padLeft(2, '0')}_v2',
     growable: false,
   );
 

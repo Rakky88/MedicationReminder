@@ -19,7 +19,9 @@ import 'cat.dart';
 import 'cat_notification_messages.dart';
 import 'notification_models.dart';
 import 'pet_sound_catalog.dart';
+import 'reminder_clock.dart';
 import 'time_zone_fallback.dart';
+import 'time_zone_aliases.dart';
 
 class NotificationService {
   NotificationService._internal();
@@ -32,12 +34,15 @@ class NotificationService {
   static const snoozeAction = 'snooze';
   static const _categoryId = 'medication_reminder';
   static const _channelId = 'medication_reminders_v1';
-  static const _alarmChannelId = 'medication_alarms_v1';
+  // Android channels are immutable. The v2 alarm channels guarantee that an
+  // update cannot inherit the notification-volume audio attributes of an old
+  // install.
+  static const _alarmChannelId = 'medication_alarms_v2';
   static const _androidRollingWeeks = 26;
   // Each dated dose uses one plugin alarm plus a follow-up and boundary alarm
   // in the native escalation layer. Keep enough room below Android's common
   // limit of 500 alarms per app for snoozes and OS bookkeeping.
-  static const _maxAndroidScheduledDoseOccurrences = 144;
+  static const _maxAndroidScheduledDoseOccurrences = 120;
   static const _accents = <Color>[
     Color(0xFF00897B),
     Color(0xFF7B1FA2),
@@ -177,7 +182,7 @@ class NotificationService {
     if (!isSupported) return;
     try {
       final zone = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(zone.identifier));
+      tz.setLocalLocation(_timeZoneLocation(zone.identifier));
       return;
     } on Object {
       if (Platform.isAndroid) {
@@ -186,7 +191,7 @@ class NotificationService {
             'getLocalTimeZone',
           );
           if (identifier != null && identifier.isNotEmpty) {
-            tz.setLocalLocation(tz.getLocation(identifier));
+            tz.setLocalLocation(_timeZoneLocation(identifier));
             return;
           }
         } on Object {
@@ -203,6 +208,11 @@ class NotificationService {
     }
   }
 
+  tz.Location _timeZoneLocation(String identifier) {
+    final canonical = timeZoneAliases[identifier] ?? identifier;
+    return tz.getLocation(canonical);
+  }
+
   Future<bool> requestPermissions() async {
     if (!isSupported) return false;
     await init();
@@ -213,8 +223,10 @@ class NotificationService {
           >();
       final result = await android?.requestNotificationsPermission();
       if (result == false) return false;
-      await android?.requestExactAlarmsPermission();
-      return true;
+      final exactAlreadyAllowed = await android
+          ?.canScheduleExactNotifications();
+      if (exactAlreadyAllowed == true) return true;
+      return await android?.requestExactAlarmsPermission() == true;
     }
     final result = await _plugin
         .resolvePlatformSpecificImplementation<
@@ -222,6 +234,19 @@ class NotificationService {
         >()
         ?.requestPermissions(alert: true, badge: true, sound: true);
     return result ?? false;
+  }
+
+  Future<bool> hasRequiredPermissions() async {
+    if (!isSupported) return true;
+    await init();
+    if (!Platform.isAndroid) return true;
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    final notificationsAllowed = await android?.areNotificationsEnabled();
+    final exactAlarmsAllowed = await android?.canScheduleExactNotifications();
+    return notificationsAllowed != false && exactAlarmsAllowed == true;
   }
 
   Future<void> syncReminders(
@@ -238,6 +263,12 @@ class NotificationService {
     ),
   );
 
+  Future<void> clearReminders() => _syncQueue.run(() async {
+    if (!isSupported) return;
+    await init();
+    await _clearPendingReminderPlans();
+  });
+
   Future<void> _syncRemindersNow(
     List<Medication> medications,
     NotificationCopy copy, {
@@ -247,7 +278,10 @@ class NotificationService {
     if (!isSupported) return;
     await init();
     try {
-      await _clearPendingReminderPlans();
+      // Keep native follow-up plans alive until their replacements are ready.
+      // Clearing them here creates a race with a Snooze action that launches
+      // or resumes Flutter while Android is handling the current dose.
+      await _plugin.cancelAllPendingNotifications();
       await refreshTimeZone();
       final images = await _prepareNotificationImages(mascot);
       final slots = _reminderSlots(medications);
@@ -288,6 +322,7 @@ class NotificationService {
       await _replaceEscalationPlans(
         const <Map<String, Object?>>[],
         const <int>[],
+        const <String>{},
       );
     }
   }
@@ -305,7 +340,9 @@ class NotificationService {
     final body = _notificationBody(copy, medication, mascot);
     final scheduleMode = await _androidScheduleMode();
     await _plugin.zonedSchedule(
-      id: medication.id * 1000 + 999,
+      id: doseKey == null
+          ? _legacySnoozeNotificationId(medication.id)
+          : _snoozeNotificationId(doseKey),
       title: copy.title,
       body: body,
       scheduledDate: tz.TZDateTime.now(tz.local).add(delay),
@@ -315,6 +352,7 @@ class NotificationService {
         images: images,
         appearance: _newAppearance(),
         summaryText: body,
+        useAlarmAudio: !medication.notificationsOnly,
       ),
       androidScheduleMode: scheduleMode,
       payload: _payload(medication.id, doseKey),
@@ -366,8 +404,10 @@ class NotificationService {
   }
 
   Future<void> resolveMedication(int medicationId) async {
-    if (!Platform.isAndroid) return;
+    if (!isSupported) return;
     await init();
+    await _plugin.cancel(id: _legacySnoozeNotificationId(medicationId));
+    if (!Platform.isAndroid) return;
     await _escalationChannel.invokeMethod<void>(
       'resolveMedication',
       <String, Object?>{'medicationId': medicationId},
@@ -378,6 +418,7 @@ class NotificationService {
     if (!isSupported) return;
     await init();
     await _plugin.cancel(id: _doseNotificationId(doseKey));
+    await _plugin.cancel(id: _snoozeNotificationId(doseKey));
     if (!Platform.isAndroid) return;
     await _escalationChannel.invokeMethod<void>(
       'resolveDose',
@@ -539,6 +580,7 @@ class NotificationService {
       await _replaceEscalationPlans(
         const <Map<String, Object?>>[],
         const <int>[],
+        resolvedDoseKeys,
       );
       return;
     }
@@ -618,7 +660,8 @@ class NotificationService {
         'openLabel': copy.openAction,
         'snoozeLabel': copy.snoozeAction,
         'soundEnabled': mascot?.soundEnabled == true,
-        'persistentMeowEnabled': mascot?.persistentMeowEnabled ?? true,
+        'notificationsOnly': reminder.slot.medication.notificationsOnly,
+        'persistentMeowEnabled': mascot?.persistentMeowEnabled ?? false,
         'catName': mascot?.name,
         'speciesCode': mascot?.species.name ?? 'cat',
         'languageCode': copy.languageCode,
@@ -629,6 +672,7 @@ class NotificationService {
         'catChannelName': _notificationChannelCopy(
           copy.languageCode,
         ).petReminders,
+        'alarmChannelName': _notificationChannelCopy(copy.languageCode).alarms,
       });
     }
 
@@ -640,6 +684,7 @@ class NotificationService {
     await _replaceEscalationPlans(
       escalationPlans,
       slots.map((slot) => slot.medication.id).toSet().toList(),
+      resolvedDoseKeys,
     );
   }
 
@@ -708,9 +753,12 @@ class NotificationService {
           AndroidFlutterLocalNotificationsPlugin
         >()
         ?.canScheduleExactNotifications();
-    return canScheduleExactly == true
-        ? AndroidScheduleMode.exactAllowWhileIdle
-        : AndroidScheduleMode.inexactAllowWhileIdle;
+    if (canScheduleExactly != true) {
+      throw StateError(
+        'Exact alarm permission is required for medication reminders.',
+      );
+    }
+    return AndroidScheduleMode.exactAllowWhileIdle;
   }
 
   String _notificationBody(
@@ -1208,53 +1256,46 @@ class NotificationService {
     return 1000000 + (hash % 800000000);
   }
 
+  int _snoozeNotificationId(String doseKey) {
+    var hash = 0x811C9DC5;
+    for (final value in 'snooze:$doseKey'.codeUnits) {
+      hash = ((hash ^ value) * 0x01000193) & 0x7FFFFFFF;
+    }
+    return 1100000000 + (hash % 800000000);
+  }
+
+  int _legacySnoozeNotificationId(int medicationId) =>
+      medicationId * 1000 + 999;
+
   Future<void> _replaceEscalationPlans(
     List<Map<String, Object?>> plans,
     List<int> activeMedicationIds,
+    Set<String> resolvedDoseKeys,
   ) async {
     if (!Platform.isAndroid) return;
-    await _escalationChannel.invokeMethod<void>(
-      'replacePlans',
-      <String, Object?>{
-        'plans': plans,
-        'activeMedicationIds': activeMedicationIds,
-      },
-    );
+    final accepted = await _escalationChannel
+        .invokeMethod<bool>('replacePlans', <String, Object?>{
+          'plans': plans,
+          'activeMedicationIds': activeMedicationIds,
+          'resolvedDoseKeys': resolvedDoseKeys.toList(),
+        });
+    if (accepted == false) {
+      throw StateError('Android could not schedule every exact reminder.');
+    }
   }
 
   tz.TZDateTime _nextWeekday(int weekday, int hour, int minute) {
-    final now = tz.TZDateTime.now(tz.local);
-    var candidate = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      hour,
-      minute,
+    return nextWeeklyReminder(
+      location: tz.local,
+      now: tz.TZDateTime.now(tz.local),
+      weekday: weekday,
+      hour: hour,
+      minute: minute,
     );
-    while (candidate.weekday != weekday || !candidate.isAfter(now)) {
-      candidate = tz.TZDateTime(
-        tz.local,
-        candidate.year,
-        candidate.month,
-        candidate.day + 1,
-        hour,
-        minute,
-      );
-    }
-    return candidate;
   }
 
-  tz.TZDateTime _addCalendarDays(tz.TZDateTime value, int days) {
-    return tz.TZDateTime(
-      tz.local,
-      value.year,
-      value.month,
-      value.day + days,
-      value.hour,
-      value.minute,
-    );
-  }
+  tz.TZDateTime _addCalendarDays(tz.TZDateTime value, int days) =>
+      addReminderCalendarDays(value, days);
 
   void _handleResponse(NotificationResponse response) {
     final event = _eventFromResponse(response);

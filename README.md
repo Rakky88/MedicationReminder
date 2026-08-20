@@ -2,7 +2,7 @@
 
 Een privacyvriendelijke Flutter-app voor eenvoudige, ADHD-vriendelijke medicatieherinneringen. De app bewaart medicijnen, schema's en innamegeschiedenis lokaal op het apparaat.
 
-## Huidige status — V0.02.04
+## Huidige status — V0.02.05
 
 De ondertekende Android-releasebuild werkt. De meest recente geverifieerde APK
 staat na een build in:
@@ -12,7 +12,7 @@ staat na een build in:
 Geverifieerd met Flutter 3.44.9 en Dart 3.12.2:
 
 - `flutter analyze`: geen issues
-- `flutter test`: 154 tests geslaagd
+- `flutter test`: 172 tests geslaagd
 - `flutter build apk --release`: geslaagd en met de vaste releasekey ondertekend
 
 De vaste openbare Android-downloadlink is:
@@ -38,12 +38,19 @@ in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
 - Notificatieacties voor **10 min uitstellen** (altijd links) en **App openen**
   (altijd rechts), met wisselende accentkleur. Een inname kan alleen bewust in de app worden
   geregistreerd; na openen staat daarvoor direct een opvallende snelkaart klaar.
-- Iedere melding gebruikt uitsluitend de gekozen app-taal (Nederlands of Engels).
-- Op Android volgt bij geen reactie na vijf minuten een nieuwe melding. Met de
-  miauwschuif ingeschakeld blijft de keten na drie onbeantwoorde meldingen iedere
-  vijf minuten terugkomen. Snoozen heeft een aparte teller; vanaf de derde snooze
-  hervat de escalatie dan na vijf minuten. Innemen of overslaan in de app stopt
-  alleen de bijbehorende dosisketen.
+- Iedere melding gebruikt uitsluitend de gekozen app-taal (Engels, Nederlands,
+  Duits, Frans of Spaans).
+- Android plant ieder medicatiemoment exact op de lokale kalendertijd van de
+  telefoon, ook over zomer- en wintertijd. Het eerste moment gebruikt een echt
+  alarm met diergeluid of het standaard telefoonalarm. Alleen wanneer bij die
+  medicatie **Notifications only** aanstaat, is ook het eerste moment een gewone
+  notificatie.
+- Iedere druk op **Snooze 10 min** plant opnieuw exact tien minuten vanaf het
+  drukmoment en gebruikt daarna weer het gekozen alarmtype. Bij negeren volgen
+  standaard drie gewone notificaties, telkens na vijf minuten. Alleen wanneer
+  **Keep repeating reminders until I respond** bewust is ingeschakeld, blijft
+  die notificatieketen iedere vijf minuten doorgaan. **Taken** en **Not taken**
+  stoppen de volledige sessie, inclusief basisalarm, snooze en vervolgmeldingen.
 - Bij openen na een alarm staan twee duidelijk verschillende keuzes klaar:
   groen **Ingenomen** en rood **Inname gemist**. Voor gemist volgt nog een
   uitleg en bevestiging. Na afhandeling verdwijnen innemen, gemist en snooze
@@ -82,9 +89,11 @@ in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
   afzonderlijk geschudde verzameling: alle twintig varianten komen langs voordat
   een geluid opnieuw mag worden gekozen. Ook Android-meldingen kunnen willekeurig
   kiezen uit twintig miauwen, blaffen of kukeleku-geluiden.
-- Het eerste geplande Android-alarm gebruikt het alarmvolume met het gekozen
-  diergeluid of het standaard alarmgeluid. Vervolg- en snoozemeldingen gebruiken
-  het notificatievolume; diergeluiden in de geopende app gebruiken mediavolume.
+- Het eerste geplande Android-alarm en iedere snooze gebruiken het alarmvolume
+  met het gekozen diergeluid of het standaard alarmgeluid. Genegeerde
+  vervolgmeldingen gebruiken het notificatievolume en het diergeluid of het
+  standaard notificatiegeluid. Diergeluiden bij appstart, bij een tik op het dier
+  en na **Taken** spelen eenmalig via het mediavolume.
 - Elk dier groeit na 14 succesvolle medicatiedagen naar de jonge fase en na 60
   succesvolle medicatiedagen naar de volwassen fase. Meerdere geldige
   innames op dezelfde kalenderdag leveren samen maximaal één groeidag op. De
@@ -162,26 +171,16 @@ in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
   gewone items voor 850, 650, 1100 en 700 happy points in de shop. Alleen
   code-items blijven buiten de gewone winkelroute.
 
-## Informatie, contact en Ko-fi
+## Informatie en Ko-fi
 
-Via het informatie-icoon staat in de app: **Gemaakt door Rick Groot · 2026**.
-Contact verloopt volledig via een formulier in de app; er wordt geen externe
-mailapp meer geopend en het doeladres staat niet in de APK of broncode. In
-`medication_reminder_app/relay/cloudflare-worker` staat nu de beveiligde
-HTTPS-relay met serversecrets, strikte validatie, honeypot, rate limiting en
-bescherming tegen dubbele verzending. Voor de eerste online koppeling zijn nog
-een geautoriseerd Cloudflare-account en een Resend-API-sleutel nodig. Een gratis
-privetest kan via het testadres van Resend uitsluitend naar het e-mailadres van
-het eigen Resend-account sturen. Voor publicatie hoort een eigen afzenderdomein
-te worden geverifieerd; de gratis providerlimieten zijn ruim voldoende, maar een
-nog niet bestaand domein kan jaarlijkse registratiekosten hebben. Daarna wordt de Worker-URL tijdens de build
-ingesteld met `--dart-define=CONTACT_FORM_ENDPOINT=https://...`. De huidige
-testbuild meldt daarom eerlijk dat verzenden nog niet gekoppeld is.
+Een tik op het logo op het hoofdscherm opent **Over deze app**, met de
+gecentreerde appkaart **Gemaakt door Rick Groot · 2026**. Het voormalige
+contactgedeelte en de losse informatieknop zijn verwijderd.
 
 **Instellingen** en **Over deze app** zijn samengevoegd tot één informatiescherm.
-Daar staat het codeveld tussen Contact en de Ko-fi-knop. De app toont geen hints
-naar actieve codes. De ingebouwde Doctor-set geeft na een geldige invoer een fez,
-strikje, tweed-outfit en TARDIS-speeltje rechtstreeks in de garderobe; deze
+Daar staat het codeveld boven de Ko-fi-knop. De app toont geen hints
+naar actieve codes. De verborgen ingebouwde set geeft na een geldige invoer een
+Fezz, rode strik, tweed-outfit en blauwe doos rechtstreeks in de garderobe; deze
 items verschijnen nooit in de shop. Een latere beveiligde codeserver kan via
 `--dart-define=SPECIAL_CODE_ENDPOINT=https://...` aanvullende eenmalige
 campagnecodes leveren.

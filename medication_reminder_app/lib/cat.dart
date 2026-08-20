@@ -70,7 +70,7 @@ class CatProfile {
     this.resolvedMissDoseKeys = const <String>{},
     this.purrEnabled = true,
     this.meowEnabled = true,
-    this.persistentMeowEnabled = true,
+    this.persistentMeowEnabled = false,
     this.dragonMode = false,
     this.lastFedAt,
     this.happyPoints = 0,
@@ -262,7 +262,7 @@ class CatProfile {
       ),
       purrEnabled: json['purrEnabled'] as bool? ?? legacySoundEnabled,
       meowEnabled: json['meowEnabled'] as bool? ?? legacySoundEnabled,
-      persistentMeowEnabled: json['persistentMeowEnabled'] as bool? ?? true,
+      persistentMeowEnabled: json['persistentMeowEnabled'] as bool? ?? false,
       dragonMode: json['dragonMode'] as bool? ?? false,
       lastFedAt: DateTime.tryParse(
         json['lastFedAt'] as String? ?? '',

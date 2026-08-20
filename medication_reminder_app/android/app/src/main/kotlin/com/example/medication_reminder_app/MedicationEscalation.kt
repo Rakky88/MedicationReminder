@@ -9,8 +9,10 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.media.AudioAttributes
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import org.json.JSONArray
 import org.json.JSONObject
@@ -22,6 +24,9 @@ private const val PLAN_PREFIX = "plan:"
 private const val FIVE_MINUTES = 5 * 60 * 1000L
 private const val TEN_MINUTES = 10 * 60 * 1000L
 private const val BASE_CHANNEL = "medication_reminders_v1"
+// Notification-channel audio attributes cannot be changed after creation.
+// v2 prevents an update from inheriting an older notification-volume channel.
+private const val BASE_ALARM_CHANNEL = "medication_alarms_v2"
 private const val SOUND_VARIANT_COUNT = 20
 private val ACCENTS = listOf(
     0xff00897b.toInt(),
@@ -63,6 +68,7 @@ data class EscalationPlan(
     val openLabel: String,
     val snoozeLabel: String,
     val soundEnabled: Boolean,
+    val notificationsOnly: Boolean,
     val persistentMeowEnabled: Boolean,
     val catName: String?,
     val speciesCode: String,
@@ -71,10 +77,12 @@ data class EscalationPlan(
     val accentedImagePaths: List<String>,
     val channelName: String,
     val catChannelName: String,
+    val alarmChannelName: String,
     var started: Boolean = false,
     var noResponseCount: Int = 0,
     var snoozeCount: Int = 0,
     var snoozeWake: Boolean = false,
+    var finished: Boolean = false,
     var lastSoundIndex: Int = -1,
     var lastThemeIndex: Int = -1,
     var lastMessageIndex: Int = -1,
@@ -92,6 +100,7 @@ data class EscalationPlan(
         put("openLabel", openLabel)
         put("snoozeLabel", snoozeLabel)
         put("soundEnabled", soundEnabled)
+        put("notificationsOnly", notificationsOnly)
         put("persistentMeowEnabled", persistentMeowEnabled)
         put("catName", catName)
         put("speciesCode", speciesCode)
@@ -100,10 +109,12 @@ data class EscalationPlan(
         put("accentedImagePaths", JSONArray(accentedImagePaths))
         put("channelName", channelName)
         put("catChannelName", catChannelName)
+        put("alarmChannelName", alarmChannelName)
         put("started", started)
         put("noResponseCount", noResponseCount)
         put("snoozeCount", snoozeCount)
         put("snoozeWake", snoozeWake)
+        put("finished", finished)
         put("lastSoundIndex", lastSoundIndex)
         put("lastThemeIndex", lastThemeIndex)
         put("lastMessageIndex", lastMessageIndex)
@@ -132,7 +143,8 @@ data class EscalationPlan(
                 openLabel = json.optString("openLabel"),
                 snoozeLabel = json.optString("snoozeLabel"),
                 soundEnabled = json.optBoolean("soundEnabled"),
-                persistentMeowEnabled = json.optBoolean("persistentMeowEnabled", true),
+                notificationsOnly = json.optBoolean("notificationsOnly"),
+                persistentMeowEnabled = json.optBoolean("persistentMeowEnabled", false),
                 catName = json.optString("catName")
                     .takeUnless { it.isBlank() || it == "null" },
                 speciesCode = json.optString("speciesCode", "cat"),
@@ -146,10 +158,15 @@ data class EscalationPlan(
                     "catChannelName",
                     "Medication reminders with cat",
                 ),
+                alarmChannelName = json.optString(
+                    "alarmChannelName",
+                    "Medication alarms",
+                ),
                 started = json.optBoolean("started"),
                 noResponseCount = json.optInt("noResponseCount"),
                 snoozeCount = json.optInt("snoozeCount"),
                 snoozeWake = json.optBoolean("snoozeWake"),
+                finished = json.optBoolean("finished"),
                 lastSoundIndex = json.optInt("lastSoundIndex", -1),
                 lastThemeIndex = json.optInt("lastThemeIndex", -1),
                 lastMessageIndex = json.optInt("lastMessageIndex", -1),
@@ -163,24 +180,64 @@ object EscalationStore {
         context: Context,
         incoming: List<JSONObject>,
         activeMedicationIds: Set<Int>,
-    ) {
+        resolvedDoseKeys: Set<String>,
+    ): Boolean {
         val preferences = context.getSharedPreferences(STORE_NAME, Context.MODE_PRIVATE)
         val incomingTokens = incoming.map { it.getString("token") }.toSet()
+        val now = System.currentTimeMillis()
         allPlans(context).forEach { existing ->
-            val keepActive = existing.started && existing.medicationId in activeMedicationIds
-            if (!keepActive && existing.token !in incomingTokens) {
+            val keepActive =
+                existing.started &&
+                !existing.finished &&
+                existing.medicationId in activeMedicationIds
+            val keepPersistent =
+                existing.persistentMeowEnabled &&
+                !existing.finished &&
+                existing.baseAtMillis <= now &&
+                existing.medicationId in activeMedicationIds
+            val keepCurrent =
+                existing.medicationId in activeMedicationIds &&
+                existing.baseAtMillis <= now &&
+                existing.baseAtMillis >= now - 24 * 60 * 60 * 1000L
+            if (
+                existing.token in resolvedDoseKeys ||
+                (!keepActive && !keepPersistent && !keepCurrent &&
+                    existing.token !in incomingTokens)
+            ) {
                 cancel(context, existing)
                 preferences.edit().remove(PLAN_PREFIX + existing.token).apply()
             }
         }
+        var everyAlarmScheduled = true
         incoming.forEach { json ->
             val incomingPlan = EscalationPlan.fromJson(json)
             val existing = load(context, incomingPlan.token)
-            if (existing?.started == true) return@forEach
+            val existingIsCurrent =
+                existing != null &&
+                existing.baseAtMillis <= now &&
+                existing.baseAtMillis >= now - 24 * 60 * 60 * 1000L
+            if (existing?.started == true || existingIsCurrent) {
+                // Opening the app after Android killed or force-stopped its
+                // process must restore the current follow-up/snooze alarm.
+                // Reusing the same PendingIntent replaces any alarm that is
+                // still registered, while preserving all session counters.
+                if (existing != null && !existing.finished) {
+                    everyAlarmScheduled =
+                        schedule(
+                            context,
+                            existing,
+                            maxOf(existing.nextAtMillis, now + 10_000L),
+                        ) && everyAlarmScheduled
+                }
+                return@forEach
+            }
             save(context, incomingPlan)
-            schedule(context, incomingPlan, incomingPlan.nextAtMillis)
-            scheduleBoundary(context, incomingPlan)
+            everyAlarmScheduled =
+                schedule(context, incomingPlan, incomingPlan.nextAtMillis) &&
+                scheduleBoundary(context, incomingPlan) &&
+                everyAlarmScheduled
         }
+        return everyAlarmScheduled
     }
 
     fun snooze(context: Context, token: String): Int {
@@ -188,15 +245,14 @@ object EscalationStore {
         plan.started = true
         plan.snoozeCount += 1
         plan.noResponseCount = 0
-        plan.snoozeWake = !plan.persistentMeowEnabled || plan.snoozeCount < 3
+        plan.snoozeWake = true
+        plan.finished = false
         dismiss(context, plan)
-        val delay = if (plan.persistentMeowEnabled && plan.snoozeCount >= 3) {
-            FIVE_MINUTES
+        return if (schedule(context, plan, System.currentTimeMillis() + TEN_MINUTES)) {
+            plan.snoozeCount
         } else {
-            TEN_MINUTES
+            -1
         }
-        schedule(context, plan, System.currentTimeMillis() + delay)
-        return plan.snoozeCount
     }
 
     fun resolveMedication(context: Context, medicationId: Int) {
@@ -224,7 +280,7 @@ object EscalationStore {
         plans.filter { it.baseAtMillis <= now }.maxByOrNull { it.baseAtMillis }?.let { latest ->
             expireBefore(context, latest.baseAtMillis, latest.token)
         }
-        allPlans(context).forEach { plan ->
+        allPlans(context).filterNot { it.finished }.forEach { plan ->
             schedule(context, plan, maxOf(plan.nextAtMillis, now + 10_000L))
             scheduleBoundary(context, plan)
         }
@@ -233,7 +289,13 @@ object EscalationStore {
     fun expireBefore(context: Context, boundaryMillis: Long, currentToken: String) {
         val preferences = context.getSharedPreferences(STORE_NAME, Context.MODE_PRIVATE)
         allPlans(context)
-            .filter { it.token != currentToken && it.baseAtMillis < boundaryMillis }
+            .filter { plan ->
+                plan.token != currentToken &&
+                    plan.baseAtMillis < boundaryMillis &&
+                    !(plan.persistentMeowEnabled &&
+                        !plan.finished &&
+                        plan.baseAtMillis <= System.currentTimeMillis())
+            }
             .forEach { plan ->
                 cancel(context, plan)
                 dismiss(context, plan)
@@ -247,44 +309,61 @@ object EscalationStore {
         return runCatching { EscalationPlan.fromJson(JSONObject(value)) }.getOrNull()
     }
 
-    fun schedule(context: Context, plan: EscalationPlan, atMillis: Long) {
+    fun schedule(context: Context, plan: EscalationPlan, atMillis: Long): Boolean {
         plan.nextAtMillis = atMillis
+        plan.finished = false
         save(context, plan)
         val manager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val operation = alarmIntent(context, plan.token)
-        scheduleAlarm(manager, atMillis, operation)
+        return scheduleAlarm(manager, atMillis, operation)
     }
 
-    private fun scheduleBoundary(context: Context, plan: EscalationPlan) {
-        if (plan.baseAtMillis <= System.currentTimeMillis()) return
+    private fun scheduleBoundary(context: Context, plan: EscalationPlan): Boolean {
+        if (plan.baseAtMillis <= System.currentTimeMillis()) return true
         val manager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val operation = boundaryIntent(context, plan.token)
-        scheduleAlarm(manager, plan.baseAtMillis, operation)
+        return scheduleAlarm(manager, plan.baseAtMillis, operation)
     }
 
     private fun scheduleAlarm(
         manager: AlarmManager,
         atMillis: Long,
         operation: PendingIntent,
-    ) {
-        try {
+    ): Boolean {
+        return try {
             val exactAllowed =
                 Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager.canScheduleExactAlarms()
             when {
-                exactAllowed && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
-                    manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis, operation)
-                exactAllowed -> manager.setExact(AlarmManager.RTC_WAKEUP, atMillis, operation)
+                !exactAllowed -> false
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
-                    manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis, operation)
-                else -> manager.set(AlarmManager.RTC_WAKEUP, atMillis, operation)
+                    manager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        atMillis,
+                        operation,
+                    ).let { true }
+                else -> manager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    atMillis,
+                    operation,
+                ).let { true }
             }
         } catch (_: IllegalStateException) {
             // Some vendors enforce a lower per-app alarm cap. The base dose
-            // notification remains scheduled; a missed follow-up must never
-            // be able to crash the app or its package-replaced receiver.
+            // notification remains scheduled; report the failed follow-up to
+            // Flutter so the UI never presents a partial plan as reliable.
+            false
         } catch (_: SecurityException) {
             // Exact-alarm access can change while the app is not running.
+            false
         }
+    }
+
+    fun finish(context: Context, plan: EscalationPlan) {
+        plan.finished = true
+        save(context, plan)
+        val manager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        manager.cancel(alarmIntent(context, plan.token))
+        manager.cancel(boundaryIntent(context, plan.token))
     }
 
     fun save(context: Context, plan: EscalationPlan) {
@@ -351,17 +430,25 @@ class MedicationEscalationReceiver : BroadcastReceiver() {
         val token = intent.getStringExtra(MainActivity.EXTRA_DOSE_KEY) ?: return
         val plan = EscalationStore.load(context, token) ?: return
         plan.started = true
-        if (plan.snoozeWake) {
+        val isSnoozeWake = plan.snoozeWake
+        if (isSnoozeWake) {
             plan.snoozeWake = false
         } else {
             plan.noResponseCount += 1
         }
-        showNotification(context, plan)
-        val reachedLimit = plan.noResponseCount >= 3 || plan.snoozeCount >= 3
+        showNotification(
+            context,
+            plan,
+            useAlarmAudio = isSnoozeWake && !plan.notificationsOnly,
+        )
+        val reachedLimit = plan.noResponseCount >= 3
         if (plan.persistentMeowEnabled || !reachedLimit) {
             EscalationStore.schedule(context, plan, System.currentTimeMillis() + FIVE_MINUTES)
         } else {
-            EscalationStore.save(context, plan)
+            // Keep the third notification visible and retain the plan so its
+            // Snooze action can still start a fresh ten-minute alarm. Marking
+            // it finished prevents boot/update receivers from adding a fourth.
+            EscalationStore.finish(context, plan)
         }
     }
 }
@@ -379,11 +466,19 @@ class MedicationEscalationBootReceiver : BroadcastReceiver() {
     }
 }
 
-private fun showNotification(context: Context, plan: EscalationPlan) {
+private fun showNotification(
+    context: Context,
+    plan: EscalationPlan,
+    useAlarmAudio: Boolean = false,
+) {
     val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     val soundNames = reminderSounds(plan.speciesCode)
-    val soundChannels = reminderSoundChannels(plan.speciesCode)
+    val soundChannels = if (useAlarmAudio) {
+        alarmSoundChannels(plan.speciesCode)
+    } else {
+        reminderSoundChannels(plan.speciesCode)
+    }
     val soundIndex = nextDifferentIndex(soundNames.size, plan.lastSoundIndex)
     plan.lastSoundIndex = soundIndex
     createChannels(
@@ -393,6 +488,7 @@ private fun showNotification(context: Context, plan: EscalationPlan) {
         soundIndex,
         soundNames,
         soundChannels,
+        useAlarmAudio,
     )
     val colorIndex = nextDifferentThemeIndex(ACCENTS.size, plan.lastThemeIndex)
     plan.lastThemeIndex = colorIndex
@@ -418,10 +514,16 @@ private fun showNotification(context: Context, plan: EscalationPlan) {
         },
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
-    val channel = if (plan.soundEnabled) soundChannels[soundIndex] else BASE_CHANNEL
+    val channel = if (plan.soundEnabled) {
+        soundChannels[soundIndex]
+    } else if (useAlarmAudio) {
+        BASE_ALARM_CHANNEL
+    } else {
+        BASE_CHANNEL
+    }
     val reachedRepeatLimit =
         plan.persistentMeowEnabled &&
-        (plan.noResponseCount >= 3 || plan.snoozeCount >= 3)
+        plan.noResponseCount >= 3
     val followUpBody = if (reachedRepeatLimit) {
         plan.escalatedBody
     } else {
@@ -459,7 +561,10 @@ private fun showNotification(context: Context, plan: EscalationPlan) {
         .setColor(ACCENTS[colorIndex])
         .setColorized(true)
         .setPriority(NotificationCompat.PRIORITY_HIGH)
-        .setCategory(NotificationCompat.CATEGORY_REMINDER)
+        .setCategory(
+            if (useAlarmAudio) NotificationCompat.CATEGORY_ALARM
+            else NotificationCompat.CATEGORY_REMINDER,
+        )
         .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
         .setAutoCancel(true)
         .setContentIntent(openPendingIntent)
@@ -489,15 +594,30 @@ private fun createChannels(
     soundIndex: Int,
     soundNames: List<String>,
     soundChannels: List<String>,
+    useAlarmAudio: Boolean,
 ) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-    if (manager.getNotificationChannel(BASE_CHANNEL) == null) {
+    val baseChannel = if (useAlarmAudio) BASE_ALARM_CHANNEL else BASE_CHANNEL
+    if (manager.getNotificationChannel(baseChannel) == null) {
+        val channel = NotificationChannel(
+            baseChannel,
+            if (useAlarmAudio) plan.alarmChannelName else plan.channelName,
+            NotificationManager.IMPORTANCE_HIGH,
+        )
+        val attributes = AudioAttributes.Builder()
+            .setUsage(
+                if (useAlarmAudio) AudioAttributes.USAGE_ALARM
+                else AudioAttributes.USAGE_NOTIFICATION,
+            )
+            .build()
+        val defaultSound = if (useAlarmAudio) {
+            Settings.System.DEFAULT_ALARM_ALERT_URI
+        } else {
+            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        }
+        channel.setSound(defaultSound, attributes)
         manager.createNotificationChannel(
-            NotificationChannel(
-                BASE_CHANNEL,
-                plan.channelName,
-                NotificationManager.IMPORTANCE_HIGH,
-            ),
+            channel,
         )
     }
     val channelId = soundChannels[soundIndex]
@@ -506,12 +626,15 @@ private fun createChannels(
             "android.resource://${context.packageName}/raw/${soundNames[soundIndex]}",
         )
         val attributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setUsage(
+                if (useAlarmAudio) AudioAttributes.USAGE_ALARM
+                else AudioAttributes.USAGE_NOTIFICATION,
+            )
             .build()
         manager.createNotificationChannel(
             NotificationChannel(
                 channelId,
-                plan.catChannelName,
+                if (useAlarmAudio) plan.alarmChannelName else plan.catChannelName,
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply { setSound(soundUri, attributes) },
         )
@@ -540,6 +663,17 @@ private fun reminderSoundChannels(speciesCode: String): List<String> {
     val version = if (species == "cat") "v3" else "v2"
     return List(SOUND_VARIANT_COUNT) { index ->
         "medication_${species}_voice_${(index + 1).toString().padStart(2, '0')}_${version}"
+    }
+}
+
+private fun alarmSoundChannels(speciesCode: String): List<String> {
+    val species = when (speciesCode) {
+        "dog" -> "dog"
+        "chicken" -> "chicken"
+        else -> "cat"
+    }
+    return List(SOUND_VARIANT_COUNT) { index ->
+        "medication_${species}_alarm_voice_${(index + 1).toString().padStart(2, '0')}_v2"
     }
 }
 

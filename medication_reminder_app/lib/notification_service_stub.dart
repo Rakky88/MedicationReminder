@@ -22,12 +22,16 @@ class NotificationService {
 
   Future<bool> requestPermissions() async => false;
 
+  Future<bool> hasRequiredPermissions() async => true;
+
   Future<void> syncReminders(
     List<Medication> medications,
     NotificationCopy copy, {
     NotificationMascot? mascot,
     Set<String> resolvedDoseKeys = const <String>{},
   }) async {}
+
+  Future<void> clearReminders() async {}
 
   Future<void> snoozeMedication(
     Medication medication,
