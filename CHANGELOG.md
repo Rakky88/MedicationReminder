@@ -1,5 +1,23 @@
 # Versiegeschiedenis
 
+## V0.02.06 — 2026-08-22
+
+- Controleer alle 120 diergeluiden afzonderlijk en vervang 48 varianten met
+  opvallend achtergrondgeluid door schonere geluiden van hetzelfde diersoort:
+  vijftien hondenhijgen, twintig kippentokjes en dertien kukeleku's.
+- Voeg een reproduceerbare geluidsaudit toe die ieder bestand decodeert, de
+  stilte-/geluidsverhouding meet en bewaakt dat elke verzameling twintig unieke,
+  geldige fragmenten houdt. Werk de Android-geluidskanalen bij waar de
+  kukeleku-bestanden zijn gewijzigd.
+- Houd een onbeantwoorde dosis en de bijbehorende streak na middernacht open tot
+  hetzelfde medicijnalarm op dezelfde tijd opnieuw afgaat. Een ander alarm sluit
+  die dosis niet langer ten onrechte af.
+- Herstel bij het laden recente, voortijdige automatische missers en
+  streakbreuken uit V0.02.05. Een expliciet door de gebruiker gekozen
+  **Inname gemist** blijft vanzelfsprekend ongewijzigd.
+- Breid de regressieset uit naar 178 geslaagde tests, inclusief late innames,
+  het herhalen van hetzelfde alarm en alle 120 unieke geluidsbestanden.
+
 ## V0.02.04 — 2026-08-19
 
 - Toon voor een ingevoerde code die in de huidige app geen actie uitvoert de

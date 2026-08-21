@@ -98,17 +98,104 @@ void main() {
     expect(state.dayResults, isNot(contains('2026-08-11')));
   });
 
-  test('an unresolved dose becomes failed after its calendar day', () async {
+  test('an unresolved dose stays pending after midnight', () async {
     final day = DateTime(2026, 8, 15);
+    final medication = _medication(
+      1,
+      day,
+      '08:00',
+      weekdays: const <int>[DateTime.saturday, DateTime.sunday],
+    );
     final state = await MedicationStreakRepository.instance.synchronize(
-      medications: <Medication>[_medication(1, day, '08:00')],
+      medications: <Medication>[medication],
       logs: const <DoseLog>[],
       at: DateTime(2026, 8, 16, 1),
     );
 
     expect(state.current, 0);
+    expect(state.dayResults, isNot(contains('2026-08-15')));
+  });
+
+  test(
+    'a late Taken before the same next alarm preserves the streak',
+    () async {
+      final day = DateTime(2026, 8, 15);
+      final medication = _medication(
+        1,
+        day,
+        '08:00',
+        weekdays: const <int>[DateTime.saturday, DateTime.sunday],
+      );
+      final state = await MedicationStreakRepository.instance.synchronize(
+        medications: <Medication>[medication],
+        logs: <DoseLog>[
+          DoseLog(
+            id: 'late-taken',
+            medicationId: 1,
+            medicationName: 'Medication 1',
+            dosage: '1',
+            recordedAt: DateTime(2026, 8, 16, 1),
+            status: DoseStatus.taken,
+            doseKey: '1:2026-08-15:08:00',
+          ),
+        ],
+        at: DateTime(2026, 8, 16, 1),
+      );
+
+      expect(state.current, 1);
+      expect(state.dayResults['2026-08-15'], MedicationStreakDayResult.success);
+    },
+  );
+
+  test('an unresolved dose fails when the same alarm repeats', () async {
+    final day = DateTime(2026, 8, 15);
+    final medication = _medication(
+      1,
+      day,
+      '08:00',
+      weekdays: const <int>[DateTime.saturday, DateTime.sunday],
+    );
+    final state = await MedicationStreakRepository.instance.synchronize(
+      medications: <Medication>[medication],
+      logs: const <DoseLog>[],
+      at: DateTime(2026, 8, 16, 8),
+    );
+
+    expect(state.current, 0);
     expect(state.dayResults['2026-08-15'], MedicationStreakDayResult.failed);
   });
+
+  test(
+    'a premature stored midnight failure is repaired automatically',
+    () async {
+      final day = DateTime(2026, 8, 15);
+      final medication = _medication(
+        1,
+        day,
+        '08:00',
+        weekdays: const <int>[DateTime.saturday, DateTime.sunday],
+      );
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        MedicationStreakRepository.preferencesKey: jsonEncode(
+          const MedicationStreakState(
+            dayResults: <String, MedicationStreakDayResult>{
+              '2026-08-14': MedicationStreakDayResult.success,
+              '2026-08-15': MedicationStreakDayResult.failed,
+            },
+          ).toJson(),
+        ),
+      });
+
+      final state = await MedicationStreakRepository.instance.synchronize(
+        medications: <Medication>[medication],
+        logs: const <DoseLog>[],
+        at: DateTime(2026, 8, 16, 1),
+      );
+
+      expect(state.dayResults, isNot(contains('2026-08-15')));
+      expect(state.current, 1);
+    },
+  );
 
   test('invalidating a successful day makes undo recalculate it', () async {
     final day = DateTime(2026, 8, 15);

@@ -31,7 +31,10 @@ abstract final class PetSoundCatalog {
   );
 
   static List<String> reminderChannelIds(PetSpecies species) {
-    final channelVersion = species == PetSpecies.cat ? 'v3' : 'v2';
+    final channelVersion = switch (species) {
+      PetSpecies.cat || PetSpecies.chicken => 'v3',
+      PetSpecies.dog => 'v2',
+    };
     return List<String>.generate(
       variantCount,
       (index) =>
@@ -42,14 +45,15 @@ abstract final class PetSoundCatalog {
 
   /// Separate immutable Android channels for the first, alarm-class reminder.
   /// Follow-up notifications keep using [reminderChannelIds].
-  static List<String> alarmChannelIds(
-    PetSpecies species,
-  ) => List<String>.generate(
-    variantCount,
-    (index) =>
-        'medication_${species.name}_alarm_voice_${(index + 1).toString().padLeft(2, '0')}_v2',
-    growable: false,
-  );
+  static List<String> alarmChannelIds(PetSpecies species) {
+    final channelVersion = species == PetSpecies.chicken ? 'v3' : 'v2';
+    return List<String>.generate(
+      variantCount,
+      (index) =>
+          'medication_${species.name}_alarm_voice_${(index + 1).toString().padLeft(2, '0')}_$channelVersion',
+      growable: false,
+    );
+  }
 
   static String stem(PetSpecies species, PetSoundMood mood) =>
       switch ((species, mood)) {

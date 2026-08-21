@@ -660,7 +660,7 @@ private fun reminderSoundChannels(speciesCode: String): List<String> {
         "chicken" -> "chicken"
         else -> "cat"
     }
-    val version = if (species == "cat") "v3" else "v2"
+    val version = if (species == "cat" || species == "chicken") "v3" else "v2"
     return List(SOUND_VARIANT_COUNT) { index ->
         "medication_${species}_voice_${(index + 1).toString().padStart(2, '0')}_${version}"
     }
@@ -672,8 +672,9 @@ private fun alarmSoundChannels(speciesCode: String): List<String> {
         "chicken" -> "chicken"
         else -> "cat"
     }
+    val version = if (species == "chicken") "v3" else "v2"
     return List(SOUND_VARIANT_COUNT) { index ->
-        "medication_${species}_alarm_voice_${(index + 1).toString().padStart(2, '0')}_v2"
+        "medication_${species}_alarm_voice_${(index + 1).toString().padStart(2, '0')}_${version}"
     }
 }
 

@@ -218,10 +218,6 @@ class MedicationRepository {
     final now = (at ?? DateTime.now()).toLocal();
     final prefs = await SharedPreferences.getInstance();
     final logs = await _getDoseLogs(includeHidden: true);
-    final loggedKeys = logs
-        .map((log) => log.doseKey)
-        .whereType<String>()
-        .toSet();
     final occurrences = <({Medication medication, MedicationDoseSlot slot})>[];
 
     for (final medication in medications.where((item) => item.enabled)) {
@@ -239,10 +235,52 @@ class MedicationRepository {
     occurrences.sort(
       (left, right) => left.slot.scheduledAt.compareTo(right.slot.scheduledAt),
     );
-    final newestAlarmTime = occurrences.last.slot.scheduledAt;
-    var changed = false;
+    final newestByAlarm = <String, DateTime>{};
     for (final occurrence in occurrences) {
-      if (!occurrence.slot.scheduledAt.isBefore(newestAlarmTime) ||
+      final alarm = _alarmSeriesKey(occurrence.medication, occurrence.slot);
+      final newest = newestByAlarm[alarm];
+      if (newest == null || occurrence.slot.scheduledAt.isAfter(newest)) {
+        newestByAlarm[alarm] = occurrence.slot.scheduledAt;
+      }
+    }
+    final occurrenceKeys = occurrences.map((item) => item.slot.key).toSet();
+    final expiredKeys = <String>{
+      for (final occurrence in occurrences)
+        if (occurrence.slot.scheduledAt.isBefore(
+          newestByAlarm[_alarmSeriesKey(
+            occurrence.medication,
+            occurrence.slot,
+          )]!,
+        ))
+          occurrence.slot.key,
+    };
+    var changed = false;
+    // V0.02.05 could prematurely create an automatic miss when a different
+    // alarm rang later that day. Repair those derived rows while the original
+    // dose is still actionable; explicit user-entered misses are untouched.
+    final staleAutomaticKeys = <String>{
+      for (final log in logs)
+        if (log.doseKey != null &&
+            log.id == 'auto-missed-${log.doseKey}' &&
+            occurrenceKeys.contains(log.doseKey) &&
+            !expiredKeys.contains(log.doseKey))
+          log.doseKey!,
+    };
+    if (staleAutomaticKeys.isNotEmpty) {
+      logs.removeWhere(
+        (log) =>
+            log.doseKey != null &&
+            log.id == 'auto-missed-${log.doseKey}' &&
+            staleAutomaticKeys.contains(log.doseKey),
+      );
+      changed = true;
+    }
+    final loggedKeys = logs
+        .map((log) => log.doseKey)
+        .whereType<String>()
+        .toSet();
+    for (final occurrence in occurrences) {
+      if (!expiredKeys.contains(occurrence.slot.key) ||
           loggedKeys.contains(occurrence.slot.key)) {
         continue;
       }
@@ -266,6 +304,12 @@ class MedicationRepository {
       await _saveLogs(prefs, logs);
     }
     return logs;
+  }
+
+  String _alarmSeriesKey(Medication medication, MedicationDoseSlot slot) {
+    final hour = slot.scheduledAt.hour.toString().padLeft(2, '0');
+    final minute = slot.scheduledAt.minute.toString().padLeft(2, '0');
+    return '${medication.id}:$hour:$minute';
   }
 
   Future<void> deleteDoseLog(String id) =>

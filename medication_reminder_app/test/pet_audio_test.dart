@@ -56,15 +56,36 @@ void main() {
         isEmpty,
       );
       for (final name in names) {
+        final asset = File(
+          'assets/sounds/$name.${PetSoundCatalog.extension(species)}',
+        );
+        final android = File(
+          'android/app/src/main/res/raw/'
+          '$name.${PetSoundCatalog.extension(species)}',
+        );
+        expect(android.existsSync(), isTrue, reason: '$species: $name');
         expect(
-          File(
-            'android/app/src/main/res/raw/$name.${PetSoundCatalog.extension(species)}',
-          ).existsSync(),
-          isTrue,
-          reason: '$species: $name',
+          android.readAsBytesSync(),
+          asset.readAsBytesSync(),
+          reason: 'Android must package the same bytes for $species: $name',
         );
       }
     }
+  });
+
+  test('changed chicken voices use fresh immutable Android channels', () {
+    expect(
+      PetSoundCatalog.reminderChannelIds(PetSpecies.chicken),
+      everyElement(endsWith('_v3')),
+    );
+    expect(
+      PetSoundCatalog.alarmChannelIds(PetSpecies.chicken),
+      everyElement(endsWith('_v3')),
+    );
+    expect(
+      PetSoundCatalog.reminderChannelIds(PetSpecies.dog),
+      everyElement(endsWith('_v2')),
+    );
   });
 
   test('native Android escalation uses the same twenty-variant stems', () {

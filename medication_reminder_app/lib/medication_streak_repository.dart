@@ -60,6 +60,7 @@ class MedicationStreakRepository {
     final todayKey = medicationStreakDayKey(today);
     final existing = await _getState();
     final results = <String, MedicationStreakDayResult>{...existing.dayResults};
+    final repairStart = DateTime(today.year, today.month, today.day - 8);
 
     // Today's schedule may still change. Explicit invalidation is used by Undo.
     results.remove(todayKey);
@@ -68,6 +69,14 @@ class MedicationStreakRepository {
     }
 
     final candidates = <String>{todayKey, ...invalidatedDays};
+    candidates.addAll(
+      results.keys.where((key) {
+        final day = parseMedicationStreakDay(key);
+        return day != null &&
+            !day.isBefore(repairStart) &&
+            results[key] == MedicationStreakDayResult.failed;
+      }),
+    );
     for (final log in logs) {
       if (log.doseKey == null) continue;
       candidates.add(medicationStreakDayKey(log.scheduledAt));
@@ -110,7 +119,11 @@ class MedicationStreakRepository {
           ..sort();
     for (final day in orderedCandidates) {
       final key = medicationStreakDayKey(day);
-      final mustRecalculate = key == todayKey || invalidatedDays.contains(key);
+      final mustRecalculate =
+          key == todayKey ||
+          invalidatedDays.contains(key) ||
+          (!day.isBefore(repairStart) &&
+              results[key] == MedicationStreakDayResult.failed);
       if (results.containsKey(key) && !mustRecalculate) continue;
       final outcome = _outcomeForDay(
         day: day,
@@ -150,9 +163,14 @@ class MedicationStreakRepository {
           medicationStreakDayKey(log.scheduledAt) ==
               medicationStreakDayKey(day);
     }).toList();
+    final expectedSlots =
+        <String, ({Medication medication, MedicationDoseSlot slot})>{
+          for (final medication in medications.where((item) => item.enabled))
+            for (final slot in medication.occurrencesBetween(day, end))
+              slot.key: (medication: medication, slot: slot),
+        };
     final expectedKeys = <String>{
-      for (final medication in medications.where((item) => item.enabled))
-        for (final slot in medication.occurrencesBetween(day, end)) slot.key,
+      ...expectedSlots.keys,
       for (final log in dayLogs) log.doseKey!,
     };
     if (expectedKeys.isEmpty) return null;
@@ -170,7 +188,38 @@ class MedicationStreakRepository {
     if (expectedKeys.every(takenKeys.contains)) {
       return MedicationStreakDayResult.success;
     }
-    if (!now.isBefore(nextDay)) return MedicationStreakDayResult.failed;
+    for (final entry in expectedSlots.entries) {
+      if (takenKeys.contains(entry.key)) continue;
+      final nextSameAlarm = _nextSameAlarm(
+        medication: entry.value.medication,
+        slot: entry.value.slot,
+      );
+      if (nextSameAlarm != null && !now.isBefore(nextSameAlarm)) {
+        return MedicationStreakDayResult.failed;
+      }
+    }
+    return null;
+  }
+
+  DateTime? _nextSameAlarm({
+    required Medication medication,
+    required MedicationDoseSlot slot,
+  }) {
+    final time =
+        '${slot.scheduledAt.hour.toString().padLeft(2, '0')}:'
+        '${slot.scheduledAt.minute.toString().padLeft(2, '0')}';
+    if (!medication.times.contains(time)) return null;
+    final searchStart = slot.scheduledAt.add(const Duration(minutes: 1));
+    final searchEnd = slot.scheduledAt.add(const Duration(days: 8));
+    for (final candidate in medication.occurrencesBetween(
+      searchStart,
+      searchEnd,
+    )) {
+      if (candidate.scheduledAt.hour == slot.scheduledAt.hour &&
+          candidate.scheduledAt.minute == slot.scheduledAt.minute) {
+        return candidate.scheduledAt;
+      }
+    }
     return null;
   }
 }

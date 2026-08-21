@@ -1,8 +1,21 @@
-# App-audit — V0.02.05
+# App-audit — V0.02.06
 
-Datum: 20 augustus 2026
+Datum: 22 augustus 2026
 Status: code-, alarm- en visuele regressie-audit afgerond; onderstaande
 verbeterideeën zijn **niet geïmplementeerd**.
+
+## In V0.02.06 gerepareerd en gecontroleerd
+
+- Alle 120 gebundelde diergeluiden zijn gedecodeerd, gemeten en per soort als
+  luistermontage beoordeeld. 48 rumoerige varianten zijn vervangen door schonere
+  echte diergeluiden van hetzelfde soort; iedere verzameling houdt twintig
+  unieke fragmenten.
+- Een geplande dosis blijft voortaan ook na middernacht onbeantwoord tot hetzelfde
+  medicijnalarm op dezelfde tijd opnieuw afgaat. Daardoor kan een geldige late
+  **Taken** de eerdere geplande dag en streak nog correct afronden.
+- Recent door V0.02.05 te vroeg opgeslagen automatische missers en
+  streakbreuken worden veilig herberekend. Handmatig gemarkeerde gemiste innames
+  worden niet gewijzigd.
 
 ## In V0.02.05 gerepareerd en gecontroleerd
 

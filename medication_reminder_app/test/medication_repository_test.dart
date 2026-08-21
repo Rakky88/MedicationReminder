@@ -204,14 +204,14 @@ void main() {
   );
 
   test(
-    'an earlier unanswered alarm becomes missed at the next alarm',
+    'a different alarm does not close an earlier unanswered alarm',
     () async {
       final medication = Medication(
         id: 7,
         name: 'Example',
         dosage: '1 tablet',
         times: const <String>['08:00', '13:00'],
-        weekdays: const <int>[DateTime.monday],
+        weekdays: const <int>[DateTime.monday, DateTime.tuesday],
         createdAt: DateTime(2026, 8, 9),
       );
 
@@ -220,12 +220,63 @@ void main() {
         at: DateTime(2026, 8, 10, 13, 1),
       );
 
+      expect(logs, isEmpty);
+    },
+  );
+
+  test(
+    'an unanswered alarm becomes missed when that same alarm repeats',
+    () async {
+      final medication = Medication(
+        id: 7,
+        name: 'Example',
+        dosage: '1 tablet',
+        times: const <String>['08:00', '13:00'],
+        weekdays: const <int>[DateTime.monday, DateTime.tuesday],
+        createdAt: DateTime(2026, 8, 9),
+      );
+
+      final logs = await MedicationRepository.instance.reconcileMissedDoses(
+        <Medication>[medication],
+        at: DateTime(2026, 8, 11, 8, 1),
+      );
+
       expect(logs, hasLength(1));
       expect(logs.single.doseKey, '7:2026-08-10:08:00');
       expect(logs.single.status, DoseStatus.skipped);
       expect(logs.any((log) => log.doseKey == '7:2026-08-10:13:00'), isFalse);
     },
   );
+
+  test('premature V0.02.05 automatic misses are repaired', () async {
+    final medication = Medication(
+      id: 7,
+      name: 'Example',
+      dosage: '1 tablet',
+      times: const <String>['08:00', '13:00'],
+      weekdays: const <int>[DateTime.monday, DateTime.tuesday],
+      createdAt: DateTime(2026, 8, 9),
+    );
+    final stale = DoseLog(
+      id: 'auto-missed-7:2026-08-10:08:00',
+      medicationId: 7,
+      medicationName: 'Example',
+      dosage: '1 tablet',
+      recordedAt: DateTime(2026, 8, 10, 8),
+      status: DoseStatus.skipped,
+      doseKey: '7:2026-08-10:08:00',
+    );
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'dose_logs_v1': jsonEncode(<Object?>[stale.toJson()]),
+    });
+
+    final logs = await MedicationRepository.instance.reconcileMissedDoses(
+      <Medication>[medication],
+      at: DateTime(2026, 8, 10, 13, 1),
+    );
+
+    expect(logs, isEmpty);
+  });
 
   test('simultaneous newest alarms both remain unanswered', () async {
     final first = Medication(

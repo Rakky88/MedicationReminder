@@ -2,7 +2,7 @@
 
 Een privacyvriendelijke Flutter-app voor eenvoudige, ADHD-vriendelijke medicatieherinneringen. De app bewaart medicijnen, schema's en innamegeschiedenis lokaal op het apparaat.
 
-## Huidige status — V0.02.05
+## Huidige status — V0.02.06
 
 De ondertekende Android-releasebuild werkt. De meest recente geverifieerde APK
 staat na een build in:
@@ -12,7 +12,7 @@ staat na een build in:
 Geverifieerd met Flutter 3.44.9 en Dart 3.12.2:
 
 - `flutter analyze`: geen issues
-- `flutter test`: 172 tests geslaagd
+- `flutter test`: 178 tests geslaagd
 - `flutter build apk --release`: geslaagd en met de vaste releasekey ondertekend
 
 De vaste openbare Android-downloadlink is:
@@ -55,8 +55,9 @@ in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
   groen **Ingenomen** en rood **Inname gemist**. Voor gemist volgt nog een
   uitleg en bevestiging. Na afhandeling verdwijnen innemen, gemist en snooze
   tot het volgende alarm.
-- Een onbeantwoord alarm wordt automatisch als gemist geregistreerd zodra een
-  volgend alarm afgaat. De oude snooze- en vijfminutenketen wordt dan beëindigd.
+- Een onbeantwoord alarm blijft open totdat hetzelfde medicijnalarm op dezelfde
+  tijd opnieuw afgaat. Pas dan wordt de vorige dosis automatisch als gemist
+  geregistreerd en wordt de oude snooze- en vijfminutenketen beëindigd.
 - Doses registreren als ingenomen of gemist
 - Bescherming tegen per ongeluk dubbel registreren
 - Undo na een registratie
@@ -85,7 +86,9 @@ in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
 - Een kat spint na een geregistreerde inname en miauwt rond medicatietijd; een
   hond hijgt of blaft en een kip tokkt of kraait op diezelfde momenten.
 - Ieder van die zes gedragstypen heeft twintig unieke, goed hoorbare fragmenten
-  uit echte CC0-/publiekedomein-opnamen. De app gebruikt per dier en stemming een
+  uit echte CC0-/publiekedomein-opnamen. Alle 120 fragmenten zijn technisch en
+  auditief gecontroleerd; varianten met opvallend achtergrondgeluid zijn door
+  schonere opnamen van hetzelfde diersoort vervangen. De app gebruikt per dier en stemming een
   afzonderlijk geschudde verzameling: alle twintig varianten komen langs voordat
   een geluid opnieuw mag worden gekozen. Ook Android-meldingen kunnen willekeurig
   kiezen uit twintig miauwen, blaffen of kukeleku-geluiden.
@@ -143,10 +146,12 @@ in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
   garderobe staan compact naast elkaar; de actuele dierpreview blijft in de
   garderobe tijdens het scrollen zichtbaar. Na de kipontgrendeling verschijnen
   ook een strohoed, eierbril, tuinbroek en maïsspeeltje, bruikbaar door alle dieren.
-- De medicatiestreak telt een kalenderdag alleen wanneer alle geplande innames
-  van die dag zijn afgevinkt. Eén gemiste inname zet de huidige streak op nul;
-  dagen zonder taken tellen niet mee en verbreken hem niet. De streak begint al
-  bij kitten, pup of ei en staat compact bij het huisdier.
+- De medicatiestreak telt een geplande dag wanneer alle innames zijn afgevinkt.
+  Een nog onbeantwoorde dosis blijft ook na middernacht open: **Taken** mag worden
+  gekozen tot hetzelfde medicijnalarm op dezelfde tijd opnieuw afgaat. Alleen
+  daarna telt die dosis als gemist en wordt de huidige streak nul. Dagen zonder
+  taken tellen niet mee en verbreken hem niet. De streak begint al bij kitten,
+  pup of ei en staat compact bij het huisdier.
 - Het tweede shoptabblad **Streak-items** toont permanent de gratis beloningen
   voor 40, 100, 150, 200, 250, 300, 365, 500, 750 en 1000 dagen. De beste ooit
   behaalde streak bepaalt blijvend welke items kunnen worden opgehaald. Bij 365

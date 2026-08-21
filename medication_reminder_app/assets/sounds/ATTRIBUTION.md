@@ -28,6 +28,10 @@ bundle in `.source_audio/`.
   https://freesound.org/people/pooky1/sounds/556913/
 - “Chicken clucking” by Breviceps:
   https://freesound.org/people/Breviceps/sounds/456803/
+- "Rooster Crowing_27112016 [Processed]" by cabled_mess:
+  https://freesound.org/people/cabled_mess/sounds/391313/
+- "chicken.wav" by JhennaSide:
+  https://freesound.org/people/JhennaSide/sounds/455905/
 
 ## Public-domain sources
 
@@ -38,3 +42,9 @@ bundle in `.source_audio/`.
 
 All hungry sound variants (meow, bark and crow) are also packaged as Android
 raw resources so medication notifications can use the adopted pet's voice.
+
+The maintenance scripts replace passages with a poor animal-to-background
+ratio, apply conservative noise reduction and verify that every generated file
+can be decoded. The clean rooster source above was already explicitly
+noise-reduced by its recorder. Source checksums are pinned in
+`tool/replace_noisy_pet_sounds.py`.
