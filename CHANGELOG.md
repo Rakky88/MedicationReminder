@@ -1,5 +1,20 @@
 # Versiegeschiedenis
 
+## V0.02.07 — 2026-08-22
+
+- Laat een tik op het huisdier het hongergeluid gebruiken zodra het dier
+  hongerpunten heeft. Alleen een volledig gevoed dier gebruikt bij aanraken het
+  vrolijke geluid; de afzonderlijke geluidsinstellingen blijven gerespecteerd.
+- Normaliseer alle twintig kattenspinsels naar een rustig maar duidelijk niveau
+  rond −20 LUFS. Het gemeten onderlinge verschil is maximaal 0,3 LU en de pieken
+  blijven begrensd, zodat geen variant plotseling veel harder klinkt.
+- Maak de tweepassige loudness-normalisatie reproduceerbaar in de bestaande
+  echte-kattengeluidgenerator en voeg een regressietest voor alle hongerfasen toe.
+- Sorteer de zichtbare taalkeuzes alfabetisch zonder de opgeslagen taalvoorkeur
+  te wijzigen. Voorkom daarnaast dat **Test notification** buiten de taalpopup
+  loopt op een scherm van 320 pixels breed en rond de release af met 180
+  geslaagde Flutter-tests en een foutloze analyse.
+
 ## V0.02.06 — 2026-08-22
 
 - Controleer alle 120 diergeluiden afzonderlijk en vervang 48 varianten met

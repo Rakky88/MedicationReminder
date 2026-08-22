@@ -1,8 +1,17 @@
-# App-audit — V0.02.06
+# App-audit — V0.02.07
 
 Datum: 22 augustus 2026
 Status: code-, alarm- en visuele regressie-audit afgerond; onderstaande
 verbeterideeën zijn **niet geïmplementeerd**.
+
+## In V0.02.07 gerepareerd en gecontroleerd
+
+- Bij aanraken gebruikt een hongerig huisdier voortaan het soortspecifieke
+  hongergeluid in plaats van het vrolijke geluid. Alle vier hongerstatussen zijn
+  via een regressietest afgedekt.
+- De twintig kattenspinsels zijn tweepassig perceptueel genormaliseerd rond
+  −20 LUFS. De eindmeting loopt van −20,0 tot −20,3 LUFS en houdt alle pieken op
+  of onder −1,5 dBTP.
 
 ## In V0.02.06 gerepareerd en gecontroleerd
 

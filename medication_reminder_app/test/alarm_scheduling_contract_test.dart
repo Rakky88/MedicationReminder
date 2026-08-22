@@ -129,10 +129,10 @@ void main() {
     );
   });
 
-  test('in-app pet sounds stay on media audio and pet taps are happy', () {
+  test('in-app pet sounds stay on media audio and pet taps respect hunger', () {
     expect(homeSource, contains('_startupPetSoundPlayed = true'));
     expect(homeSource, contains('PetAudio.instance.happy(profile)'));
-    expect(homeSource, contains('await PetAudio.instance.happy(cat);'));
+    expect(homeSource, contains('await PetAudio.instance.interact(cat);'));
     expect(
       File('lib/pet_audio.dart').readAsStringSync(),
       contains('AndroidUsageType.media'),

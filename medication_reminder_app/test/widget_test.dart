@@ -24,6 +24,38 @@ void main() {
     expect(find.text('No medication scheduled'), findsOneWidget);
   });
 
+  testWidgets('language menu is alphabetized by its visible names', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MedicationReminderApp(initialLocale: Locale('en')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Language'));
+    await tester.pumpAndSettle();
+
+    const names = <String>[
+      'Deutsch',
+      'English',
+      'Español',
+      'Français',
+      'Nederlands',
+    ];
+    final verticalPositions = names
+        .map((name) => tester.getTopLeft(find.text(name)).dy)
+        .toList(growable: false);
+    expect(
+      verticalPositions,
+      orderedEquals(<double>[...verticalPositions]..sort()),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shows onboarding when there are no medications', (
     WidgetTester tester,
   ) async {

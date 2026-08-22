@@ -7,6 +7,11 @@ import 'package:flutter/foundation.dart';
 import 'cat.dart';
 import 'pet_sound_catalog.dart';
 
+PetSoundMood petInteractionSoundMood(CatProfile pet) =>
+    pet.hungerLevel == CatHungerLevel.full
+    ? PetSoundMood.happy
+    : PetSoundMood.hungry;
+
 class PetAudio {
   PetAudio._();
 
@@ -27,6 +32,11 @@ class PetAudio {
     if (!pet.happySoundEnabled) return;
     await _playSafely(pet.species, PetSoundMood.happy);
   }
+
+  Future<void> interact(CatProfile pet) =>
+      petInteractionSoundMood(pet) == PetSoundMood.hungry
+      ? hungry(pet)
+      : happy(pet);
 
   Future<void> _playSafely(PetSpecies species, PetSoundMood mood) async {
     try {

@@ -1,7 +1,7 @@
 class AppRelease {
   AppRelease._();
 
-  static const displayVersion = 'V0.02.06';
+  static const displayVersion = 'V0.02.07';
   static const repositoryUrl = 'https://github.com/Rakky88/MedicationReminder';
   // This is the same focused tip panel URL used by Ko-fi's official widget.
   static const kofiUrl =

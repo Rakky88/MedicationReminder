@@ -2,7 +2,7 @@
 
 Een privacyvriendelijke Flutter-app voor eenvoudige, ADHD-vriendelijke medicatieherinneringen. De app bewaart medicijnen, schema's en innamegeschiedenis lokaal op het apparaat.
 
-## Huidige status — V0.02.06
+## Huidige status — V0.02.07
 
 De ondertekende Android-releasebuild werkt. De meest recente geverifieerde APK
 staat na een build in:
@@ -12,7 +12,7 @@ staat na een build in:
 Geverifieerd met Flutter 3.44.9 en Dart 3.12.2:
 
 - `flutter analyze`: geen issues
-- `flutter test`: 178 tests geslaagd
+- `flutter test`: 180 tests geslaagd
 - `flutter build apk --release`: geslaagd en met de vaste releasekey ondertekend
 
 De vaste openbare Android-downloadlink is:
@@ -85,6 +85,9 @@ in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
   beloningen geven. Extra medicatie nemen helpt het spel dus niet.
 - Een kat spint na een geregistreerde inname en miauwt rond medicatietijd; een
   hond hijgt of blaft en een kip tokkt of kraait op diezelfde momenten.
+- Een tik op een volledig gevoed dier speelt het vrolijke soortgeluid. Zodra
+  het dier een hongerfase heeft, speelt diezelfde tik juist het ingestelde
+  hongergeluid: miauwen, blaffen of kraaien.
 - Ieder van die zes gedragstypen heeft twintig unieke, goed hoorbare fragmenten
   uit echte CC0-/publiekedomein-opnamen. Alle 120 fragmenten zijn technisch en
   auditief gecontroleerd; varianten met opvallend achtergrondgeluid zijn door
@@ -96,7 +99,9 @@ in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
   met het gekozen diergeluid of het standaard alarmgeluid. Genegeerde
   vervolgmeldingen gebruiken het notificatievolume en het diergeluid of het
   standaard notificatiegeluid. Diergeluiden bij appstart, bij een tik op het dier
-  en na **Taken** spelen eenmalig via het mediavolume.
+  en na **Taken** spelen eenmalig via het mediavolume. Alle twintig kattenspinsels
+  zijn perceptueel genormaliseerd rond −20 LUFS, met maximaal 0,3 LU onderling
+  verschil en begrensde pieken.
 - Elk dier groeit na 14 succesvolle medicatiedagen naar de jonge fase en na 60
   succesvolle medicatiedagen naar de volwassen fase. Meerdere geldige
   innames op dezelfde kalenderdag leveren samen maximaal één groeidag op. De

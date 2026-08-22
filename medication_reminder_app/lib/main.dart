@@ -489,7 +489,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _interactWithCat() async {
     final cat = _cat;
     if (cat == null) return;
-    await PetAudio.instance.happy(cat);
+    await PetAudio.instance.interact(cat);
   }
 
   Future<void> _playWithCat() async {
@@ -889,11 +889,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               }
             },
             itemBuilder: (_) => <PopupMenuEntry<String>>[
-              const PopupMenuItem(value: 'en', child: Text('English')),
-              const PopupMenuItem(value: 'nl', child: Text('Nederlands')),
               const PopupMenuItem(value: 'de', child: Text('Deutsch')),
-              const PopupMenuItem(value: 'fr', child: Text('Français')),
+              const PopupMenuItem(value: 'en', child: Text('English')),
               const PopupMenuItem(value: 'es', child: Text('Español')),
+              const PopupMenuItem(value: 'fr', child: Text('Français')),
+              const PopupMenuItem(value: 'nl', child: Text('Nederlands')),
               const PopupMenuDivider(),
               PopupMenuItem(
                 value: 'test',
@@ -901,7 +901,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   children: <Widget>[
                     const Icon(Icons.notifications_active_outlined),
                     const SizedBox(width: 12),
-                    Text(loc.testNotification),
+                    Expanded(
+                      child: Text(
+                        loc.testNotification,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               ),

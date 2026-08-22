@@ -4,9 +4,31 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medication_reminder_app/cat.dart';
+import 'package:medication_reminder_app/pet_audio.dart';
 import 'package:medication_reminder_app/pet_sound_catalog.dart';
 
 void main() {
+  test('pet taps use the hungry sound whenever the pet is not full', () {
+    final fullPet = CatProfile(
+      name: 'Milo',
+      variant: PetVariant.catOrange,
+      adoptedAt: DateTime(2026, 8, 22),
+    );
+
+    expect(petInteractionSoundMood(fullPet), PetSoundMood.happy);
+    for (final hungerPoints in <int>[1, 2, 3, 4, 5]) {
+      expect(
+        petInteractionSoundMood(fullPet.copyWith(hungerPoints: hungerPoints)),
+        PetSoundMood.hungry,
+        reason: 'hungerPoints=$hungerPoints',
+      );
+    }
+    expect(
+      File('lib/main.dart').readAsStringSync(),
+      contains('PetAudio.instance.interact(cat)'),
+    );
+  });
+
   for (final species in PetSpecies.values) {
     for (final mood in PetSoundMood.values) {
       test('${species.name} has twenty unique ${mood.name} sounds', () {
