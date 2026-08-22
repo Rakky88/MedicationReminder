@@ -2,7 +2,7 @@
 
 Een privacyvriendelijke Flutter-app voor eenvoudige, ADHD-vriendelijke medicatieherinneringen. De app bewaart medicijnen, schema's en innamegeschiedenis lokaal op het apparaat.
 
-## Huidige status — V0.02.07
+## Huidige status — V0.02.08
 
 De ondertekende Android-releasebuild werkt. De meest recente geverifieerde APK
 staat na een build in:
@@ -99,9 +99,10 @@ in [`ASSET_REVIEW_WORKFLOW.md`](ASSET_REVIEW_WORKFLOW.md).
   met het gekozen diergeluid of het standaard alarmgeluid. Genegeerde
   vervolgmeldingen gebruiken het notificatievolume en het diergeluid of het
   standaard notificatiegeluid. Diergeluiden bij appstart, bij een tik op het dier
-  en na **Taken** spelen eenmalig via het mediavolume. Alle twintig kattenspinsels
-  zijn perceptueel genormaliseerd rond −20 LUFS, met maximaal 0,3 LU onderling
-  verschil en begrensde pieken.
+  en na **Taken** spelen eenmalig via het mediavolume. De acht spinsels waarin
+  meetbare breedbandruis zat zijn vervangen door schone passages uit een echte
+  CC0-kattenopname. Alle twintig kattenspinsels zijn perceptueel gelijkgezet op
+  −18,5 LUFS en houden veilige piekruimte.
 - Elk dier groeit na 14 succesvolle medicatiedagen naar de jonge fase en na 60
   succesvolle medicatiedagen naar de volwassen fase. Meerdere geldige
   innames op dezelfde kalenderdag leveren samen maximaal één groeidag op. De

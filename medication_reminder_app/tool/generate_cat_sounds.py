@@ -9,6 +9,7 @@ purrs are different passages from two continuous real purr recordings.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import shutil
@@ -25,9 +26,13 @@ SOURCE_AUDIO = ROOT / ".source_audio" / "cc0"
 ASSET_OUTPUT = ROOT / "assets" / "sounds"
 ANDROID_OUTPUT = ROOT / "android" / "app" / "src" / "main" / "res" / "raw"
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
-PURR_TARGET_LUFS = -20.0
+PURR_TARGET_LUFS = -18.5
 PURR_TRUE_PEAK_DBTP = -1.5
 PURR_LRA = 3.0
+PURR_SOURCE_HASHES = {
+    "cat_purr_2.mp3": "0764d800e073d6aedaa214be049e75ad1dd15722ab0fd290003b1a697a9787ba",
+    "cat_purr_clean_rehanjo.mp3": "c12bd9afd982f6bdcefdfd85aea8fd088239a606fe953a4206ac187aad39650c",
+}
 
 # Eighteen isolated vocalisations in the CC0 "Kitten meows" recording. The
 # remaining two files use the other two CC0 real-cat recordings in full.
@@ -78,6 +83,16 @@ def _measure_loudness(
     if payload_start < 0 or payload_end <= payload_start:
         raise RuntimeError(f"Could not read loudness measurement for {source}")
     return json.loads(result.stderr[payload_start : payload_end + 1])
+
+
+def _verify_purr_sources() -> None:
+    for name, expected in PURR_SOURCE_HASHES.items():
+        path = SOURCE_AUDIO / name
+        if not path.is_file():
+            raise FileNotFoundError(f"Missing purr source: {path}")
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if digest != expected:
+            raise RuntimeError(f"Unexpected purr source checksum for {name}: {digest}")
 
 
 def _loudnorm_filter(measured: dict[str, str]) -> str:
@@ -200,9 +215,13 @@ def _generate_meows() -> None:
 
 
 def _generate_purrs() -> None:
+    _verify_purr_sources()
     purr_sources = (
         *((SOURCE_AUDIO / "cat_purr_2.mp3", index * 1.15, 4.5) for index in range(12)),
-        *((SOURCE_AUDIO / "cat_purr_3.mp3", index, 4.5) for index in range(8)),
+        *(
+            (SOURCE_AUDIO / "cat_purr_clean_rehanjo.mp3", index * 1.75, 4.5)
+            for index in range(8)
+        ),
     )
     for index, (source, start, duration) in enumerate(purr_sources, 1):
         target = ASSET_OUTPUT / f"cat_purr_{index:02}.wav"

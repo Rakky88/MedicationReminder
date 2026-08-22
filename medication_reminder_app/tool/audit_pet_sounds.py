@@ -46,6 +46,8 @@ MIN_QUIET_TO_ACTIVE_SEPARATION_DB = {
     "chicken_crow": 35.0,
     "chicken_cluck": 35.0,
 }
+MAX_PURR_HIGH_BAND_PERCENT = 0.05
+MAX_PURR_SPECTRAL_FLATNESS_DB = -30.0
 
 
 def _decode(path: Path) -> np.ndarray:
@@ -87,6 +89,24 @@ def _metrics(samples: np.ndarray) -> dict[str, float]:
     quiet = frame_rms[frame_rms < active_threshold]
     active_rms = float(np.median(active)) if len(active) else float(np.mean(frame_rms))
     quiet_rms = float(np.median(quiet)) if len(quiet) else float(np.percentile(frame_rms, 10))
+    spectrum_length = 2048
+    if len(samples) >= spectrum_length:
+        spectral_frames = np.lib.stride_tricks.sliding_window_view(
+            samples, spectrum_length
+        )[:: spectrum_length // 2]
+        spectral_frames = spectral_frames * np.hanning(spectrum_length)
+        power = np.mean(np.abs(np.fft.rfft(spectral_frames, axis=1)) ** 2, axis=0)
+        frequencies = np.fft.rfftfreq(spectrum_length, 1 / SAMPLE_RATE)
+        audible = power[(frequencies >= 70) & (frequencies <= 8_000)]
+        high = power[(frequencies >= 2_500) & (frequencies <= 8_000)]
+        high_percent = 100.0 * float(np.sum(high)) / max(float(np.sum(audible)), 1e-12)
+        spectral_flatness = float(
+            np.exp(np.mean(np.log(audible + 1e-18)))
+            / max(float(np.mean(audible)), 1e-18)
+        )
+    else:
+        high_percent = 0.0
+        spectral_flatness = 0.0
     return {
         "duration_seconds": len(samples) / SAMPLE_RATE,
         "rms_dbfs": _dbfs(float(np.sqrt(np.mean(np.square(samples))))),
@@ -96,6 +116,8 @@ def _metrics(samples: np.ndarray) -> dict[str, float]:
         "quiet_to_active_db": _dbfs(quiet_rms) - _dbfs(active_rms),
         "active_percent": 100.0 * len(active) / max(1, len(frame_rms)),
         "clipped_percent": 100.0 * float(np.mean(np.abs(samples) >= 0.999)),
+        "high_band_percent": high_percent,
+        "spectral_flatness_db": _dbfs(math.sqrt(spectral_flatness)),
     }
 
 
@@ -144,6 +166,17 @@ def main() -> None:
         for index, path in enumerate(paths, 1):
             samples = _decode(path)
             metrics = _metrics(samples)
+            if stem == "cat_purr":
+                if metrics["high_band_percent"] > MAX_PURR_HIGH_BAND_PERCENT:
+                    raise RuntimeError(
+                        f"{path.name} has {metrics['high_band_percent']:.3f}% "
+                        "high-band energy, indicating audible hiss or background noise"
+                    )
+                if metrics["spectral_flatness_db"] > MAX_PURR_SPECTRAL_FLATNESS_DB:
+                    raise RuntimeError(
+                        f"{path.name} has a {metrics['spectral_flatness_db']:.1f} dB "
+                        "spectral flatness, indicating broadband noise"
+                    )
             minimum = MIN_QUIET_TO_ACTIVE_SEPARATION_DB.get(stem)
             separation = -metrics["quiet_to_active_db"]
             if minimum is not None and separation < minimum:

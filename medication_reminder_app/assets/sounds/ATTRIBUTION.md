@@ -20,6 +20,8 @@ bundle in `.source_audio/`.
   https://freesound.org/people/Snapper4298/sounds/255588/
 - “cat purr.wav” by Walter_Odington:
   https://freesound.org/people/Walter_Odington/sounds/26769/
+- “Purring Cat.wav” by Rehanjo:
+  https://freesound.org/people/Rehanjo/sounds/593609/
 - “Dog Barks.wav” by UnderlinedDesigns:
   https://freesound.org/people/UnderlinedDesigns/sounds/191687/
 - “dog panting.wav” by keweldog:

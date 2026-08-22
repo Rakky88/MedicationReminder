@@ -1,5 +1,19 @@
 # Versiegeschiedenis
 
+## V0.02.08 — 2026-08-22
+
+- Meet alle twintig kattenspinsels opnieuw op hoge-bandenergie en spectrale
+  vlakheid. Identificeer daarmee varianten 13–20 als de duidelijke ruisgroep en
+  vervang precies die acht door passages uit Rehanjo's schone CC0-opname van een
+  echt spinnende kat.
+- Verlaag de hoge-bandenergie van de acht vervangen varianten van 1,42–2,93%
+  naar 0,001–0,003% en leg maximale ruisgrenzen vast in de reproduceerbare
+  geluidsaudit.
+- Zet alle twintig spinsels exact gelijk op −18,5 LUFS. Dat is 1,5 dB luider dan
+  V0.02.07, terwijl de luidste piek onder −1,5 dBTP blijft.
+- Behoud twintig unieke bestanden en controleer opnieuw alle 120 diergeluiden,
+  de volledige Flutter-analyse en 180 regressietests.
+
 ## V0.02.07 — 2026-08-22
 
 - Laat een tik op het huisdier het hongergeluid gebruiken zodra het dier

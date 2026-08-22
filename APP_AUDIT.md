@@ -1,8 +1,18 @@
-# App-audit — V0.02.07
+# App-audit — V0.02.08
 
 Datum: 22 augustus 2026
 Status: code-, alarm- en visuele regressie-audit afgerond; onderstaande
 verbeterideeën zijn **niet geïmplementeerd**.
+
+## In V0.02.08 gerepareerd en gecontroleerd
+
+- Varianten 13–20 van de kattenspinsels hadden 1,42–2,93% energie in de hoge
+  ruisband en een duidelijk vlakker breedbandspectrum dan varianten 1–12. Deze
+  acht zijn vervangen door schone passages uit een afzonderlijke CC0-opname;
+  hun hoge-bandenergie meet nu slechts 0,001–0,003%.
+- Alle twintig spinsels staan exact op −18,5 LUFS, 1,5 dB luider dan voorheen,
+  met veilige piekruimte. De geluidsaudit faalt voortaan automatisch als een
+  spinvariant opnieuw boven de vastgelegde ruisgrenzen komt.
 
 ## In V0.02.07 gerepareerd en gecontroleerd
 
